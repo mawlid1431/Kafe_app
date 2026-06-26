@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kafe Eman - Order History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dadada",
+                      "on-surface-variant": "#504442",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#eeeeee",
+                      "on-tertiary-fixed": "#281900",
+                      "on-background": "#1a1c1c",
+                      "secondary-fixed-dim": "#cfc4c0",
+                      "primary-fixed-dim": "#e3beb8",
+                      "outline": "#827472",
+                      "surface": "#f9f9f9",
+                      "outline-variant": "#d3c3c0",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#e8e8e8",
+                      "surface-variant": "#e2e2e2",
+                      "on-primary-container": "#ae8d87",
+                      "surface-container-highest": "#e2e2e2",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffba38",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed": "#ffdeac",
+                      "inverse-surface": "#2f3131",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#ffdad4",
+                      "on-secondary-container": "#6b6360",
+                      "on-surface": "#1a1c1c",
+                      "inverse-on-surface": "#f1f1f1",
+                      "secondary-fixed": "#ece0dc",
+                      "secondary-container": "#ece0dc",
+                      "surface-bright": "#f9f9f9",
+                      "on-primary-fixed-variant": "#5b403c",
+                      "tertiary-container": "#3e2900",
+                      "on-tertiary-container": "#c48900",
+                      "secondary": "#655d5a",
+                      "on-error-container": "#93000a",
+                      "inverse-primary": "#e3beb8",
+                      "surface-container-low": "#f3f3f3",
+                      "on-primary": "#ffffff",
+                      "tertiary": "#241600",
+                      "on-primary-fixed": "#2b1613",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#745853",
+                      "primary-container": "#3e2723",
+                      "primary": "#271310",
+                      "on-tertiary-fixed-variant": "#604100",
+                      "on-secondary-fixed-variant": "#4c4542",
+                      "on-secondary-fixed": "#201a18",
+                      "background": "#f9f9f9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-lg": "32px",
+                      "unit": "8px",
+                      "stack-sm": "8px",
+                      "stack-md": "16px",
+                      "container-margin": "24px",
+                      "section-gap": "48px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Playfair Display"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Playfair Display"
+                      ],
+                      "display-lg-mobile": [
+                              "Playfair Display"
+                      ],
+                      "caption": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "caption": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F5F5F5; /* Level 0 Base */
+            background-image: radial-gradient(circle at top right, rgba(227,190,184,0.3) 0%, transparent 60%),
+                              radial-gradient(circle at bottom left, rgba(207,196,192,0.4) 0%, transparent 60%);
+            background-attachment: fixed;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 24px rgba(62,39,35,0.05);
+        }
+
+        .glass-button {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .glass-button:active {
+            transform: scale(0.98);
+        }
+
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background font-body-md min-h-screen flex flex-col pt-16 pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-[0_8px_24px_rgba(62,39,35,0.05)] md:hidden">
+<button aria-label="Menu" class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">coffee</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary tracking-tight">Kafe Eman</h1>
+<button aria-label="Notifications" class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<!-- Desktop Nav (Hidden on Mobile) -->
+<header class="hidden md:flex fixed top-0 left-0 w-full z-50 justify-between items-center px-container-margin h-20 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-[0_8px_24px_rgba(62,39,35,0.05)]">
+<h1 class="font-display-lg text-display-lg text-primary tracking-tight mr-8">Kafe Eman</h1>
+<nav class="flex gap-8 items-center flex-1">
+<a class="font-label-md text-label-md text-on-surface-variant hover:opacity-80 transition-opacity" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:opacity-80 transition-opacity" href="#">Menu</a>
+<a class="font-label-md text-label-md text-primary hover:opacity-80 transition-opacity border-b-2 border-primary pb-1" href="#">Orders</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:opacity-80 transition-opacity" href="#">Profile</a>
+</nav>
+<div class="flex gap-4">
+<button aria-label="Cart" class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">shopping_bag</span>
+</button>
+<button aria-label="Notifications" class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="flex-1 w-full max-w-3xl mx-auto px-container-margin mt-stack-lg md:mt-24">
+<h2 class="font-headline-md text-headline-md text-primary mb-stack-md">Order History</h2>
+<!-- Tabs -->
+<div class="flex gap-2 mb-section-gap p-1 bg-surface-container-low rounded-full glass-panel inline-flex">
+<button class="px-6 py-2 rounded-full font-label-md text-label-md text-on-primary bg-primary shadow-sm transition-colors" id="tab-active">
+                Active
+            </button>
+<button class="px-6 py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:bg-white/50 transition-colors" id="tab-completed">
+                Completed
+            </button>
+</div>
+<!-- Orders List -->
+<div class="flex flex-col gap-stack-lg" id="orders-container">
+<!-- Active Order Card 1 -->
+<div class="glass-panel rounded-[24px] p-container-margin relative overflow-hidden active-order">
+<div class="flex justify-between items-start mb-stack-md">
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider block mb-1">#KE-99234</span>
+<span class="font-caption text-caption text-secondary">Today, 08:45 AM</span>
+</div>
+<div class="bg-tertiary-fixed-dim text-on-tertiary-fixed-variant px-3 py-1 rounded-full font-label-md text-caption flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">local_cafe</span> Brewing
+                    </div>
+</div>
+<div class="flex gap-4 items-center mb-stack-md border-t border-white/30 pt-4">
+<div class="w-16 h-16 rounded-xl bg-surface-variant overflow-hidden flex-shrink-0">
+<img alt="Iced Latte" class="w-full h-full object-cover" data-alt="A macro shot of an iced latte in a tall glass, condensation on the outside, swirling milk blending with dark espresso, resting on a clean white marble counter. Light mode, bright, premium coffee house aesthetic, soft focus background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOQxISC5lfwBeBaPADhcCnBl5-gWDaTdzN510pcuOLacVwSKLWRjrZ01spkZR1aBwnrAJLXLXjPleBOAATuNrXLNIG2gssQGRy9DIHBihkzsAANC7Zv5sNXpNCB5t8i--BELuE3YUuRVvnRAVeNZp-0j-ilBE3GHekkFzFfu5v8sqDGYhFdpiLYUQGZs4BNXPdUyW5hvTkgw9kb66lofGoTU73UfiSYOjhDT_06NLf02talgQMpNcUAQlGUKlOUPQtAS3OAJoHcKzE"/>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Iced Vanilla Latte</h3>
+<p class="font-caption text-caption text-secondary">Oat Milk, Extra Shot</p>
+</div>
+<span class="font-body-md text-body-md font-semibold">$6.50</span>
+</div>
+<div class="flex gap-4 items-center mb-stack-md border-b border-white/30 pb-4">
+<div class="w-16 h-16 rounded-xl bg-surface-variant overflow-hidden flex-shrink-0">
+<img alt="Almond Croissant" class="w-full h-full object-cover" data-alt="A fresh almond croissant on a delicate white ceramic plate, dusted with powdered sugar, sitting on a light oak table. Top down view, bright natural lighting, minimal and premium bakery style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoHoYcgUJBsq9P610R7MDnFkrJP2RutdpLzrhorFvj6qV0K16NtxBaXI3jJfFwdxqFO70ZaeQWmcZ-xlkxIB91dnTfwG3SsdX0x-jZjafY8vE6jzt76QEjFLroDJ64vhHx-muBscCbBwTx_jN3fuu9k8o3RUQFFMNfV0xALr039gKowJK6YNuukNegNIkLJQNu_SkVwFOM2GcQihiV3C4YRpeLwuCk3a_UH8v0G0D4eoBlLhXOkLLqZm8iq6UJJLvevuqwcU_ilMKw"/>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Almond Croissant</h3>
+<p class="font-caption text-caption text-secondary">Warmed</p>
+</div>
+<span class="font-body-md text-body-md font-semibold">$4.50</span>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="font-body-md text-body-md text-on-surface-variant">Total</span>
+<span class="font-headline-md text-headline-md text-primary">$11.00</span>
+</div>
+</div>
+<!-- Active Order Card 2 -->
+<div class="glass-panel rounded-[24px] p-container-margin relative overflow-hidden active-order">
+<div class="flex justify-between items-start mb-stack-md">
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider block mb-1">#KE-99235</span>
+<span class="font-caption text-caption text-secondary">Today, 09:15 AM</span>
+</div>
+<div class="bg-primary-fixed-dim text-on-primary-fixed-variant px-3 py-1 rounded-full font-label-md text-caption flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">two_wheeler</span> On the Way
+                    </div>
+</div>
+<div class="flex gap-4 items-center mb-stack-md border-t border-b border-white/30 py-4">
+<div class="w-16 h-16 rounded-xl bg-surface-variant overflow-hidden flex-shrink-0">
+<img alt="Pour Over" class="w-full h-full object-cover" data-alt="A dark pour-over coffee in a clear glass server, steaming slightly, next to a matching glass mug. Set on a light wooden tray against a bright, minimalist cafe background. Warm, inviting, premium aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9PaO6g4D8f_pEyezirVf404jx2OHFZpiI-L6H_1eXjkDCL6jQyCFo-2JWPOusAF-AvKa3ugTkCTdLQAPdCFKQBNxXQKU6S6DQcV_XCJsx0pRZHRQidBhEImeba2LHgnWfaN6YHJqX57cFn9iPPQwO4HqG3yd8MgILw1enWu5RJslTjLVA-0y1DuXnojUbdj052xYMW3g69Cle4BNGA60A8wTW5wM-IM7FGaIOmQnVw4JaJ4DvH_uuMEJAqFRGRB6zXt1i9vvMQm7h"/>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Ethiopia Yirgacheffe Pour Over</h3>
+<p class="font-caption text-caption text-secondary">Black, Hot</p>
+</div>
+<span class="font-body-md text-body-md font-semibold">$5.50</span>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="font-body-md text-body-md text-on-surface-variant">Total</span>
+<span class="font-headline-md text-headline-md text-primary">$5.50</span>
+</div>
+</div>
+<!-- Completed Order Card 1 (Hidden by default based on tab) -->
+<div class="glass-panel rounded-[24px] p-container-margin relative overflow-hidden completed-order hidden">
+<div class="flex justify-between items-start mb-stack-md">
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider block mb-1">#KE-99102</span>
+<span class="font-caption text-caption text-secondary">Yesterday, 10:30 AM</span>
+</div>
+<div class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full font-label-md text-caption flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_circle</span> Delivered
+                    </div>
+</div>
+<div class="flex gap-4 items-center mb-stack-md border-t border-white/30 py-4">
+<div class="w-16 h-16 rounded-xl bg-surface-variant overflow-hidden flex-shrink-0">
+<img alt="Espresso" class="w-full h-full object-cover" data-alt="A rich, dark espresso shot in a small white ceramic demitasse cup, thick crema on top, sitting on a matching saucer next to a tiny silver spoon. Clean, bright, premium light mode cafe setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4YlwyNPYMd-1Mu7Xde2TUB-KknPywFLh53LZW5s3RE5eNRq2hklfaXXd5FrrpDLqylALlcNy1c0J7_IhjtIuia6zCAl7hakGVXR90MbwKnBLq6t5ZBlekimWPBk7umr-vX5qNzX_h7oCCx2DNp1WBHF7DmFfgc9n2TS25Zd8Z7eLP_F2tbHHAbol97Q4DVT5x9R2hR2plXglf2X3FWyK1r-sEXh7JChXcRzsuaNg8wcyOwoDJeSsP1J5KnCvNJWa1OUINblfg2k12"/>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Double Espresso</h3>
+<p class="font-caption text-caption text-secondary">House Blend</p>
+</div>
+<span class="font-body-md text-body-md font-semibold">$3.50</span>
+</div>
+<div class="flex justify-between items-center mt-2 border-t border-white/30 pt-4">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface-variant">Total</span>
+<span class="font-headline-md text-headline-md text-primary">$3.50</span>
+</div>
+<button class="glass-button px-6 py-2 rounded-full font-label-md text-label-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">replay</span> Reorder
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-6 mx-4 w-[calc(100%-48px)] rounded-[32px] bg-white/70 backdrop-blur-[40px] border border-white/20 shadow-[0_8px_32px_rgba(62,39,35,0.08)] z-50 flex justify-around items-center px-4 h-20 md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-white/10 transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md mt-1 text-[10px]">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-white/10 transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">local_cafe</span>
+<span class="font-label-md text-label-md mt-1 text-[10px]">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-white/10 transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-md text-label-md mt-1 text-[10px]">Cart</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary bg-primary/5 rounded-full p-2 hover:bg-white/10 transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-label-md text-label-md mt-1 text-[10px]">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-white/10 transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md mt-1 text-[10px]">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple tab switching logic
+        const tabActive = document.getElementById('tab-active');
+        const tabCompleted = document.getElementById('tab-completed');
+        const activeOrders = document.querySelectorAll('.active-order');
+        const completedOrders = document.querySelectorAll('.completed-order');
+
+        tabActive.addEventListener('click', () => {
+            tabActive.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+            tabActive.classList.remove('text-on-surface-variant', 'hover:bg-white/50');
+            
+            tabCompleted.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+            tabCompleted.classList.add('text-on-surface-variant', 'hover:bg-white/50');
+
+            activeOrders.forEach(el => el.classList.remove('hidden'));
+            completedOrders.forEach(el => el.classList.add('hidden'));
+        });
+
+        tabCompleted.addEventListener('click', () => {
+            tabCompleted.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+            tabCompleted.classList.remove('text-on-surface-variant', 'hover:bg-white/50');
+            
+            tabActive.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+            tabActive.classList.add('text-on-surface-variant', 'hover:bg-white/50');
+
+            activeOrders.forEach(el => el.classList.add('hidden'));
+            completedOrders.forEach(el => el.classList.remove('hidden'));
+        });
+    </script>
+</body></html>

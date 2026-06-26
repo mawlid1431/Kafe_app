@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kafe Eman - Rewards</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dadada",
+                        "on-surface-variant": "#504442",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "on-tertiary-fixed": "#281900",
+                        "on-background": "#1a1c1c",
+                        "secondary-fixed-dim": "#cfc4c0",
+                        "primary-fixed-dim": "#e3beb8",
+                        "outline": "#827472",
+                        "surface": "#f9f9f9",
+                        "outline-variant": "#d3c3c0",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-variant": "#e2e2e2",
+                        "on-primary-container": "#ae8d87",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffba38",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdeac",
+                        "inverse-surface": "#2f3131",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#ffdad4",
+                        "on-secondary-container": "#6b6360",
+                        "on-surface": "#1a1c1c",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#ece0dc",
+                        "secondary-container": "#ece0dc",
+                        "surface-bright": "#f9f9f9",
+                        "on-primary-fixed-variant": "#5b403c",
+                        "tertiary-container": "#3e2900",
+                        "on-tertiary-container": "#c48900",
+                        "secondary": "#655d5a",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#e3beb8",
+                        "surface-container-low": "#f3f3f3",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#241600",
+                        "on-primary-fixed": "#2b1613",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#745853",
+                        "primary-container": "#3e2723",
+                        "primary": "#271310",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "on-secondary-fixed-variant": "#4c4542",
+                        "on-secondary-fixed": "#201a18",
+                        "background": "#f9f9f9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "unit": "8px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "container-margin": "24px",
+                        "section-gap": "48px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Playfair Display"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Playfair Display"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "caption": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "caption": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 24px rgba(62, 39, 35, 0.05);
+        }
+        .glass-card-elevated {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(60px);
+            -webkit-backdrop-filter: blur(60px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 12px 32px rgba(62, 39, 35, 0.08);
+        }
+        .bg-ambient-blob {
+            position: fixed;
+            top: -10%;
+            right: -10%;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, rgba(227,190,184,0.3) 0%, rgba(249,249,249,0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .bg-ambient-blob-2 {
+            position: fixed;
+            bottom: -20%;
+            left: -10%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, rgba(207,196,192,0.3) 0%, rgba(249,249,249,0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased overflow-x-hidden min-h-screen flex flex-col pt-16 pb-32">
+<!-- Ambient Backgrounds -->
+<div class="bg-ambient-blob"></div>
+<div class="bg-ambient-blob-2"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 bg-white/70 backdrop-blur-xl dark:bg-surface-container/70 text-primary dark:text-primary-fixed border-b border-white/20 dark:border-outline-variant/20 shadow-[0_8px_24px_rgba(62,39,35,0.05)]">
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">coffee</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary dark:text-primary-fixed tracking-tight">Kafe Eman</h1>
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-200 text-on-surface-variant dark:text-outline">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<main class="flex-grow w-full max-w-[1200px] mx-auto px-container-margin md:px-[32px] flex flex-col gap-section-gap pt-stack-lg">
+<!-- Header Section -->
+<section class="flex flex-col gap-stack-sm text-center md:text-left">
+<h2 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary-container">My Rewards</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Your journey to the perfect cup.</p>
+</section>
+<!-- Points & Tier Card (Liquid Glass) -->
+<section class="w-full">
+<div class="glass-card-elevated rounded-[24px] p-stack-lg flex flex-col md:flex-row items-center md:items-start justify-between gap-stack-lg relative overflow-hidden">
+<!-- Decorative background image inside card -->
+<div class="absolute inset-0 z-0 opacity-10 pointer-events-none" data-alt="A macro, top-down view of a perfectly poured espresso crema with delicate, swirling latte art, rendered in a warm, inviting, premium light-mode aesthetic with soft highlights and deep espresso tones." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAMmRiBDmCW95Wxp05byl30i4QBv-eLVMocMMEy7NxU1Ax6EXdMCf5uxIyeDFGhM_b61lTvSZpkTERAvUbTZILdnCIcZyieMPoFSf0BMn6qXTLQHS6p2p3cZe0GpvrXQR1cRMQRSgQRGDrNl4xD7hCtRpwtnb6R30dkdP-VA5TdKqbnCidatUhLA-30rHA8zAPIi0uw34OWQbpwlkodM6nuBiXWiyhLS-_nW1Uc-aRnS1KYIoDuA7zeD51UIjpfT2-uThqXNJJbtLAk')"></div>
+<div class="relative z-10 flex flex-col items-center md:items-start gap-stack-md w-full md:w-1/2">
+<div class="flex items-center gap-unit">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-3xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label-md text-label-md text-primary-container uppercase tracking-wider">Gold Member</span>
+</div>
+<div class="flex flex-col items-center md:items-start">
+<span class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary tracking-tight">2,450</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Available Points</span>
+</div>
+</div>
+<div class="relative z-10 w-full md:w-1/2 flex flex-col gap-stack-sm bg-surface-container/30 p-stack-md rounded-xl">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface-variant">Next Tier: Platinum</span>
+<span class="font-caption text-caption text-primary">550 pts needed</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 82%;"></div>
+</div>
+<div class="flex justify-between font-caption text-caption text-outline mt-unit">
+<span>Gold (2k)</span>
+<span>Platinum (3k)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Rewards Grid -->
+<section class="flex flex-col gap-stack-lg">
+<h3 class="font-headline-md text-headline-md text-primary-container border-b border-surface-dim pb-unit">Available Rewards</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-container-margin">
+<!-- Reward Item 1 -->
+<div class="glass-panel rounded-[24px] p-stack-md flex flex-col gap-stack-md hover:-translate-y-1 transition-transform duration-300">
+<div class="w-full h-40 rounded-[16px] overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A perfectly crafted Spanish Latte in a clear glass cup, resting on a light wooden table, with soft, natural morning sunlight creating a warm, premium, light-mode ambiance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBz-9WmTQZ0a7qqsZN1Z20lnoEqnLiyQDwOk_MNRcS7ZToyOuK9LtDsz96KDvi_npVeJaLbTs8IjcMA_xBElflB_uJC9xXeZvIuzkS8GxLEIvAT8lWNvPr6JiUitfhQv9nN-vmy-XhdI8dP8cP7L7GEd-Egw9m2bVLH0_VWsbwycUKai7PAQoFQ-Pk2luDIKZu-v-pCGFGazhW3Qt42XoAlOYEUq_-UQmo4webhDvBf4fFAMsV6PF6GNMR6dV4h-T48Mr9EQ3xJqV3"/>
+<div class="absolute top-2 right-2 bg-white/80 backdrop-blur-md px-2 py-1 rounded-full font-label-md text-label-md text-primary shadow-sm">
+                            500 pts
+                        </div>
+</div>
+<div class="flex flex-col gap-unit">
+<h4 class="font-body-lg text-body-lg font-semibold text-on-background">Free Spanish Latte</h4>
+<p class="font-caption text-caption text-on-surface-variant line-clamp-2">Enjoy our signature sweet and creamy Spanish Latte on us.</p>
+</div>
+<button class="mt-auto w-full py-2 bg-primary text-white font-label-md text-label-md rounded-full hover:scale-[0.98] transition-transform active:scale-95">Redeem</button>
+</div>
+<!-- Reward Item 2 -->
+<div class="glass-panel rounded-[24px] p-stack-md flex flex-col gap-stack-md hover:-translate-y-1 transition-transform duration-300">
+<div class="w-full h-40 rounded-[16px] overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A high-end, flaky butter croissant resting on a minimalist white ceramic plate, illuminated by soft, diffuse lighting in a bright, modern cafe setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1gEWYLyRIro4G25D8c3ZZtkFJUsiuOnb_uYLLU8sy8Q-JKi7cKyiImChfZMBgKkpKspjel_-esYqNKnXaGfEkkYkzUgeGwOyt2rVVTPyvDOIATqcesbDk6NGINtZjG91NcTEppFUCLVb9LhT3mX4ar2Lr_lOelRwsLZZSjlyZvNpoK7L_6l5EHJTPB2tARfazSeMdspKJnbjEgeLzTwwvrc6lYkKyBNu67Q1JBkL2XzuDXbPubFYkAV1aC4TPUsvDl55lL36YBnAz"/>
+<div class="absolute top-2 right-2 bg-white/80 backdrop-blur-md px-2 py-1 rounded-full font-label-md text-label-md text-primary shadow-sm">
+                            300 pts
+                        </div>
+</div>
+<div class="flex flex-col gap-unit">
+<h4 class="font-body-lg text-body-lg font-semibold text-on-background">20% Off Pastries</h4>
+<p class="font-caption text-caption text-on-surface-variant line-clamp-2">Treat yourself to a discount on any of our freshly baked goods.</p>
+</div>
+<button class="mt-auto w-full py-2 bg-primary text-white font-label-md text-label-md rounded-full hover:scale-[0.98] transition-transform active:scale-95">Redeem</button>
+</div>
+<!-- Reward Item 3 -->
+<div class="glass-panel rounded-[24px] p-stack-md flex flex-col gap-stack-md hover:-translate-y-1 transition-transform duration-300">
+<div class="w-full h-40 rounded-[16px] overflow-hidden relative flex items-center justify-center bg-primary-fixed-dim/30">
+<span class="material-symbols-outlined text-primary-container text-6xl" style="font-variation-settings: 'FILL' 0;">cake</span>
+<div class="absolute top-2 right-2 bg-white/80 backdrop-blur-md px-2 py-1 rounded-full font-label-md text-label-md text-primary shadow-sm">
+                            1000 pts
+                        </div>
+</div>
+<div class="flex flex-col gap-unit">
+<h4 class="font-body-lg text-body-lg font-semibold text-on-background">Birthday Treat</h4>
+<p class="font-caption text-caption text-on-surface-variant line-clamp-2">Celebrate with a complimentary cake slice and beverage of your choice.</p>
+</div>
+<button class="mt-auto w-full py-2 bg-surface-dim text-on-surface-variant font-label-md text-label-md rounded-full cursor-not-allowed opacity-70">Locked</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-6 mx-4 w-[calc(100%-48px)] rounded-[32px] bg-white/70 backdrop-blur-[40px] dark:bg-surface-container/70 border border-white/20 dark:border-outline-variant/10 shadow-[0_8px_32px_rgba(62,39,35,0.08)] z-50 flex justify-around items-center px-4 h-20">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-white/10 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-white/10 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">local_cafe</span>
+<span class="font-label-md text-label-md mt-1">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-white/10 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">shopping_bag</span>
+<span class="font-label-md text-label-md mt-1">Cart</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-white/10 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">receipt_long</span>
+<span class="font-label-md text-label-md mt-1">Orders</span>
+</a>
+<!-- Active Profile (Rewards conceptually links closely to Profile in typical nav structures if no dedicated 'Rewards' tab exists) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-tertiary-fixed-dim bg-primary/5 rounded-full p-2 hover:bg-white/10 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

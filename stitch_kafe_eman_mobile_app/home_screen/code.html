@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kafe Eman - Home</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config from Brand Anchors -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#3e2900",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container": "#eeeeee",
+                        "inverse-on-surface": "#f1f1f1",
+                        "on-primary-fixed-variant": "#5b403c",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#d3c3c0",
+                        "tertiary-fixed": "#ffdeac",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#745853",
+                        "secondary-fixed-dim": "#cfc4c0",
+                        "surface": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "on-tertiary-fixed": "#281900",
+                        "primary-container": "#3e2723",
+                        "surface-dim": "#dadada",
+                        "error": "#ba1a1a",
+                        "secondary": "#655d5a",
+                        "outline": "#827472",
+                        "on-surface": "#1a1c1c",
+                        "surface-bright": "#f9f9f9",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary-fixed": "#201a18",
+                        "tertiary": "#241600",
+                        "on-tertiary-container": "#c48900",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#504442",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#4c4542",
+                        "primary-fixed": "#ffdad4",
+                        "inverse-primary": "#e3beb8",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary-fixed": "#2b1613",
+                        "primary": "#271310",
+                        "on-secondary-container": "#6b6360",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#ae8d87",
+                        "primary-fixed-dim": "#e3beb8",
+                        "secondary-fixed": "#ece0dc",
+                        "secondary-container": "#ece0dc",
+                        "tertiary-fixed-dim": "#ffba38"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1.5rem",
+                        "3xl": "2rem"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "section-gap": "48px",
+                        "container-margin": "24px",
+                        "gutter": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Playfair Display"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for horizontal scroll */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased min-h-screen pb-32 font-body-md">
+<!-- TopAppBar (from JSON) -->
+<header class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-white/20 shadow-[0px_8px_24px_rgba(62,39,35,0.05)]">
+<div class="flex justify-between items-center px-container-margin py-stack-md w-full max-w-6xl mx-auto">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/40 shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A detailed, professional headshot of a smiling young man in a well-lit premium coffee shop setting. He is wearing a smart casual linen shirt. The lighting is warm and natural, highlighting a high-end, clean aesthetic consistent with a premium lifestyle brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvzH4M7oRxmV4mngbleG0YurwR6hD6-doVQk_wPOopSN0PiInmnnrEC69izXPZ0TNcaf-IAiqmkQ3dh3Nl9Vg3ScuPyeYSVfVpDxayOG-FBmX8hdZ8vbWskUewZCRkQZd0k-KAQKOUIxaCvKi4MU4f7p3V2BthU6lm6S80HKk5WDDqEZd4VAEBoIoE9GHfnhqZYsVUPnLCL8GU0-h1YOpPwbIdClRPbuVp6lyThrErkPPB39g_PlJhc7oCCe1-GD1cPpDld7d0-ffX"/>
+</div>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary tracking-tight">KAFE EMAN</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors active:scale-95 duration-200 text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-[100px] px-container-margin max-w-6xl mx-auto space-y-section-gap">
+<!-- Greeting & Search -->
+<section class="space-y-stack-md mt-4">
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-primary">Good morning, Aman! ☕</h2>
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">search</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-low/50 backdrop-blur-md rounded-2xl border border-white/40 shadow-[inset_0px_2px_4px_rgba(62,39,35,0.02)] focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all font-body-md placeholder-outline" placeholder="Search for your favorite brew..." type="text"/>
+</div>
+</section>
+<!-- Promo Carousel -->
+<section>
+<div class="relative w-full h-48 md:h-64 rounded-3xl overflow-hidden shadow-[0px_12px_32px_rgba(62,39,35,0.08)]">
+<!-- Background Image -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-alt="A stunning close-up of two beautifully crafted artisan lattes on a rustic wooden table in a sunlit, premium cafe. The image uses shallow depth of field, warm golden hour lighting, and captures the delicate latte art. The aesthetic is extremely high-end, cozy, and professional." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDFZNrzCMIBk7otH8vuGDl3HzXoGpU4oRQxtmtITt2l_Vr_VeLJY4vS-JQj2LX4i5vcrXBVSOCYTkroDiGZXoK0p0GrcPkxyq2Z6h8UwK11OPZk1IHOOKUjmuuOkleQHDaWEbWd8zSod0HW9r0EHWMqLP1pfhnXAZCxOgGMe1vBOjVA-S4fC74CS-FRrH8-OiPXKws-VzlD-h__RKjMzQYPkcgXPswEcXOHG8AutvayIb9YOisiYLahnet13k0xr-3kKy8QLXyDcHcF')"></div>
+<!-- Glass Overlay -->
+<div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-transparent"></div>
+<!-- Content -->
+<div class="relative h-full flex flex-col justify-center p-stack-lg text-white">
+<span class="font-label-md text-label-md text-tertiary-fixed-dim bg-white/20 backdrop-blur-md px-3 py-1 rounded-full w-fit mb-2">Special Offer</span>
+<h3 class="font-headline-md text-headline-md mb-1">Buy 1 Get 1 Free</h3>
+<p class="font-body-md text-white/90 max-w-[60%]">On all handcrafted seasonal lattes. Today only.</p>
+</div>
+</div>
+</section>
+<!-- Featured Drinks (Horizontal Scroll) -->
+<section class="space-y-stack-md">
+<div class="flex justify-between items-end">
+<h3 class="font-headline-md text-headline-md text-primary">Featured Drinks</h3>
+<a class="font-label-md text-label-md text-primary hover:opacity-70 transition-opacity" href="#">See all</a>
+</div>
+<div class="flex overflow-x-auto hide-scrollbar gap-stack-md pb-4 -mx-container-margin px-container-margin snap-x">
+<!-- Item 1 -->
+<div class="snap-start shrink-0 w-64 bg-surface-container-lowest/70 backdrop-blur-[40px] rounded-[24px] border border-white/20 p-4 shadow-[0px_8px_24px_rgba(62,39,35,0.05)] flex flex-col gap-4">
+<div class="w-full h-40 rounded-xl overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A perfectly poured Caramel Macchiato in a clear, elegant glass, sitting on a clean marble surface. Warm lighting highlights the layers of espresso, milk, and caramel drizzle. High-end, photorealistic, liquid glass aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwhhkMxjDlyKpp7wH_9TIynMh9E_DwxPNKLxqci8J48ULBtFoWJqc1EQtTY8iYv2sDYp8hd716PwhFZ-6Jlz4nYmiywx-L7x_H7uTwkvC9f1GNxfMrEx7gDqCJUha2bU308X-lh5zLppwegeFcMFlcvRIXshlpF_arMjGWW9wXxtFHrtrBPhvpBAh4YBlVKg3FXpksylpyLge7zLiBh29Ugzv5SFj9bY2QouD__FYKb24T-xWTAtAmogOXIvm_NlcTWpb3UOpZk6pc"/>
+<div class="absolute top-2 right-2 bg-surface-container-lowest/80 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface text-[12px]">4.9</span>
+</div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Caramel Macchiato</h4>
+<div class="flex justify-between items-center mt-2">
+<span class="font-headline-md text-headline-md text-primary text-[20px]">$5.50</span>
+<button class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="snap-start shrink-0 w-64 bg-surface-container-lowest/70 backdrop-blur-[40px] rounded-[24px] border border-white/20 p-4 shadow-[0px_8px_24px_rgba(62,39,35,0.05)] flex flex-col gap-4">
+<div class="w-full h-40 rounded-xl overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A refreshing Iced Matcha Latte in a condensation-covered tall glass, placed on a light wooden coaster. The vivid green matcha swirls elegantly with the milk. High-end, bright, natural lighting, premium cafe aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbg6ffGEXKEYJQ7sug-e6lnZ4zX8jrr4y9XviiZYIBDisgOIHqXUoe_ZqxputUM5kfttnAHjIkPBslyqAYoMNDcTpE5UdXxiZA-qqTiE1HFwtCSn-_Le_8pil5TRIyLBYmfp5ZNojtyXWOZzzJZyONj9Lt3UNMQ2LVGsxyrEM0f4mVsBU20fh9_kUVdxreAdGglWAjkZTcnLI6U9q1bHo5nJis9UpoEp1wbSQtRlsWGVrnogs7bKDsIzZTKEYLGI0EnSWv_3XmLxXw"/>
+<div class="absolute top-2 right-2 bg-surface-container-lowest/80 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface text-[12px]">4.8</span>
+</div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Iced Matcha Latte</h4>
+<div class="flex justify-between items-center mt-2">
+<span class="font-headline-md text-headline-md text-primary text-[20px]">$6.00</span>
+<button class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (from JSON) -->
+<nav class="md:hidden fixed bottom-container-margin left-container-margin right-container-margin rounded-[32px] z-50 overflow-hidden bg-surface-container-low/80 backdrop-blur-[40px] border border-white/20 shadow-[0px_12px_32px_rgba(62,39,35,0.1)]">
+<div class="flex justify-around items-center h-20 px-gutter w-[calc(100%-48px)] mx-auto">
+<!-- Active Item: Home -->
+<button class="flex flex-col items-center justify-center text-primary bg-white/20 rounded-full px-4 py-2 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-[10px] mt-1">Home</span>
+</button>
+<!-- Inactive Items -->
+<button class="flex flex-col items-center justify-center text-secondary opacity-60 hover:bg-white/10 active:scale-90 transition-all duration-200 rounded-full px-4 py-2">
+<span class="material-symbols-outlined">local_cafe</span>
+<span class="font-label-md text-[10px] mt-1">Menu</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary opacity-60 hover:bg-white/10 active:scale-90 transition-all duration-200 rounded-full px-4 py-2">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-md text-[10px] mt-1">Cart</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary opacity-60 hover:bg-white/10 active:scale-90 transition-all duration-200 rounded-full px-4 py-2">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-[10px] mt-1">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary opacity-60 hover:bg-white/10 active:scale-90 transition-all duration-200 rounded-full px-4 py-2">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-[10px] mt-1">Profile</span>
+</button>
+</div>
+</nav>
+</body></html>

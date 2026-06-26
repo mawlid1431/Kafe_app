@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Product Detail - KAFE EMAN</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#3e2900",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container": "#eeeeee",
+                        "inverse-on-surface": "#f1f1f1",
+                        "on-primary-fixed-variant": "#5b403c",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#d3c3c0",
+                        "tertiary-fixed": "#ffdeac",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#745853",
+                        "secondary-fixed-dim": "#cfc4c0",
+                        "surface": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "on-tertiary-fixed": "#281900",
+                        "primary-container": "#3e2723",
+                        "surface-dim": "#dadada",
+                        "error": "#ba1a1a",
+                        "secondary": "#655d5a",
+                        "outline": "#827472",
+                        "on-surface": "#1a1c1c",
+                        "surface-bright": "#f9f9f9",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary-fixed": "#201a18",
+                        "tertiary": "#241600",
+                        "on-tertiary-container": "#c48900",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#504442",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#4c4542",
+                        "primary-fixed": "#ffdad4",
+                        "inverse-primary": "#e3beb8",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary-fixed": "#2b1613",
+                        "primary": "#271310",
+                        "on-secondary-container": "#6b6360",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#ae8d87",
+                        "primary-fixed-dim": "#e3beb8",
+                        "secondary-fixed": "#ece0dc",
+                        "secondary-container": "#ece0dc",
+                        "tertiary-fixed-dim": "#ffba38"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-md": "16px",
+                        "section-gap": "48px",
+                        "container-margin": "24px",
+                        "gutter": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "unit": "8px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Playfair Display"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"]
+                    },
+                    fontSize: {
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "caption": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "display-lg-mobile": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .liquid-glass-card {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0px 8px 24px rgba(62, 39, 35, 0.05);
+        }
+        .liquid-glass-glow {
+            box-shadow: 0px 12px 32px rgba(62, 39, 35, 0.15), inset 0px 2px 4px rgba(255, 255, 255, 0.1);
+        }
+        .pill-inactive {
+            background-color: rgba(238, 238, 238, 0.5);
+            box-shadow: inset 0px 1px 2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased font-body-md min-h-screen pb-32">
+<!-- Sticky Header with Back Button (Task-focused) -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-container-margin py-stack-md bg-gradient-to-b from-black/40 to-transparent">
+<a class="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-xl border border-white/20 text-white active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="arrow_back" data-weight="fill" style="font-variation-settings: 'FILL' 1;">arrow_back</span>
+</a>
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-xl border border-white/20 text-white active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="favorite_border">favorite_border</span>
+</button>
+</header>
+<main class="w-full max-w-[1200px] mx-auto md:px-container-margin">
+<!-- Hero Image -->
+<div class="w-full h-[442px] md:h-[530px] relative md:rounded-b-[40px] overflow-hidden md:mt-stack-md shadow-[0px_8px_24px_rgba(62,39,35,0.05)]">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full" data-alt="A close-up, high-end commercial photograph of an Iced Caramel Macchiato in a clear, condensation-covered glass, resting on a clean white marble countertop. The scene is brightly lit with natural sunlight, casting soft, elegant shadows. The background is softly blurred, evoking a serene, modern coffee shop atmosphere in a high-key light mode style. The liquid features beautiful cascading layers of espresso, milk, and rich golden caramel drizzle." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB6tv_eXYPP2IPh_C0ZNZjjZ8QhA15OpkffZdiVDx5NAhtqEhNzzQsEPuJFUwqDh5euUkyPw83VWCmsGgWBoLEQYbGCZGENSLvM_19qTQXslcT-_ffVwZ6negTKTA0WhrDtx3LfFGvRMvYUr-gYSa2b6lTswhgzETZBj15YzDn7O-lPkgvdLigKnDUXYlv8r5TJVthUY1-t0b1i1pyxsoSfUFR1rK3YGfg-IbHEsn4-hQKybtAwRc8lRIKmgULpTiTdGS6i_UKAWjQp')"></div>
+<!-- Gradient Overlay for text readability if needed -->
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:rounded-b-[40px]"></div>
+</div>
+<div class="px-container-margin md:px-0 pt-stack-md md:pt-stack-lg max-w-2xl mx-auto">
+<!-- Title & Price -->
+<div class="flex justify-between items-start mb-stack-sm">
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary-container tracking-tight">Iced Caramel Macchiato</h1>
+<span class="font-headline-md text-headline-md text-primary-container shrink-0 mt-2 md:mt-4">$6.50</span>
+</div>
+<!-- Description -->
+<p class="font-body-md text-body-md text-on-surface-variant mb-section-gap">
+                A perfectly balanced blend of our signature rich espresso, cold milk, and vanilla syrup, poured over ice and finished with a crosshatch of sweet caramel drizzle.
+            </p>
+<!-- Customization Section (Liquid Glass Card) -->
+<section class="liquid-glass-card rounded-[24px] p-container-margin space-y-stack-lg relative overflow-hidden">
+<!-- Subtle glow effect inside card -->
+<div class="absolute -top-20 -right-20 w-40 h-40 bg-tertiary-fixed-dim/20 rounded-full blur-[40px]"></div>
+<!-- Sugar Level -->
+<div>
+<h3 class="font-label-md text-label-md text-primary-container mb-stack-md uppercase tracking-widest opacity-80">Sugar Level</h3>
+<div class="flex gap-gutter">
+<button class="flex-1 py-3 px-4 rounded-[16px] pill-inactive font-body-md text-body-md text-on-surface-variant active:scale-95 transition-all text-center">0%</button>
+<button class="flex-1 py-3 px-4 rounded-[16px] bg-tertiary-fixed-dim text-on-tertiary-fixed font-body-md text-body-md font-semibold active:scale-95 transition-all text-center shadow-[0px_4px_12px_rgba(255,186,56,0.3)]">50%</button>
+<button class="flex-1 py-3 px-4 rounded-[16px] pill-inactive font-body-md text-body-md text-on-surface-variant active:scale-95 transition-all text-center">100%</button>
+</div>
+</div>
+<!-- Ice Level -->
+<div>
+<h3 class="font-label-md text-label-md text-primary-container mb-stack-md uppercase tracking-widest opacity-80">Ice Level</h3>
+<div class="flex gap-gutter">
+<button class="flex-1 py-3 px-4 rounded-[16px] pill-inactive font-body-md text-body-md text-on-surface-variant active:scale-95 transition-all text-center">None</button>
+<button class="flex-1 py-3 px-4 rounded-[16px] pill-inactive font-body-md text-body-md text-on-surface-variant active:scale-95 transition-all text-center">Less</button>
+<button class="flex-1 py-3 px-4 rounded-[16px] bg-tertiary-fixed-dim text-on-tertiary-fixed font-body-md text-body-md font-semibold active:scale-95 transition-all text-center shadow-[0px_4px_12px_rgba(255,186,56,0.3)]">Normal</button>
+</div>
+</div>
+<!-- Milk Type -->
+<div>
+<h3 class="font-label-md text-label-md text-primary-container mb-stack-md uppercase tracking-widest opacity-80">Milk Type</h3>
+<div class="flex flex-col gap-stack-sm">
+<label class="flex items-center justify-between p-4 rounded-[16px] bg-white/40 border border-white/40 cursor-pointer hover:bg-white/60 transition-colors">
+<span class="font-body-md text-body-md text-on-surface">Full Cream</span>
+<input checked="" class="text-tertiary-fixed-dim focus:ring-tertiary-fixed-dim bg-transparent border-outline" name="milk" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 rounded-[16px] bg-white/40 border border-white/40 cursor-pointer hover:bg-white/60 transition-colors">
+<span class="font-body-md text-body-md text-on-surface">Oat Milk <span class="text-xs text-on-surface-variant ml-1">(+$0.50)</span></span>
+<input class="text-tertiary-fixed-dim focus:ring-tertiary-fixed-dim bg-transparent border-outline" name="milk" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 rounded-[16px] bg-white/40 border border-white/40 cursor-pointer hover:bg-white/60 transition-colors">
+<span class="font-body-md text-body-md text-on-surface">Almond Milk <span class="text-xs text-on-surface-variant ml-1">(+$0.50)</span></span>
+<input class="text-tertiary-fixed-dim focus:ring-tertiary-fixed-dim bg-transparent border-outline" name="milk" type="radio"/>
+</label>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="fixed bottom-0 left-0 right-0 p-container-margin bg-gradient-to-t from-background via-background/90 to-transparent z-40 pb-stack-lg">
+<div class="max-w-2xl mx-auto">
+<button class="w-full bg-primary-container text-white font-label-md text-label-md py-4 px-8 rounded-full liquid-glass-glow flex items-center justify-center gap-2 active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="shopping_bag" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+                Add to Cart — $6.50
+            </button>
+</div>
+</div>
+</body></html>

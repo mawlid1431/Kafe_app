@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kafe Eman - Live Order Tracking</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffdad4",
+                    "on-tertiary-container": "#c48900",
+                    "on-secondary-fixed-variant": "#4c4542",
+                    "inverse-primary": "#e3beb8",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffdeac",
+                    "secondary": "#655d5a",
+                    "secondary-container": "#ece0dc",
+                    "on-background": "#1a1c1c",
+                    "error-container": "#ffdad6",
+                    "on-surface-variant": "#504442",
+                    "primary": "#271310",
+                    "surface": "#f9f9f9",
+                    "surface-variant": "#e2e2e2",
+                    "on-surface": "#1a1c1c",
+                    "on-tertiary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#ae8d87",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#ffba38",
+                    "on-secondary-fixed": "#201a18",
+                    "on-secondary-container": "#6b6360",
+                    "surface-dim": "#dadada",
+                    "on-tertiary-fixed-variant": "#604100",
+                    "outline": "#827472",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed": "#ece0dc",
+                    "secondary-fixed-dim": "#cfc4c0",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-container-highest": "#e2e2e2",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#f1f1f1",
+                    "background": "#f9f9f9",
+                    "surface-bright": "#f9f9f9",
+                    "outline-variant": "#d3c3c0",
+                    "surface-container-low": "#f3f3f3",
+                    "on-tertiary-fixed": "#281900",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#5b403c",
+                    "surface-tint": "#745853",
+                    "primary-fixed-dim": "#e3beb8",
+                    "inverse-surface": "#2f3131",
+                    "surface-container": "#eeeeee",
+                    "on-primary-fixed": "#2b1613",
+                    "primary-container": "#3e2723",
+                    "tertiary": "#241600",
+                    "tertiary-container": "#3e2900"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "8px",
+                    "gutter": "16px",
+                    "stack-sm": "8px",
+                    "section-gap": "48px",
+                    "stack-md": "16px",
+                    "stack-lg": "32px",
+                    "container-margin": "24px"
+            },
+            "fontFamily": {
+                    "caption": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Playfair Display"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "display-lg-mobile": [
+                            "Playfair Display"
+                    ],
+                    "label-md": [
+                            "Inter"
+                    ],
+                    "display-lg": [
+                            "Playfair Display"
+                    ]
+            },
+            "fontSize": {
+                    "caption": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(249, 249, 249, 0.7);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0px -8px 24px rgba(62, 39, 35, 0.05);
+        }
+        
+        .progress-line {
+            width: 2px;
+            background: var(--tw-colors-surface-variant);
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: 24px;
+            z-index: 0;
+        }
+        
+        .progress-step.active .step-dot {
+            background-color: var(--tw-colors-primary);
+            border-color: var(--tw-colors-tertiary-fixed-dim);
+            box-shadow: 0 0 0 4px rgba(255, 186, 56, 0.2);
+        }
+        
+        .progress-step.completed .step-dot {
+            background-color: var(--tw-colors-primary);
+            border-color: var(--tw-colors-primary);
+        }
+        
+        .progress-step.completed .progress-line-segment {
+            background-color: var(--tw-colors-primary);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface h-screen w-full overflow-hidden flex flex-col font-body-md antialiased relative">
+<!-- Top App Bar (Task-focused, so standard nav is suppressed per rules, but we need a header) -->
+<header class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-white/20 shadow-[0px_8px_24px_rgba(62,39,35,0.05)]">
+<div class="flex justify-between items-center px-container-margin py-stack-md w-full max-w-7xl mx-auto">
+<button aria-label="Go Back" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95 transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="font-label-md text-label-md text-on-surface-variant tracking-wider uppercase">Order #KE-8492</span>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight">Live Tracking</h1>
+</div>
+<button aria-label="Help" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95 transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span>
+</button>
+</div>
+</header>
+<!-- Map Canvas (Full Bleed Background) -->
+<main class="flex-1 relative w-full h-full pt-[80px]">
+<!-- Simulated Map Background -->
+<div class="absolute inset-0 w-full h-full bg-surface-container-low" data-alt="A clean, minimalist 3D map view of a city street layout, styled in a warm, premium coffee palette. The roads are rendered in smooth, creamy off-white tones, while the terrain and buildings are depicted in soft, light beige and warm taupe hues. Subtle lighting creates soft, diffused shadows, giving the map a modern, liquid glass aesthetic. The overall mood is calm, inviting, and sophisticated, perfectly suited for a high-end cafe delivery tracking interface." data-location="Dubai" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHSGsXQBQcCkKsW5GzjvJVXrGVIaPyQooSj6tOIrYKYZi2jKOMXm8dJaxJ9KyIbWzJQNrhKh1TO4GOU_7bInep7v3U4oTqjdQhLKwnOR6YIc4HfzUGOZOsWzb959QoPCGbPACdlPPpUcFI9zH-IkvPy8NNBnXx1d61-Y0TZETsia3pS-snD2xrj0ke8nRjIOTdYPOKRMnp9cMXuobOB7lXjzRCy65pqZcEzDO5qTt-4IirSSGmjWbEAqajbna5kRWwNW0OAK-UQWG8')">
+<!-- Map Route Overlay (Simulated) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" preserveaspectratio="none" viewbox="0 0 100 100">
+<path class="opacity-50" d="M 20,80 Q 40,60 50,50 T 80,20" fill="none" stroke="var(--tw-colors-primary)" stroke-dasharray="1 1" stroke-width="0.5"></path>
+<!-- Branch Marker -->
+<circle cx="20" cy="80" fill="var(--tw-colors-primary)" r="1.5"></circle>
+<!-- Delivery Marker -->
+<circle cx="80" cy="20" fill="var(--tw-colors-tertiary-fixed-dim)" r="1.5"></circle>
+</svg>
+</div>
+<!-- Floating Glass Bottom Sheet -->
+<div class="absolute bottom-0 left-0 w-full glass-panel rounded-t-[32px] pt-stack-lg pb-container-margin px-container-margin flex flex-col gap-stack-lg max-h-[707px] overflow-y-auto">
+<!-- Drag Handle -->
+<div class="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-outline-variant rounded-full"></div>
+<!-- Status & ETA Header -->
+<div class="flex flex-col items-center text-center gap-stack-sm">
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-primary tracking-tight">8 mins</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Arriving soon</p>
+<div class="inline-flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-full mt-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">directions_bike</span>
+<span class="font-label-md text-label-md text-primary">Rider is picking up your order</span>
+</div>
+</div>
+<!-- Rider Info Card -->
+<div class="bg-white/50 border border-white/40 rounded-2xl p-4 flex items-center justify-between shadow-[0px_4px_16px_rgba(62,39,35,0.03)] backdrop-blur-md">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container overflow-hidden border-2 border-white shadow-sm relative">
+<img alt="Rider Profile" class="w-full h-full object-cover" data-alt="A warm, professional headshot of a delivery rider wearing a casual but neat uniform. He has a friendly, reassuring smile. The lighting is soft and flattering, highlighting his approachability. The background is slightly blurred with warm, coffee-toned bokeh, seamlessly blending with the premium liquid glass aesthetic of the Kafe Eman UI. He looks reliable and courteous." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzHgLdX0YOS86mh9XCTI25Jfp3B3rtaFkqo1rw3sPXHIShW94u6XXZG9O-FdMjYyfoadG3VgRfdyTaanH3J9ITMzmy4rOSudki5us3xLhgu3e4nsx6xaOIvQYX_9nWLo7Hfe3S7wpRwr8O2lrJtL5xZGDREa-IhHvd2SiKWRg8DxgYhWiBd60plNflKjjY6g1Y_UO0RTF5V1BkhTtEUQN3dcddi1YCsxXeRCMVHZaH-TTf81qWW0ibkVdpCcTWsgdD2vs7XVSVlYbw"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Ahmad</span>
+<div class="flex items-center gap-1 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-caption text-caption font-semibold">4.9</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Message Rider" class="w-10 h-10 rounded-full bg-surface border border-white/50 flex items-center justify-center text-primary hover:bg-surface-variant transition-colors shadow-sm active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chat</span>
+</button>
+<button aria-label="Call Rider" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">call</span>
+</button>
+</div>
+</div>
+<!-- Progress Tracker -->
+<div class="relative pl-2 py-2">
+<div class="progress-line"></div>
+<div class="flex flex-col gap-6 relative z-10">
+<!-- Step 1 -->
+<div class="progress-step completed flex items-start gap-4">
+<div class="step-dot w-6 h-6 rounded-full border-2 border-primary bg-primary flex items-center justify-center z-10 relative mt-1">
+<span class="material-symbols-outlined text-[14px] text-white" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Order Placed</span>
+<span class="font-caption text-caption text-on-surface-variant">10:42 AM</span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="progress-step completed flex items-start gap-4">
+<div class="step-dot w-6 h-6 rounded-full border-2 border-primary bg-primary flex items-center justify-center z-10 relative mt-1">
+<span class="material-symbols-outlined text-[14px] text-white" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Brewing</span>
+<span class="font-caption text-caption text-on-surface-variant">Your order is ready</span>
+</div>
+</div>
+<!-- Step 3 (Active) -->
+<div class="progress-step active flex items-start gap-4">
+<div class="step-dot w-6 h-6 rounded-full border-2 border-tertiary-fixed-dim bg-white flex items-center justify-center z-10 relative mt-1 transition-all duration-300">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold">On the Way</span>
+<span class="font-caption text-caption text-on-surface-variant">Rider is picking up</span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="progress-step flex items-start gap-4">
+<div class="step-dot w-6 h-6 rounded-full border-2 border-surface-variant bg-surface flex items-center justify-center z-10 relative mt-1">
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant opacity-60">Delivered</span>
+<span class="font-caption text-caption text-on-surface-variant opacity-60">Estimated 11:15 AM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Nav Bar is suppressed because this is a focused task/tracking screen -->
+</body></html>

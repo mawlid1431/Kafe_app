@@ -1,0 +1,7 @@
+[install]
+# This project uses Bun only (see package.json preinstall + only-allow).
+exact = false
+
+[install.cache]
+# Faster repeat installs
+disable = false

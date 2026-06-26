@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Kafe Eman",
+    "slug": "kafeeman",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "kafeeman",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["ios"],
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0E0A07"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.devmalitos.kafeeman",
+      "buildNumber": "1"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e7337a07-750d-4b0d-96a5-d78bcc7977dc"
+      },
+      "router": {}
+    },
+    "owner": "devmalitos"
+  }
+}
