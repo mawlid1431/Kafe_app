@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { REWARD_CATALOG, REWARD_TIERS } from '../data';
+import { RewardGiftIcon } from './onboardingIcons';
 import { GlassSurface, StitchPillButton } from './stitchUi';
 import { FONTS } from './fonts';
 import type { ThemeColors } from '../theme';
@@ -91,7 +92,11 @@ export function RewardsScreen({ C, points, history, onBack, onRedeem }: Props) {
         return (
           <GlassSurface key={reward.id} style={[styles.rewardCard, STITCH_SHADOW]} strong>
             <View style={[styles.rewardIcon, { backgroundColor: C.tertiaryFixed }]}>
-              <Ionicons name={icon} size={22} color={C.primaryContainer} />
+              {reward.icon === 'gift' ? (
+                <RewardGiftIcon size={22} color={C.primaryContainer} />
+              ) : (
+                <Ionicons name={icon} size={22} color={C.primaryContainer} />
+              )}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.rewardTitle, { color: C.text }]}>{reward.title}</Text>

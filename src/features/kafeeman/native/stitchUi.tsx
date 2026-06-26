@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  Animated,
   Platform,
   Pressable,
   StyleSheet,
@@ -33,9 +34,9 @@ const GLASS_LEVEL: Record<
   GlassLevel,
   { intensity: number; strong: boolean; blur: boolean; overlay: keyof typeof BRAND | 'glassInset' }
 > = {
-  sheet: { intensity: 40, strong: false, blur: true, overlay: 'glass' },
-  float: { intensity: 60, strong: true, blur: true, overlay: 'glassStrong' },
-  inset: { intensity: 32, strong: false, blur: true, overlay: 'glassInset' },
+  sheet: { intensity: 55, strong: false, blur: true, overlay: 'glass' },
+  float: { intensity: 78, strong: true, blur: true, overlay: 'glassStrong' },
+  inset: { intensity: 44, strong: false, blur: true, overlay: 'glassInset' },
 };
 
 export function LiquidGlassBackground({
@@ -48,21 +49,27 @@ export function LiquidGlassBackground({
   return (
     <View style={[{ flex: 1 }, style]}>
       <LinearGradient
-        colors={['#f9f9f9', '#f5ede9', '#f9f9f9']}
+        colors={['#faf8f7', '#f5ebe5', '#f8f4f1', '#faf8f7']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['rgba(62,39,35,0.07)', 'transparent']}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0.2, y: 0.55 }}
+        colors={['rgba(255,186,56,0.08)', 'transparent', 'rgba(62,39,35,0.04)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(62,39,35,0.05)']}
+        colors={['rgba(62,39,35,0.06)', 'transparent']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.15, y: 0.6 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(62,39,35,0.04)']}
         start={{ x: 0, y: 1 }}
-        end={{ x: 0.75, y: 0.35 }}
+        end={{ x: 0.8, y: 0.3 }}
         style={StyleSheet.absoluteFillObject}
       />
       {children}
@@ -484,12 +491,13 @@ export function StitchPromoBanner({
   onPress?: () => void;
 }) {
   const content = (
-    <View style={[styles.promoOuter, STITCH_SHADOW_FLOAT]}>
-      <AppImage uri={image} style={StyleSheet.absoluteFillObject} />
+    <View style={[styles.promoOuter, STITCH_SHADOW_FLOAT, { backgroundColor: C.primaryContainer }]}>
+      <AppImage uri={image} style={StyleSheet.absoluteFillObject} contentPosition="right" />
       <LinearGradient
-        colors={[`${C.primary}CC`, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        colors={[`${C.primaryContainer}F5`, `${C.primaryContainer}D9`, `${C.primaryContainer}66`, 'transparent']}
+        locations={[0, 0.35, 0.62, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
         style={StyleSheet.absoluteFillObject}
       />
       <View style={styles.promoContent}>
@@ -526,18 +534,19 @@ export function StitchPillButton({
   variant?: 'primary' | 'outline' | 'apple';
   icon?: keyof typeof Ionicons.glyphMap;
 }) {
-  const bg =
-    variant === 'primary'
-      ? C.primaryContainer
-      : variant === 'apple'
-        ? C.inverseSurface
-        : C.surfaceLowest;
-  const color =
-    variant === 'outline'
-      ? C.primary
-      : variant === 'apple'
-        ? C.inverseOnSurface
-        : C.onPrimary;
+  const isPrimary = variant === 'primary';
+  const isOutline = variant === 'outline';
+  const isApple = variant === 'apple';
+
+  const solidBg = isApple ? C.inverseSurface : C.surfaceLowest;
+  const textColor = isOutline ? C.primary : isApple ? C.inverseOnSurface : C.onPrimary;
+
+  const inner = (
+    <>
+      {icon && <Ionicons name={icon} size={18} color={textColor} style={{ marginRight: 8 }} />}
+      <Text style={[styles.pillBtnText, { color: textColor }]}>{label}</Text>
+    </>
+  );
 
   return (
     <Pressable
@@ -545,17 +554,29 @@ export function StitchPillButton({
       style={({ pressed }) => [
         styles.pillBtn,
         styles.pillBtnFull,
-        {
-          backgroundColor: bg,
-          borderWidth: variant === 'outline' ? 2 : 0,
-          borderColor: variant === 'outline' ? C.outline : 'transparent',
-          transform: [{ scale: pressed ? 0.98 : 1 }],
+        !isPrimary && {
+          backgroundColor: solidBg,
+          borderWidth: isOutline ? 1.5 : 0,
+          borderColor: isOutline ? C.outlineVariant : 'transparent',
+          paddingVertical: 14,
+          paddingHorizontal: 24,
         },
-        variant === 'primary' && STITCH_SHADOW,
+        isPrimary && STITCH_SHADOW,
+        { transform: [{ scale: pressed ? 0.97 : 1 }], opacity: pressed ? 0.92 : 1 },
       ]}
     >
-      {icon && <Ionicons name={icon} size={18} color={color} style={{ marginRight: 8 }} />}
-      <Text style={[styles.pillBtnText, { color }]}>{label}</Text>
+      {isPrimary ? (
+        <LinearGradient
+          colors={[C.primaryContainer, C.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.pillBtnGradient}
+        >
+          {inner}
+        </LinearGradient>
+      ) : (
+        <View style={styles.pillBtnRow}>{inner}</View>
+      )}
     </Pressable>
   );
 }
@@ -596,27 +617,71 @@ export function StitchOptionPill({
 export function StitchFloatingCart({
   C,
   count,
+  total,
+  bottom = 110,
   onPress,
 }: {
   C: ThemeColors;
   count: number;
+  total: number;
+  bottom?: number;
   onPress: () => void;
 }) {
+  const scale = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const prevCount = useRef(0);
+
+  useEffect(() => {
+    if (count <= 0) {
+      prevCount.current = 0;
+      return;
+    }
+
+    if (prevCount.current === 0) {
+      scale.setValue(0.85);
+      opacity.setValue(0);
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, friction: 7, tension: 140, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+      ]).start();
+    } else if (count > prevCount.current) {
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.06, duration: 90, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, friction: 6, useNativeDriver: true }),
+      ]).start();
+    }
+
+    prevCount.current = count;
+  }, [count, opacity, scale]);
+
   if (count <= 0) return null;
+
   return (
-    <View style={styles.floatingCartWrap} pointerEvents="box-none">
+    <Animated.View
+      style={[styles.floatingCartWrap, { bottom, opacity, transform: [{ scale }] }]}
+      pointerEvents="box-none"
+    >
       <Pressable onPress={onPress} style={[styles.floatingCart, STITCH_SHADOW_FLOAT]}>
         <GlassSurface level="float" style={styles.floatingCartInner} strong>
           <View style={[styles.floatingCartIcon, { backgroundColor: C.accent }]}>
             <Ionicons name="bag" size={16} color={C.tertiaryContainer} />
+            <View style={[styles.floatingCartBadge, { backgroundColor: C.error }]}>
+              <Text style={styles.floatingCartBadgeText}>{count > 9 ? '9+' : count}</Text>
+            </View>
           </View>
-          <Text style={[styles.floatingCartText, { color: C.primaryContainer }]}>
-            {count} item{count !== 1 ? 's' : ''} in cart
-          </Text>
-          <Ionicons name="arrow-forward" size={18} color={C.secondary} />
+          <View style={styles.floatingCartCopy}>
+            <Text style={[styles.floatingCartText, { color: C.primaryContainer }]}>View cart</Text>
+            <Text style={[styles.floatingCartSub, { color: C.textMuted }]}>
+              {count} item{count !== 1 ? 's' : ''} · RM {total.toFixed(2)}
+            </Text>
+          </View>
+          <View style={[styles.floatingCartCta, { backgroundColor: C.primaryContainer }]}>
+            <Text style={[styles.floatingCartCtaText, { color: C.onPrimary }]}>Checkout</Text>
+            <Ionicons name="arrow-forward" size={14} color={C.onPrimary} />
+          </View>
         </GlassSurface>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -641,11 +706,12 @@ const styles = StyleSheet.create({
   glassInnerRim: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    left: 8,
+    right: 8,
     height: 1,
     backgroundColor: BRAND.glassInnerRim,
     zIndex: 2,
+    borderRadius: 1,
   },
   glassSearchWrap: {
     borderRadius: 16,
@@ -884,9 +950,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   promoContent: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    padding: 32,
+    paddingHorizontal: 28,
+    paddingVertical: 24,
+    maxWidth: '72%',
   },
   promoBadge: {
     alignSelf: 'flex-start',
@@ -917,9 +985,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  pillBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 999,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  pillBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pillBtnFull: { width: '100%', alignSelf: 'stretch' },
   pillBtnText: { fontFamily: FONTS.semiBold, fontSize: 14, letterSpacing: 0.5 },
@@ -933,31 +1015,59 @@ const styles = StyleSheet.create({
   optionPillText: { fontSize: 14 },
   floatingCartWrap: {
     position: 'absolute',
-    bottom: 110,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+    left: 20,
+    right: 20,
     zIndex: 40,
   },
-  floatingCart: { borderRadius: 999, overflow: 'hidden' },
+  floatingCart: { borderRadius: 20, overflow: 'hidden' },
   floatingCartInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 999,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
   },
   floatingCartIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  floatingCartText: { fontFamily: FONTS.semiBold, fontSize: 14 },
+  floatingCartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  floatingCartBadgeText: {
+    color: '#fff',
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    lineHeight: 12,
+  },
+  floatingCartCopy: { flex: 1, gap: 2 },
+  floatingCartText: { fontFamily: FONTS.semiBold, fontSize: 15 },
+  floatingCartSub: { fontFamily: FONTS.regular, fontSize: 12 },
+  floatingCartCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  floatingCartCtaText: { fontFamily: FONTS.bold, fontSize: 12 },
   stickyFooter: {
     position: 'absolute',
     left: 24,

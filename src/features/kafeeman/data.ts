@@ -16,9 +16,9 @@ export const MENU: MenuItem[] = [
 export const CATEGORIES = ['All', 'Coffee', 'Tea', 'Cold Drinks', 'Ice Blended', 'Pastries', 'Desserts', 'Breakfast'];
 
 export const PROMOS = [
-  { id: 1, title: 'Buy 1 Free 1', sub: 'Every Tuesday on all lattes', img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=300&fit=crop&auto=format', code: 'BOGO50' },
-  { id: 2, title: 'Birthday Month', sub: 'Free drink on your birthday 🎂', img: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=600&h=300&fit=crop&auto=format', code: 'WELCOME10' },
-  { id: 3, title: 'Earn 2× Points', sub: 'This weekend only', img: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600&h=300&fit=crop&auto=format', code: 'KEAMAN15' },
+  { id: 1, title: 'Buy 1 Free 1', sub: 'Every Tuesday on all lattes', img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=400&fit=crop&auto=format', code: 'BOGO50' },
+  { id: 2, title: 'Birthday Month', sub: 'Free drink on your birthday', img: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=400&fit=crop&auto=format', code: 'WELCOME10' },
+  { id: 3, title: 'Earn 2× Points', sub: 'This weekend only', img: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&h=400&fit=crop&auto=format', code: 'KEAMAN15' },
 ];
 
 export const HOME_OFFERS = [
@@ -120,10 +120,19 @@ export function formatOrderDate(ts: number): string {
 }
 
 export const BRANCHES = [
-  { name: 'Alor Setar', addr: 'Jalan Tunku Ibrahim, 05000 Alor Setar, Kedah', time: 'Open until 10 PM', img: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=200&fit=crop&auto=format' },
-  { name: 'Penang', addr: 'Lebuh Chulia, Georgetown, 10300 Penang', time: 'Open until 11 PM', img: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=400&h=200&fit=crop&auto=format' },
-  { name: 'Kuala Lumpur', addr: 'Bukit Bintang, 55100 Kuala Lumpur', time: 'Open until 12 AM', img: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=400&h=200&fit=crop&auto=format' },
+  { name: 'Alor Setar', addr: 'Jalan Tunku Ibrahim, 05000 Alor Setar, Kedah', time: 'Open until 10 PM', img: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=200&fit=crop&auto=format', lat: 6.1248, lng: 100.3678 },
+  { name: 'Penang', addr: 'Lebuh Chulia, Georgetown, 10300 Penang', time: 'Open until 11 PM', img: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=400&h=200&fit=crop&auto=format', lat: 5.4164, lng: 100.3327 },
+  { name: 'Kuala Lumpur', addr: 'Bukit Bintang, 55100 Kuala Lumpur', time: 'Open until 12 AM', img: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=400&h=200&fit=crop&auto=format', lat: 3.1478, lng: 101.7103 },
 ] as const;
+
+/** Demo customer pin — offset from branch for delivery tracking. */
+export const DEMO_DELIVERY_DEST = { lat: 3.139, lng: 101.7069 } as const;
+
+export const RIDER_CONTACT = {
+  name: 'Ahmad',
+  phone: '+60129876543',
+  rating: 4.9,
+} as const;
 
 export const STATUS_ORDER: OrderStatus[] = ['placed', 'preparing', 'on-the-way', 'arrived'];
 
@@ -134,8 +143,36 @@ export const ORDER_STEPS = [
   { key: 'arrived' as OrderStatus, label: 'Delivered', sub: 'Enjoy your coffee! ☕' },
 ];
 
-export const ONBOARDING_SLIDES = [
-  { emoji: '☕', title: 'Order coffee easily', sub: 'Browse our full menu, customize every detail, and order in seconds.', img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=480&h=480&fit=crop&auto=format' },
-  { emoji: '🚗', title: 'Delivery or Pickup', sub: 'Get your favourite brew delivered hot or collect it ready at the branch.', img: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?w=480&h=480&fit=crop&auto=format' },
-  { emoji: '🎁', title: 'Earn Rewards', sub: 'Every order earns points. Unlock free drinks, discounts, and birthday gifts.', img: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=480&h=480&fit=crop&auto=format' },
+export type OnboardingSlideIcon = {
+  icon: 'cafe' | 'delivery' | 'storefront' | 'reward';
+  label?: string;
+};
+
+export const ONBOARDING_SLIDES: {
+  icons: OnboardingSlideIcon[];
+  title: string;
+  sub: string;
+  img: string;
+}[] = [
+  {
+    icons: [{ icon: 'cafe' }],
+    title: 'Order coffee easily',
+    sub: 'Browse our full menu, customize every detail, and order in seconds.',
+    img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=480&h=480&fit=crop&auto=format',
+  },
+  {
+    icons: [
+      { icon: 'delivery', label: 'Delivery' },
+      { icon: 'storefront', label: 'Pickup' },
+    ],
+    title: 'Delivery or Pickup',
+    sub: 'Get your favourite brew delivered hot or collect it ready at the branch.',
+    img: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?w=480&h=480&fit=crop&auto=format',
+  },
+  {
+    icons: [{ icon: 'reward' }],
+    title: 'Earn Rewards',
+    sub: 'Every order earns points. Unlock free drinks, discounts, and birthday gifts.',
+    img: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=480&h=480&fit=crop&auto=format',
+  },
 ];

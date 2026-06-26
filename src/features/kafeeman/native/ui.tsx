@@ -16,30 +16,63 @@ import type { ThemeColors } from '../theme';
 import { BRAND } from '../theme';
 import { FONTS } from './fonts';
 
+function resolveImageLayout(style?: StyleProp<ImageStyle>) {
+  const flat = StyleSheet.flatten(style) ?? {};
+  const radius = typeof flat.borderRadius === 'number' ? flat.borderRadius : 12;
+
+  const fillsContainer =
+    (flat.position === 'absolute' &&
+      typeof flat.width !== 'number' &&
+      typeof flat.height !== 'number' &&
+      (flat.left != null || flat.right != null || flat.top != null || flat.bottom != null)) ||
+    flat.width === '100%' ||
+    flat.height === '100%' ||
+    flat.flex === 1;
+
+  if (fillsContainer) {
+    return { wrapperStyle: [style, { overflow: 'hidden' as const }], radius, fillsContainer };
+  }
+
+  const width = typeof flat.width === 'number' ? flat.width : 60;
+  const height = typeof flat.height === 'number' ? flat.height : 60;
+  return {
+    wrapperStyle: [{ width, height, borderRadius: radius, overflow: 'hidden' as const }, style],
+    radius,
+    fillsContainer,
+    width,
+    height,
+  };
+}
+
 export function AppImage({
   uri,
   style,
+  contentPosition,
 }: {
   uri: string;
   style?: StyleProp<ImageStyle>;
+  contentPosition?: { top?: string | number; left?: string | number } | 'center' | 'right' | 'left';
 }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const flat = StyleSheet.flatten(style) ?? {};
-  const w = typeof flat.width === 'number' ? flat.width : 60;
-  const h = typeof flat.height === 'number' ? flat.height : 60;
-  const radius = typeof flat.borderRadius === 'number' ? flat.borderRadius : 12;
+  const { wrapperStyle, radius, fillsContainer, width, height } = resolveImageLayout(style);
 
   if (failed) {
     return (
-      <View style={[style, styles.fallback, { width: w, height: h, borderRadius: radius }]}>
+      <View
+        style={[
+          wrapperStyle,
+          styles.fallback,
+          !fillsContainer && width != null && height != null ? { width, height, borderRadius: radius } : null,
+        ]}
+      >
         <Text style={{ fontSize: 22 }}>☕</Text>
       </View>
     );
   }
 
   return (
-    <View style={[{ width: w, height: h, borderRadius: radius, overflow: 'hidden' }, style]}>
+    <View style={wrapperStyle}>
       {loading && (
         <View style={[StyleSheet.absoluteFillObject, styles.skeleton, { borderRadius: radius }]}>
           <ActivityIndicator size="small" color={BRAND.primaryContainer} />
@@ -49,6 +82,7 @@ export function AppImage({
         source={{ uri }}
         style={StyleSheet.absoluteFillObject}
         contentFit="cover"
+        contentPosition={contentPosition ?? 'center'}
         transition={250}
         onLoad={() => setLoading(false)}
         onError={() => {
@@ -98,9 +132,17 @@ export function GradientButton({
     return (
       <Pressable
         onPress={onPress}
-        style={[styles.btnWrap, styles.ghost, { borderColor: C.glassBorder, backgroundColor: C.glass }]}
+        style={({ pressed }) => [
+          styles.btnWrap,
+          styles.ghost,
+          {
+            borderColor: C.outlineVariant,
+            backgroundColor: C.glassStrong,
+            transform: [{ scale: pressed ? 0.98 : 1 }],
+          },
+        ]}
       >
-        <Text style={[styles.btnText, { color: C.text, fontFamily: FONTS.bold }]}>{label}</Text>
+        <Text style={[styles.btnText, { color: C.primary, fontFamily: FONTS.bold }]}>{label}</Text>
       </Pressable>
     );
   }
@@ -113,9 +155,18 @@ export function GradientButton({
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
-      style={[disabled ? { opacity: 0.5 } : undefined, styles.btnWrap]}
+      style={({ pressed }) => [
+        disabled ? { opacity: 0.5 } : undefined,
+        styles.btnWrap,
+        { transform: [{ scale: pressed ? 0.98 : 1 }] },
+      ]}
     >
-      <LinearGradient colors={[...colors]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
+      <LinearGradient
+        colors={[...colors]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.gradient, { borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' }]}
+      >
         <Text style={[styles.btnText, { color: C.onPrimary }]}>{label}</Text>
       </LinearGradient>
     </Pressable>

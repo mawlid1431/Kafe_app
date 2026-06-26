@@ -1,16 +1,16 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Path } from 'react-native-svg';
 
+import { RIDER_CONTACT } from '../data';
 import type { OrderStatus } from '../types';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
+import { RiderChatSheet } from './riderChatSheet';
 import { GlassSurface, StitchPillButton } from './stitchUi';
+import { TrackingMap } from './trackingMap';
 import { AppImage } from './ui';
-
-const MAP_IMAGE =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuBHSGsXQBQcCkKsW5GzjvJVXrGVIaPyQooSj6tOIrYKYZi2jKOMXm8dJaxJ9KyIbWzJQNrhKh1TO4GOU_7bInep7v3U4oTqjdQhLKwnOR6YIc4HfzUGOZOsWzb959QoPCGbPACdlPPpUcFI9zH-IkvPy8NNBnXx1d61-Y0TZETsia3pS-snD2xrj0ke8nRjIOTdYPOKRMnp9cMXuobOB7lXjzRCy65pqZcEzDO5qTt-4IirSSGmjWbEAqajbna5kRWwNW0OAK-UQWG8';
 
 const RIDER_AVATAR =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuAzHgLdX0YOS86mh9XCTI25Jfp3B3rtaFkqo1rw3sPXHIShW94u6XXZG9O-FdMjYyfoadG3VgRfdyTaanH3J9ITMzmy4rOSudki5us3xLhgu3e4nsx6xaOIvQYX_9nWLo7Hfe3S7wpRwr8O2lrJtL5xZGDREa-IHHvd2SiKWRg8DxgYhWiBd60plNflKjjY6g1Y_UO0RTF5V1BkhTtEUQN3dcddi1YCsxXeRCMVHZaH-TTf81qWW0ibkVdpCcTWsgdD2vs7XVSVlYbw';
@@ -59,27 +59,28 @@ export function OrderTrackingScreen({
   onBack: () => void;
   onDone: () => void;
 }) {
+  const [chatOpen, setChatOpen] = useState(false);
   const eta = etaForStep(trackingStep, orderType);
   const status = statusLine(trackingStep, orderType);
   const showRider = orderType === 'delivery' && trackingStep >= 2;
 
+  const callRider = useCallback(async () => {
+    const url = `tel:${RIDER_CONTACT.phone}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert('Cannot place call', 'Phone calls are not supported on this device.');
+        return;
+      }
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert('Call failed', `Try calling ${RIDER_CONTACT.phone} manually.`);
+    }
+  }, []);
+
   return (
     <View style={styles.root}>
-      <AppImage uri={MAP_IMAGE} style={StyleSheet.absoluteFillObject} />
-      <View style={styles.mapOverlay} pointerEvents="none">
-        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <Path
-            d="M 22,78 Q 42,58 52,48 T 78,22"
-            stroke={C.primary}
-            strokeWidth={0.8}
-            strokeDasharray="2 2"
-            fill="none"
-            opacity={0.55}
-          />
-          <Circle cx={22} cy={78} r={2.2} fill={C.primaryContainer} />
-          <Circle cx={78} cy={22} r={2.2} fill={C.accent} />
-        </Svg>
-      </View>
+      <TrackingMap C={C} branchName={branchName} orderType={orderType} trackingStep={trackingStep} />
 
       <View style={styles.mapHeader}>
         <Pressable onPress={onBack} style={[styles.headerBtn, { borderColor: C.glassBorderStrong }]}>
@@ -117,18 +118,26 @@ export function OrderTrackingScreen({
             <View style={styles.riderLeft}>
               <AppImage uri={RIDER_AVATAR} style={styles.riderAvatar} />
               <View>
-                <Text style={[styles.riderName, { color: C.text }]}>Ahmad</Text>
+                <Text style={[styles.riderName, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
                 <View style={styles.riderRating}>
                   <Ionicons name="star" size={14} color={C.onTertiaryContainer} />
-                  <Text style={{ color: C.onTertiaryContainer, fontFamily: FONTS.semiBold, fontSize: 12 }}>4.9</Text>
+                  <Text style={{ color: C.onTertiaryContainer, fontFamily: FONTS.semiBold, fontSize: 12 }}>
+                    {RIDER_CONTACT.rating}
+                  </Text>
                 </View>
               </View>
             </View>
             <View style={styles.riderActions}>
-              <Pressable style={[styles.riderBtn, { borderColor: C.outlineVariant, backgroundColor: C.surfaceLowest }]}>
+              <Pressable
+                onPress={() => setChatOpen(true)}
+                style={[styles.riderBtn, { borderColor: C.outlineVariant, backgroundColor: C.surfaceLowest }]}
+              >
                 <Ionicons name="chatbubble-outline" size={18} color={C.primary} />
               </Pressable>
-              <Pressable style={[styles.riderBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}>
+              <Pressable
+                onPress={() => void callRider()}
+                style={[styles.riderBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
+              >
                 <Ionicons name="call" size={18} color={C.onPrimary} />
               </Pressable>
             </View>
@@ -185,13 +194,14 @@ export function OrderTrackingScreen({
           <StitchPillButton label="Done" onPress={onDone} C={C} />
         )}
       </GlassSurface>
+
+      <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#ece0dc' },
-  mapOverlay: { ...StyleSheet.absoluteFillObject, opacity: 0.95 },
   mapHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -238,6 +248,7 @@ const styles = StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 32,
     maxHeight: '58%',
+    zIndex: 3,
   },
   handle: {
     position: 'absolute',

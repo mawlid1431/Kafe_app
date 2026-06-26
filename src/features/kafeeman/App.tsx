@@ -73,9 +73,13 @@ import { OrderTrackingScreen } from './native/orderTracking';
 import { OrdersScreen } from './native/ordersScreen';
 import { RewardsScreen } from './native/rewardsScreen';
 import { FavoritesScreen } from './native/favoritesScreen';
+import { OnboardingSlideIconView } from './native/onboardingIcons';
+import { SplashScreen } from './native/splashScreen';
 import { AppImage, GradientButton } from './native/ui';
-import { BRAND, useBrandTheme, type ThemeColors } from './theme';
+import { STITCH_SHADOW, useBrandTheme, type ThemeColors } from './theme';
 import type { CartLine, MenuItem, OrderRecord, PointsActivity, Screen, TabKey } from './types';
+
+const FLOATING_CART_SCREENS: Screen[] = ['home', 'menu', 'product-detail', 'favorites'];
 
 const TAB_SCREENS: Record<TabKey, Screen> = {
   home: 'home',
@@ -130,7 +134,6 @@ function KafeemanApp() {
   const [tngPhase, setTngPhase] = useState<TngPayPhase>('pin');
   const [paidAmount, setPaidAmount] = useState(0);
   const [promoIdx, setPromoIdx] = useState(0);
-  const [splashPhase, setSplashPhase] = useState<0 | 1 | 2>(0);
   const [trackingStep, setTrackingStep] = useState(0);
   const [orderType, setOrderType] = useState<'delivery' | 'pickup'>('delivery');
   const [selectedBranch, setSelectedBranch] = useState<string>(BRANCHES[2].name);
@@ -173,7 +176,9 @@ function KafeemanApp() {
   const showNav = ['home', 'menu', 'cart', 'orders', 'profile'].includes(screen);
   const showTopBar = screen === 'home' || screen === 'menu';
   const showLiquidBg = ['home', 'menu', 'cart', 'orders', 'profile', 'rewards', 'favorites'].includes(screen);
-  const showFloatingCart = screen === 'menu' && cartCount > 0;
+  const showFloatingCart = cartCount > 0 && FLOATING_CART_SCREENS.includes(screen);
+  const floatingCartBottom =
+    screen === 'product-detail' ? 96 : showNav ? 110 : insets.bottom + 24;
 
   const go = useCallback((s: Screen) => {
     const tabMap: Partial<Record<Screen, TabKey>> = {
@@ -390,18 +395,6 @@ function KafeemanApp() {
   };
 
   useEffect(() => {
-    if (screen !== 'splash') return;
-    const t1 = setTimeout(() => setSplashPhase(1), 350);
-    const t2 = setTimeout(() => setSplashPhase(2), 2200);
-    const t3 = setTimeout(() => setScreen('onboarding'), 2700);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, [screen]);
-
-  useEffect(() => {
     const t = setInterval(() => setPromoIdx((i) => (i + 1) % PROMOS.length), 3800);
     return () => clearInterval(t);
   }, []);
@@ -447,32 +440,7 @@ function KafeemanApp() {
   const renderScreen = () => {
     switch (screen) {
       case 'splash':
-        return (
-          <LinearGradient
-            colors={['#f3f3f3', BRAND.bg, BRAND.bg]}
-            style={[styles.splash, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}
-          >
-            <View style={styles.splashContent}>
-              <GlassSurface level="float" style={styles.splashLogoGlass}>
-                <LinearGradient colors={[C.primaryContainer, C.primaryDark]} style={styles.splashLogo}>
-                  <Text style={{ fontSize: 48 }}>☕</Text>
-                </LinearGradient>
-              </GlassSurface>
-              <Text style={styles.splashTitle}>Kafe Eman</Text>
-              <Text style={styles.splashSub}>Brew · Sip · Enjoy</Text>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: splashPhase === 0 ? '0%' : splashPhase === 1 ? '88%' : '100%',
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          </LinearGradient>
-        );
+        return <SplashScreen C={C} onComplete={() => setScreen('onboarding')} />;
 
       case 'onboarding': {
         const s = ONBOARDING_SLIDES[slide];
@@ -485,14 +453,25 @@ function KafeemanApp() {
             >
               <View style={styles.onboardHeader}>
                 <Pressable onPress={() => setScreen('auth')} style={styles.skipBtn}>
-                  <Text style={{ color: C.textMuted, fontWeight: '600' }}>Skip</Text>
+                  <Text style={styles.skipBtnText}>Skip</Text>
                 </Pressable>
               </View>
-              <AppImage uri={s.img} style={[styles.onboardImage, { height: onboardImageHeight }]} />
+              <View style={[styles.onboardImageWrap, STITCH_SHADOW, { marginHorizontal: 24 }]}>
+                <AppImage uri={s.img} style={[styles.onboardImage, { height: onboardImageHeight }]} />
+              </View>
               <View style={styles.onboardBody}>
-                <Text style={{ fontSize: 40, marginBottom: 16 }}>{s.emoji}</Text>
-                <Text style={styles.screenTitle}>{s.title}</Text>
-                <Text style={styles.bodyText}>{s.sub}</Text>
+                <View style={styles.onboardIconRow}>
+                  {s.icons.map((item, i) => (
+                    <View key={i} style={styles.onboardIconItem}>
+                      <View style={styles.onboardIconBadge}>
+                        <OnboardingSlideIconView item={item} color={C.primaryContainer} size={26} />
+                      </View>
+                      {item.label ? <Text style={styles.onboardIconLabel}>{item.label}</Text> : null}
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.onboardTitle}>{s.title}</Text>
+                <Text style={styles.onboardSub}>{s.sub}</Text>
               </View>
               <View style={styles.dots}>
                 {ONBOARDING_SLIDES.map((_, i) => (
@@ -1421,7 +1400,18 @@ function KafeemanApp() {
       <LiquidGlassBackground style={[styles.flex, !showLiquidBg && { backgroundColor: C.bg }]}>
         {showTopBar && <StitchTopBar C={C} onAvatarPress={() => go('profile')} />}
         <View style={styles.flex}>{renderScreen()}</View>
-        {showFloatingCart && <StitchFloatingCart C={C} count={cartCount} onPress={() => go('cart')} />}
+        {showFloatingCart && (
+          <StitchFloatingCart
+            C={C}
+            count={cartCount}
+            total={cartTotal}
+            bottom={floatingCartBottom}
+            onPress={() => {
+              void hapticMedium();
+              go('cart');
+            }}
+          />
+        )}
         {showNav && (
           <StitchBottomNav
             C={C}
@@ -1451,27 +1441,30 @@ function createStyles(C: ThemeColors) {
     flex: { flex: 1 },
     center: { alignItems: 'center', justifyContent: 'center' },
     padH: { paddingHorizontal: 24 },
-    splash: { flex: 1 },
-    splashContent: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
-    splashLogo: {
-      width: 100,
-      height: 100,
-      borderRadius: 32,
+    onboardHeader: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 24, paddingTop: 8, paddingBottom: 4 },
+    skipBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: C.surfaceContainer },
+    skipBtnText: { color: C.textMuted, fontWeight: '600', fontFamily: FONTS.semiBold, fontSize: 14 },
+    onboardScroll: { flexGrow: 1, paddingBottom: 8 },
+    onboardImageWrap: { borderRadius: 28, overflow: 'hidden' },
+    onboardImage: { width: '100%', borderRadius: 28 },
+    onboardBody: { paddingHorizontal: 32, paddingTop: 28, paddingBottom: 8, alignItems: 'center' },
+    onboardIconRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', gap: 24, marginBottom: 20 },
+    onboardIconItem: { alignItems: 'center' },
+    onboardIconBadge: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 20,
+      backgroundColor: C.secondaryContainer,
+      borderWidth: 1,
+      borderColor: C.outlineVariant,
     },
-    splashTitle: { fontSize: 36, fontWeight: '800', fontFamily: FONTS.display, color: C.text, marginBottom: 8 },
-    splashSub: { fontSize: 12, letterSpacing: 3, fontFamily: FONTS.semiBold, color: C.primary, textTransform: 'uppercase', marginBottom: 40 },
-    progressTrack: { width: 96, height: 3, borderRadius: 2, backgroundColor: `${C.primary}22`, overflow: 'hidden' },
-    progressFill: { height: '100%', backgroundColor: C.primary, borderRadius: 2 },
-    onboardHeader: { flexDirection: 'row', justifyContent: 'flex-end', padding: 20, paddingTop: 8 },
-    skipBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassBorder },
-    onboardScroll: { flexGrow: 1, paddingBottom: 8 },
-    onboardImage: { marginHorizontal: 20, borderRadius: 28, width: undefined },
-    onboardBody: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 8 },
+    onboardIconLabel: { fontSize: 11, fontFamily: FONTS.semiBold, color: C.textMuted, marginTop: 8, textAlign: 'center' },
+    onboardTitle: { fontSize: 28, fontWeight: '800', fontFamily: FONTS.display, color: C.text, marginBottom: 10, textAlign: 'center' },
+    onboardSub: { fontSize: 15, fontFamily: FONTS.regular, color: C.textMuted, lineHeight: 22, textAlign: 'center', maxWidth: 300 },
     onboardFooter: { paddingHorizontal: 24, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.glassBorder, backgroundColor: C.bg },
-    dots: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 8, marginBottom: 8 },
+    dots: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16, marginBottom: 8 },
     dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: `${C.primary}35` },
     dotActive: { width: 28, backgroundColor: C.primary },
     authHeroFade: { position: 'absolute', left: 0, right: 0 },
@@ -1659,12 +1652,6 @@ function createStyles(C: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-    },
-    splashLogoGlass: {
-      borderRadius: 36,
-      padding: 4,
-      marginBottom: 20,
-      overflow: 'hidden',
     },
     promoDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 12 },
     promoDot: { width: 8, height: 8, borderRadius: 4 },
