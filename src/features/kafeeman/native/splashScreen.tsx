@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BRAND_ASSETS, BRAND_NAME, BRAND_TAGLINE } from '../brand';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
@@ -75,12 +76,12 @@ export function SplashScreen({ C, onComplete }: Props) {
   return (
     <Animated.View style={[styles.root, { opacity: screenOpacity }]}>
       <LinearGradient
-        colors={[C.bg, '#f3ebe6', '#faf6f3', C.bg]}
+        colors={[C.bg, C.surfaceLow, C.tertiaryFixed, C.bg]}
         locations={[0, 0.35, 0.7, 1]}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(255,186,56,0.12)', 'transparent']}
+        colors={['transparent', 'rgba(168,210,147,0.14)', 'transparent']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.ambientGlow}
@@ -97,7 +98,7 @@ export function SplashScreen({ C, onComplete }: Props) {
             style={[
               styles.logoRing,
               {
-                borderColor: `${C.accent}55`,
+                borderColor: `${C.primaryContainer}44`,
                 opacity: ringOpacity,
                 transform: [{ scale: ringScale }],
               },
@@ -110,9 +111,14 @@ export function SplashScreen({ C, onComplete }: Props) {
               ...STITCH_SHADOW_FLOAT,
             }}
           >
-            <LinearGradient colors={[C.primaryContainer, C.primaryDark, '#2a1814']} style={styles.logoBox}>
-              <Ionicons name="cafe" size={48} color={C.onPrimary} />
-            </LinearGradient>
+            <View style={[styles.logoBox, { backgroundColor: C.surfaceLowest, borderColor: C.outlineVariant }]}>
+              <Image
+                source={BRAND_ASSETS.logo}
+                style={styles.logoImage}
+                contentFit="contain"
+                transition={200}
+              />
+            </View>
           </Animated.View>
         </View>
 
@@ -122,14 +128,14 @@ export function SplashScreen({ C, onComplete }: Props) {
             { color: C.primary, opacity: titleOpacity, transform: [{ translateY: titleY }] },
           ]}
         >
-          Kafe Eman
+          {BRAND_NAME}
         </Animated.Text>
         <Animated.Text style={[styles.tagline, { color: C.textMuted, opacity: subOpacity }]}>
-          Brew · Sip · Enjoy
+          {BRAND_TAGLINE}
         </Animated.Text>
 
-        <Animated.View style={[styles.progressTrack, { backgroundColor: `${C.primary}14`, opacity: subOpacity }]}>
-          <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: C.primary }]} />
+        <Animated.View style={[styles.progressTrack, { backgroundColor: `${C.primaryContainer}18`, opacity: subOpacity }]}>
+          <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: C.primaryContainer }]} />
         </Animated.View>
       </View>
     </Animated.View>
@@ -176,17 +182,22 @@ const styles = StyleSheet.create({
   logoBox: {
     width: 100,
     height: 100,
-    borderRadius: 32,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+    padding: 8,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
-    fontSize: 40,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '700',
     fontFamily: FONTS.display,
-    letterSpacing: -0.8,
+    letterSpacing: -0.32,
     marginBottom: 10,
   },
   tagline: {

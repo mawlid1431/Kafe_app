@@ -1,114 +1,122 @@
-/** Liquid Glass brand tokens — stitch_kafe_eman_mobile_app / DESIGN.md */
+/** Artisanal Sage brand tokens — design.md */
 import { FONTS } from './native/fonts';
 
+/** Soft ambient occlusion tinted with forest green (design.md Level 2). */
 export const STITCH_SHADOW = {
-  shadowColor: '#3E2723',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.05,
-  shadowRadius: 24,
+  shadowColor: '#355927',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 20,
   elevation: 4,
 } as const;
 
 export const STITCH_SHADOW_FLOAT = {
-  shadowColor: '#3E2723',
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.1,
-  shadowRadius: 32,
+  shadowColor: '#355927',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.12,
+  shadowRadius: 28,
   elevation: 8,
 } as const;
 
-/** Official Kafe Eman Stitch brand — always light (porcelain + deep roast). */
+/** Official Kafe Eman — Artisanal Sage palette (design.md). */
 export const BRAND = {
-  bg: '#f9f9f9',
-  surface: '#f9f9f9',
-  surfaceLow: '#f3f3f3',
-  surfaceContainer: '#eeeeee',
+  bg: '#f9faf2',
+  surface: '#f9faf2',
+  surfaceLow: '#f3f4ec',
+  surfaceContainer: '#edefe6',
   surfaceLowest: '#ffffff',
-  text: '#1a1c1c',
-  textMuted: '#504442',
-  textFaint: '#827472',
-  onBackground: '#1a1c1c',
-  onSurface: '#1a1c1c',
-  onSurfaceVariant: '#504442',
-  primary: '#271310',
+  text: '#191c18',
+  textMuted: '#43493e',
+  textFaint: '#73796d',
+  onBackground: '#191c18',
+  onSurface: '#191c18',
+  onSurfaceVariant: '#43493e',
+  primary: '#1e4112',
   onPrimary: '#ffffff',
-  primaryDark: '#3e2723',
-  primaryContainer: '#3e2723',
+  primaryDark: '#1e4112',
+  primaryContainer: '#355927',
   onPrimaryContainer: '#ffffff',
-  secondary: '#655d5a',
+  secondary: '#546348',
   onSecondary: '#ffffff',
-  secondaryContainer: '#ece0dc',
-  onSecondaryContainer: '#6b6360',
-  accent: '#ffba38',
-  tertiaryFixed: '#ffdeac',
-  tertiaryFixedDim: '#ffba38',
-  tertiaryContainer: '#3e2900',
-  onTertiaryFixed: '#281900',
-  onTertiaryContainer: '#c48900',
-  outline: '#827472',
-  outlineVariant: '#d3c3c0',
-  inverseSurface: '#2f3131',
-  inverseOnSurface: '#f1f1f1',
-  glass: 'rgba(255,255,255,0.52)',
-  glassStrong: 'rgba(255,255,255,0.68)',
-  glassInset: 'rgba(255,255,255,0.42)',
-  glassBorder: 'rgba(255,255,255,0.55)',
-  glassBorderStrong: 'rgba(255,255,255,0.72)',
-  glassInnerRim: 'rgba(255,255,255,0.65)',
-  navBg: 'rgba(255,255,255,0.78)',
-  inputBg: '#f3f3f3',
-  inputBorder: '#d3c3c0',
+  secondaryContainer: '#d5e5c3',
+  onSecondaryContainer: '#58674c',
+  accent: '#a8d293',
+  tertiaryFixed: '#e9e1d6',
+  tertiaryFixedDim: '#cdc5bb',
+  tertiaryContainer: '#545048',
+  onTertiaryFixed: '#1e1b15',
+  onTertiaryContainer: '#c9c2b8',
+  outline: '#73796d',
+  outlineVariant: '#c3c9bb',
+  inverseSurface: '#2e312c',
+  inverseOnSurface: '#f0f2e9',
+  glass: 'rgba(249,250,242,0.70)',
+  glassStrong: 'rgba(249,250,242,0.85)',
+  glassInset: 'rgba(233,225,214,0.55)',
+  glassBorder: 'rgba(195,201,187,0.65)',
+  glassBorderStrong: 'rgba(163,180,148,0.55)',
+  glassInnerRim: 'rgba(255,255,255,0.55)',
+  navBg: 'rgba(249,250,242,0.78)',
+  inputBg: '#e9e1d6',
+  inputBorder: '#c3c9bb',
   error: '#ba1a1a',
+  radiusSm: 8,
+  radiusMd: 12,
+  radiusLg: 16,
   radiusXl: 24,
   radiusMax: 32,
 } as const;
 
-/** @deprecated Stitch brand is light-only; kept for type compatibility. */
+/** @deprecated Artisanal Sage is light-only; kept for type compatibility. */
 export const LIGHT = BRAND;
 
-/** @deprecated Stitch brand is light-only. */
+/** @deprecated Artisanal Sage is light-only. */
 export const DARK = BRAND;
 
 export type ThemeColors = typeof BRAND;
 
-/** Layout rhythm — DESIGN.md 8px base */
+/** Layout rhythm — design.md 8px base */
 export const SPACING = {
-  xs: 8,
+  xs: 4,
   sm: 12,
   md: 16,
   lg: 24,
   xl: 32,
-  screen: 24,
-  section: 16,
+  screen: 16,
+  section: 24,
+  gutter: 24,
 } as const;
 
-/** Typography scale — single source for screen titles */
+/** Typography scale — Plus Jakarta Sans (design.md) */
 export const TYPE = {
   screenTitle: {
     fontFamily: FONTS.display,
     fontSize: 28,
     lineHeight: 36,
-    letterSpacing: -0.3,
+    letterSpacing: -0.28,
   },
   sectionTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 24,
+    lineHeight: 32,
+    letterSpacing: -0.24,
   },
   label: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     lineHeight: 20,
+    letterSpacing: 0.28,
   },
   body: {
     fontFamily: FONTS.regular,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
   },
   caption: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: 12,
     lineHeight: 16,
+    letterSpacing: 0.48,
   },
 } as const;
 

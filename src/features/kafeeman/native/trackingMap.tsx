@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 8,
     borderRadius: 2,
-    backgroundColor: '#3e2723',
+    backgroundColor: '#355927',
     marginTop: -1,
   },
   riderWrap: {

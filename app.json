@@ -8,18 +8,23 @@
     "scheme": "kafeeman",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": ["ios"],
+    "platforms": [
+      "ios"
+    ],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0E0A07"
+      "backgroundColor": "#f9faf2"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.devmalitos.kafeeman",
       "buildNumber": "1",
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["tel", "telprompt"],
+        "LSApplicationQueriesSchemes": [
+          "tel",
+          "telprompt"
+        ],
         "NSLocationWhenInUseUsageDescription": "Show your location on the live delivery map."
       }
     },

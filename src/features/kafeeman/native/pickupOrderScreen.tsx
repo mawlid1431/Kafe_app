@@ -31,14 +31,17 @@ export function PickupOrderScreen({
   order,
   onBack,
   onDone,
+  onCancel,
 }: {
   C: ThemeColors;
   order: OrderRecord;
   onBack: () => void;
   onDone: () => void;
+  onCancel?: () => void;
 }) {
   const step = order.trackingStep;
   const isActive = order.status === 'active';
+  const canCancel = isActive && step < 2;
   const eta = etaForPickup(step);
   const status = statusForPickup(step);
 
@@ -176,6 +179,10 @@ export function PickupOrderScreen({
           })}
         </GlassCard>
 
+        {canCancel && onCancel ? (
+          <StitchPillButton label="Cancel order" onPress={onCancel} C={C} variant="outline" />
+        ) : null}
+
         {isActive && step >= PICKUP_ORDER_STEPS.length - 1 ? (
           <StitchPillButton label="Done" onPress={onDone} C={C} />
         ) : null}
@@ -249,7 +256,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   timelineDotActive: {
-    shadowColor: '#ffba38',
+    shadowColor: '#a8d293',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.45,
     shadowRadius: 8,

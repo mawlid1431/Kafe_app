@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -24,12 +25,19 @@ import {
   MENU,
   ONBOARDING_SLIDES,
   ORDER_STEPS,
+  NOTIFICATIONS_SEED,
   POINTS_HISTORY_SEED,
   PROMOS,
   REWARD_TIERS,
 } from './data';
 import { calcPromoDiscount, findPromo, maxRedeemablePoints, pointsForSpend, pointsToRmDiscount, POINTS_PER_RM, type PromoCode } from './lib/promos';
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess, hapticWarning } from './lib/haptics';
+import {
+  DEFAULT_ADDRESSES,
+  DEFAULT_PROFILE,
+  loadAppState,
+  saveAppState,
+} from './lib/storage';
 import { ToastProvider, useToast } from './native/feedback';
 import { FONTS } from './native/fonts';
 import {
@@ -70,7 +78,10 @@ import {
   StitchTopBar,
 } from './native/stitchUi';
 import { OrderNoteField, PointsRedeemSection } from './native/cartExtras';
-import { DeliveryTrackingScreen } from './native/orderTracking';
+import { AddressesScreen } from './native/addressesScreen';
+import { HelpScreen } from './native/helpScreen';
+import { NotificationsScreen } from './native/notificationsScreen';
+import { OrderReceiptScreen } from './native/orderReceiptScreen';
 import { PickupOrderScreen } from './native/pickupOrderScreen';
 import { OrdersScreen } from './native/ordersScreen';
 import { RewardsScreen } from './native/rewardsScreen';
@@ -79,7 +90,22 @@ import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
 import { AppImage, GradientButton } from './native/ui';
 import { STITCH_SHADOW, useBrandTheme, type ThemeColors } from './theme';
-import type { CartLine, MenuItem, OrderRecord, PointsActivity, Screen, TabKey } from './types';
+import type {
+  AppNotification,
+  CartLine,
+  MenuItem,
+  OrderRecord,
+  PointsActivity,
+  SavedAddress,
+  Screen,
+  TabKey,
+  UserProfile,
+} from './types';
+
+/** Loaded on demand so react-native-maps is not required for the initial app bundle. */
+const DeliveryTrackingScreen = lazy(() =>
+  import('./native/orderTracking').then((module) => ({ default: module.DeliveryTrackingScreen })),
+);
 
 const FLOATING_CART_SCREENS: Screen[] = ['home', 'menu', 'product-detail', 'favorites'];
 
@@ -145,7 +171,26 @@ function KafeemanApp() {
   const [orderNote, setOrderNote] = useState('');
   const [usePointsEnabled, setUsePointsEnabled] = useState(false);
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [hydrated, setHydrated] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [setupName, setSetupName] = useState('');
+  const [setupEmail, setSetupEmail] = useState('');
+  const [addresses, setAddresses] = useState<SavedAddress[]>(DEFAULT_ADDRESSES);
+  const [selectedAddressId, setSelectedAddressId] = useState('home');
+  const [notifications, setNotifications] = useState<AppNotification[]>(NOTIFICATIONS_SEED);
+  const [menuSearch, setMenuSearch] = useState('');
+  const [receiptOrder, setReceiptOrder] = useState<OrderRecord | null>(null);
+  const [addressReturn, setAddressReturn] = useState<Screen>('checkout');
+  const splashNavPending = useRef(false);
   const otpRefs = useRef<(TextInput | null)[]>([]);
+
+  const selectedAddress = useMemo(
+    () => addresses.find((a) => a.id === selectedAddressId) ?? addresses[0],
+    [addresses, selectedAddressId],
+  );
+  const firstName = profile.name.split(' ')[0] ?? profile.name;
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartTotal = cart.reduce((a, c) => a + c.item.price * c.qty, 0);
@@ -163,6 +208,16 @@ function KafeemanApp() {
     }
     return items;
   }, [category, searchQuery]);
+  const menuFiltered = useMemo(() => {
+    let items = category === 'All' ? MENU : MENU.filter((m) => m.category === category);
+    if (menuSearch.trim()) {
+      const q = menuSearch.trim().toLowerCase();
+      items = items.filter(
+        (m) => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q),
+      );
+    }
+    return items;
+  }, [category, menuSearch]);
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
@@ -190,8 +245,10 @@ function KafeemanApp() {
     return { ...found, trackingStep: Math.max(found.trackingStep, trackingStep) };
   }, [orders, activeOrderId, orderRef, trackingStep]);
   const showLiquidBg =
-    ['home', 'menu', 'cart', 'orders', 'profile', 'rewards', 'favorites'].includes(screen) ||
-    (screen === 'order-tracking' && viewingOrder?.orderType === 'pickup');
+    ['home', 'menu', 'cart', 'orders', 'profile', 'rewards', 'favorites', 'notifications', 'help', 'addresses'].includes(screen) ||
+    (screen === 'order-tracking' && viewingOrder?.orderType === 'pickup') ||
+    screen === 'order-receipt';
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
   const showFloatingCart = cartCount > 0 && FLOATING_CART_SCREENS.includes(screen);
   const floatingCartBottom =
     screen === 'product-detail' ? 96 : showNav ? 110 : insets.bottom + 24;
@@ -337,6 +394,18 @@ function KafeemanApp() {
       setPromoCode('');
       setPromoMessage('');
       void hapticSuccess();
+      setNotifications((prev) => [
+        {
+          id: `n-order-${orderRef}`,
+          title: 'Order confirmed',
+          body: `We're preparing ${orderRef}. ${orderType === 'delivery' ? 'Track delivery live.' : 'Pick up at the branch.'}`,
+          time: 'Just now',
+          read: false,
+          type: 'order',
+          orderId: orderRef,
+        },
+        ...prev,
+      ]);
       showToast(`Order ${orderRef} confirmed`, 'success', {
         label: orderType === 'delivery' ? 'Track delivery' : 'View order',
         onPress: () => setScreen('order-tracking'),
@@ -357,6 +426,11 @@ function KafeemanApp() {
   );
 
   const trackOrder = useCallback((order: OrderRecord) => {
+    if (order.status === 'delivered' || order.status === 'cancelled') {
+      setReceiptOrder(order);
+      setScreen('order-receipt');
+      return;
+    }
     setOrderRef(order.id);
     setTrackingStep(order.trackingStep);
     setOrderType(order.orderType);
@@ -364,6 +438,61 @@ function KafeemanApp() {
     setActiveOrderId(order.id);
     setScreen('order-tracking');
   }, []);
+
+  const cancelOrder = useCallback(
+    (orderId: string) => {
+      Alert.alert('Cancel order?', 'You can only cancel while your order is still being prepared.', [
+        { text: 'Keep order', style: 'cancel' },
+        {
+          text: 'Cancel order',
+          style: 'destructive',
+          onPress: () => {
+            const order = orders.find((o) => o.id === orderId);
+            if (!order) return;
+            setOrders((prev) =>
+              prev.map((o) => (o.id === orderId ? { ...o, status: 'cancelled' as const } : o)),
+            );
+            if (order.pointsRedeemed) {
+              setPoints((p) => p + order.pointsRedeemed!);
+              setPointsHistory((prev) => [
+                {
+                  id: `refund-${orderId}`,
+                  label: `Points refunded — ${orderId}`,
+                  delta: order.pointsRedeemed!,
+                  date: 'Today',
+                },
+                ...prev,
+              ]);
+            }
+            setNotifications((prev) => [
+              {
+                id: `n-cancel-${Date.now()}`,
+                title: 'Order cancelled',
+                body: `Order ${orderId} was cancelled successfully.`,
+                time: 'Just now',
+                read: false,
+                type: 'order',
+                orderId,
+              },
+              ...prev,
+            ]);
+            void hapticWarning();
+            showToast('Order cancelled', 'info');
+            go('orders');
+          },
+        },
+      ]);
+    },
+    [orders, showToast, go],
+  );
+
+  const navigateFromSplash = useCallback(() => {
+    if (onboardingDone) {
+      setScreen(isLoggedIn ? 'home' : 'auth');
+    } else {
+      setScreen('onboarding');
+    }
+  }, [isLoggedIn, onboardingDone]);
 
   const reorder = useCallback(
     (order: OrderRecord) => {
@@ -437,6 +566,69 @@ function KafeemanApp() {
   }, []);
 
   useEffect(() => {
+    void loadAppState().then((saved) => {
+      if (saved?.onboardingDone) setOnboardingDone(true);
+      if (saved?.isLoggedIn) setIsLoggedIn(true);
+      if (saved?.profile) setProfile(saved.profile);
+      if (saved?.cart) setCart(saved.cart);
+      if (saved?.favorites) setFavorites(saved.favorites);
+      if (saved?.orders) setOrders(saved.orders);
+      if (typeof saved?.points === 'number') setPoints(saved.points);
+      if (saved?.pointsHistory) setPointsHistory(saved.pointsHistory);
+      if (saved?.selectedBranch) setSelectedBranch(saved.selectedBranch);
+      if (saved?.orderType) setOrderType(saved.orderType);
+      if (saved?.addresses) setAddresses(saved.addresses);
+      if (saved?.selectedAddressId) setSelectedAddressId(saved.selectedAddressId);
+      if (saved?.notifications) setNotifications(saved.notifications);
+      setHydrated(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const t = setTimeout(() => {
+      void saveAppState({
+        version: 1,
+        onboardingDone,
+        isLoggedIn,
+        profile,
+        cart,
+        favorites,
+        orders,
+        points,
+        pointsHistory,
+        selectedBranch,
+        orderType,
+        addresses,
+        selectedAddressId,
+        notifications,
+      });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [
+    hydrated,
+    onboardingDone,
+    isLoggedIn,
+    profile,
+    cart,
+    favorites,
+    orders,
+    points,
+    pointsHistory,
+    selectedBranch,
+    orderType,
+    addresses,
+    selectedAddressId,
+    notifications,
+  ]);
+
+  useEffect(() => {
+    if (!hydrated || !splashNavPending.current) return;
+    splashNavPending.current = false;
+    navigateFromSplash();
+  }, [hydrated, navigateFromSplash]);
+
+  useEffect(() => {
     if (screen !== 'order-tracking') return;
     const orderId = activeOrderId ?? orderRef;
     const order = orders.find((o) => o.id === orderId);
@@ -480,7 +672,15 @@ function KafeemanApp() {
   const renderScreen = () => {
     switch (screen) {
       case 'splash':
-        return <SplashScreen C={C} onComplete={() => setScreen('onboarding')} />;
+        return (
+          <SplashScreen
+            C={C}
+            onComplete={() => {
+              if (hydrated) navigateFromSplash();
+              else splashNavPending.current = true;
+            }}
+          />
+        );
 
       case 'onboarding': {
         const s = ONBOARDING_SLIDES[slide];
@@ -492,7 +692,7 @@ function KafeemanApp() {
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.onboardHeader}>
-                <Pressable onPress={() => setScreen('auth')} style={styles.skipBtn}>
+                <Pressable onPress={() => { setOnboardingDone(true); setScreen('auth'); }} style={styles.skipBtn}>
                   <Text style={styles.skipBtnText}>Skip</Text>
                 </Pressable>
               </View>
@@ -525,7 +725,7 @@ function KafeemanApp() {
               {slide < 2 ? (
                 <PrimaryBtn label="Next →" onPress={() => setSlide(slide + 1)} />
               ) : (
-                <PrimaryBtn label="Get Started" onPress={() => setScreen('auth')} />
+                <PrimaryBtn label="Get Started" onPress={() => { setOnboardingDone(true); setScreen('auth'); }} />
               )}
             </View>
           </View>
@@ -564,7 +764,9 @@ function KafeemanApp() {
                       label="Login"
                       onPress={() => {
                         void hapticMedium();
-                        showToast('Welcome back, Ahmad!', 'success');
+                        setIsLoggedIn(true);
+                        setOnboardingDone(true);
+                        showToast(`Welcome back, ${firstName}!`, 'success');
                         setScreen('branch');
                       }}
                       C={C}
@@ -581,6 +783,8 @@ function KafeemanApp() {
                   <Pressable
                     onPress={() => {
                       void hapticLight();
+                      setIsLoggedIn(true);
+                      setOnboardingDone(true);
                       go('home');
                     }}
                     style={{ marginTop: 16, alignItems: 'center' }}
@@ -669,7 +873,39 @@ function KafeemanApp() {
             <View style={styles.avatarWrap}>
               <Ionicons name="person" size={40} color={C.primary} />
             </View>
-            <PrimaryBtn label="Continue" onPress={() => setScreen('branch')} />
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Full name</Text>
+              <TextInput
+                value={setupName}
+                onChangeText={setSetupName}
+                placeholder="Ahmad Eman"
+                placeholderTextColor={C.textFaint}
+                style={styles.input}
+              />
+            </View>
+            <View style={{ marginBottom: 24 }}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                value={setupEmail}
+                onChangeText={setSetupEmail}
+                placeholder="ahmad@email.com"
+                placeholderTextColor={C.textFaint}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+              />
+            </View>
+            <PrimaryBtn
+              label="Continue"
+              onPress={() => {
+                if (setupName.trim()) {
+                  setProfile({ name: setupName.trim(), email: setupEmail.trim() || DEFAULT_PROFILE.email });
+                }
+                setIsLoggedIn(true);
+                setOnboardingDone(true);
+                setScreen('branch');
+              }}
+            />
           </ScrollView>
         );
 
@@ -684,6 +920,8 @@ function KafeemanApp() {
                 key={b.name}
                 onPress={() => {
                   setSelectedBranch(b.name);
+                  setOnboardingDone(true);
+                  setIsLoggedIn(true);
                   setScreen('order-type');
                 }}
                 style={[styles.branchCard, selectedBranch === b.name && { borderColor: C.primary, borderWidth: 2 }]}
@@ -741,7 +979,7 @@ function KafeemanApp() {
           <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingTop: 8 }}>
             <View style={styles.padH}>
               <Text style={[styles.stitchGreeting, { color: C.primary }]}>
-                {getTimeGreeting()}, Aman! ☕
+                {getTimeGreeting()}, {firstName}! ☕
               </Text>
               <StitchStoreBar
                 C={C}
@@ -919,6 +1157,15 @@ function KafeemanApp() {
             contentContainerStyle={{ paddingBottom: 140 }}
             showsVerticalScrollIndicator={false}
           >
+            <View style={[styles.padH, { marginBottom: 12 }]}>
+              <GlassSearchBar
+                C={C}
+                value={menuSearch}
+                onChangeText={setMenuSearch}
+                placeholder="Search menu…"
+                onClear={() => setMenuSearch('')}
+              />
+            </View>
             <ScrollView
               horizontal
               nestedScrollEnabled
@@ -937,12 +1184,17 @@ function KafeemanApp() {
               ))}
             </ScrollView>
             <View style={[styles.menuGrid, styles.padH]}>
-              {filtered.length === 0 ? (
-                <Text style={[styles.bodyText, { width: '100%', textAlign: 'center', marginTop: 32 }]}>
-                  No items in this category yet.
-                </Text>
+              {menuFiltered.length === 0 ? (
+                <StitchEmptyState
+                  C={C}
+                  icon="search-outline"
+                  title="No drinks found"
+                  message="Try another category or search term."
+                  actionLabel="Clear search"
+                  onAction={() => setMenuSearch('')}
+                />
               ) : (
-                filtered.map((item) => (
+                menuFiltered.map((item) => (
                   <StitchMenuCard
                     key={item.id}
                     C={C}
@@ -1190,19 +1442,33 @@ function KafeemanApp() {
                 <Text style={styles.headerTitle}>Checkout</Text>
               </View>
               <View style={styles.padH}>
-                {orderType === 'delivery' && (
-                  <View style={[styles.summaryCard, { marginBottom: 16 }]}>
-                    <Text style={styles.label}>Deliver to</Text>
+                {orderType === 'delivery' && selectedAddress && (
+                  <Pressable
+                    onPress={() => {
+                      setAddressReturn('checkout');
+                      setScreen('addresses');
+                    }}
+                    style={[styles.summaryCard, { marginBottom: 16 }]}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={styles.label}>Deliver to</Text>
+                      <Text style={{ color: C.primaryContainer, fontFamily: FONTS.semiBold, fontSize: 12 }}>
+                        Change
+                      </Text>
+                    </View>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 8 }}>
                       <View style={[styles.otpIcon, { width: 36, height: 36, marginBottom: 0 }]}>
                         <Ionicons name="location" size={18} color={C.primary} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: C.text, fontWeight: '700' }}>Home</Text>
-                        <Text style={styles.bodyText}>No. 12, Jalan Mawar 3, Taman Desa, 58100 KL</Text>
+                        <Text style={{ color: C.text, fontWeight: '700' }}>{selectedAddress.label}</Text>
+                        <Text style={styles.bodyText}>{selectedAddress.line1}</Text>
+                        {selectedAddress.line2 ? (
+                          <Text style={styles.bodyText}>{selectedAddress.line2}</Text>
+                        ) : null}
                       </View>
                     </View>
-                  </View>
+                  </Pressable>
                 )}
                 <CheckoutSummary
                   C={C}
@@ -1349,15 +1615,76 @@ function KafeemanApp() {
               order={viewingOrder}
               onBack={() => go('orders')}
               onDone={() => go('home')}
+              onCancel={() => cancelOrder(viewingOrder.id)}
             />
           );
         }
         return (
-          <DeliveryTrackingScreen
+          <Suspense
+            fallback={
+              <View style={[styles.flex, styles.center, { backgroundColor: C.bg }]}>
+                <ActivityIndicator size="large" color={C.primaryContainer} />
+                <Text style={[styles.bodyText, { marginTop: 12 }]}>Loading map…</Text>
+              </View>
+            }
+          >
+            <DeliveryTrackingScreen
+              C={C}
+              order={viewingOrder}
+              onBack={() => go('orders')}
+              onDone={() => go('home')}
+              onCancel={() => cancelOrder(viewingOrder.id)}
+            />
+          </Suspense>
+        );
+
+      case 'order-receipt':
+        if (!receiptOrder) {
+          return (
+            <View style={[styles.flex, styles.center, styles.padH]}>
+              <Text style={styles.bodyText}>Receipt not found.</Text>
+              <View style={{ height: 16, width: '100%' }} />
+              <GhostBtn label="Back to Orders" onPress={() => go('orders')} />
+            </View>
+          );
+        }
+        return (
+          <OrderReceiptScreen
             C={C}
-            order={viewingOrder}
+            order={receiptOrder}
             onBack={() => go('orders')}
-            onDone={() => go('home')}
+            onReorder={() => reorder(receiptOrder)}
+          />
+        );
+
+      case 'notifications':
+        return (
+          <NotificationsScreen
+            C={C}
+            notifications={notifications}
+            onBack={() => go('home')}
+            onMarkAllRead={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
+            onOpenOrder={(orderId) => {
+              const order = orders.find((o) => o.id === orderId);
+              if (order) trackOrder(order);
+            }}
+          />
+        );
+
+      case 'help':
+        return <HelpScreen C={C} onBack={() => go('profile')} />;
+
+      case 'addresses':
+        return (
+          <AddressesScreen
+            C={C}
+            addresses={addresses}
+            selectedId={selectedAddressId}
+            onBack={() => setScreen(addressReturn)}
+            onSelect={(id) => {
+              setSelectedAddressId(id);
+              setScreen(addressReturn);
+            }}
           />
         );
 
@@ -1398,8 +1725,8 @@ function KafeemanApp() {
               <View style={styles.avatarWrap}>
                 <AppImage uri={PROFILE_AVATAR} style={styles.profileAvatar} />
               </View>
-              <Text style={styles.screenTitleSm}>Ahmad Eman</Text>
-              <Text style={styles.bodyText}>ahmad@email.com</Text>
+              <Text style={styles.screenTitleSm}>{profile.name}</Text>
+              <Text style={styles.bodyText}>{profile.email}</Text>
               <GlassCard level="sheet" style={{ width: '100%', marginTop: 20 }}>
                 <Pressable onPress={() => go('rewards')} style={styles.loyaltyCardInner}>
                   <Ionicons name="sparkles" size={22} color={C.accent} />
@@ -1420,10 +1747,11 @@ function KafeemanApp() {
               { icon: 'gift-outline' as const, label: 'Rewards', action: () => go('rewards') },
               { icon: 'receipt-outline' as const, label: 'Order History', action: () => go('orders') },
               { icon: 'location-outline' as const, label: 'Branch', action: () => setScreen('branch') },
+              { icon: 'home-outline' as const, label: 'Delivery addresses', action: () => { setAddressReturn('profile'); setScreen('addresses'); } },
               {
                 icon: 'help-circle-outline' as const,
                 label: 'Help',
-                action: () => showToast('Support: help@kafeeman.my · 9am–9pm', 'info'),
+                action: () => setScreen('help'),
               },
               {
                 icon: 'log-out-outline' as const,
@@ -1436,6 +1764,8 @@ function KafeemanApp() {
                       style: 'destructive',
                       onPress: () => {
                         void hapticWarning();
+                        setIsLoggedIn(false);
+                        setCart([]);
                         setScreen('auth');
                       },
                     },
@@ -1494,7 +1824,14 @@ function KafeemanApp() {
     <SafeAreaView style={[styles.flex, { backgroundColor: showLiquidBg ? 'transparent' : C.bg }]} edges={['top', 'left', 'right']}>
       <StatusBar style="dark" />
       <LiquidGlassBackground style={[styles.flex, !showLiquidBg && { backgroundColor: C.bg }]}>
-        {showTopBar && <StitchTopBar C={C} onAvatarPress={() => go('profile')} />}
+        {showTopBar && (
+          <StitchTopBar
+            C={C}
+            onAvatarPress={() => go('profile')}
+            onNotifyPress={() => setScreen('notifications')}
+            notifyCount={unreadNotifications}
+          />
+        )}
         <View style={styles.flex}>{renderScreen()}</View>
         {showFloatingCart && (
           <StitchFloatingCart

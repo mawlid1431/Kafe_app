@@ -80,7 +80,9 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
             ? order.orderType === 'delivery'
               ? 'Tap to track on map'
               : 'Tap for pickup status'
-            : 'Tap for order details';
+            : order.status === 'cancelled'
+              ? 'Tap for details'
+              : 'Tap for receipt';
           return (
             <Pressable key={order.id} onPress={() => onTrack(order)}>
               <GlassCard level="sheet" style={{ marginBottom: 12 }}>
@@ -99,8 +101,8 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
               </View>
               <View style={styles.orderFooter}>
                 <View>
-                  <Text style={[styles.status, { color: isActive ? C.accent : '#22c55e' }]}>
-                    {status} · {tapHint}
+                  <Text style={[styles.status, { color: isActive ? C.accent : order.status === 'cancelled' ? C.error : '#22c55e' }]}>
+                    {order.status === 'cancelled' ? 'Cancelled' : status} · {tapHint}
                   </Text>
                   <Text style={[styles.total, { color: C.primary }]}>{formatRM(order.total)}</Text>
                 </View>

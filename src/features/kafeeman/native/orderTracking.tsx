@@ -53,11 +53,13 @@ export function DeliveryTrackingScreen({
   order,
   onBack,
   onDone,
+  onCancel,
 }: {
   C: ThemeColors;
   order: OrderRecord;
   onBack: () => void;
   onDone: () => void;
+  onCancel?: () => void;
 }) {
   const [chatOpen, setChatOpen] = useState(false);
   const trackingStep = order.trackingStep;
@@ -65,6 +67,7 @@ export function DeliveryTrackingScreen({
   const status = statusForDelivery(trackingStep);
   const isActive = order.status === 'active';
   const riderLive = isActive && trackingStep >= 2;
+  const canCancel = isActive && trackingStep < 2;
 
   const callRider = useCallback(async () => {
     void hapticMedium();
@@ -220,6 +223,11 @@ export function DeliveryTrackingScreen({
         {isActive && trackingStep >= ORDER_STEPS.length - 1 && (
           <StitchPillButton label="Done" onPress={onDone} C={C} />
         )}
+        {canCancel && onCancel && (
+          <Pressable onPress={onCancel} style={styles.cancelLink}>
+            <Text style={[styles.cancelText, { color: C.error }]}>Cancel order</Text>
+          </Pressable>
+        )}
       </GlassSurface>
 
       <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} onCall={() => void callRider()} />
@@ -372,4 +380,6 @@ const styles = StyleSheet.create({
   },
   itemThumb: { width: 36, height: 36, borderRadius: 10 },
   itemChipText: { fontFamily: FONTS.semiBold, fontSize: 12, maxWidth: 120 },
+  cancelLink: { alignItems: 'center', paddingVertical: 10, marginTop: 4 },
+  cancelText: { fontFamily: FONTS.semiBold, fontSize: 13 },
 });

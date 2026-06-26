@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -16,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW, STITCH_SHADOW_FLOAT } from '../theme';
+import { BRAND_ASSETS, BRAND_NAME } from '../brand';
 import { FONTS } from './fonts';
 import { AppImage } from './ui';
 
@@ -49,25 +51,25 @@ export function LiquidGlassBackground({
   return (
     <View style={[{ flex: 1 }, style]}>
       <LinearGradient
-        colors={['#faf8f7', '#f5ebe5', '#f8f4f1', '#faf8f7']}
+        colors={[BRAND.bg, BRAND.surfaceLow, BRAND.tertiaryFixed, BRAND.bg]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['rgba(255,186,56,0.08)', 'transparent', 'rgba(62,39,35,0.04)']}
+        colors={['rgba(168,210,147,0.10)', 'transparent', 'rgba(53,89,39,0.05)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['rgba(62,39,35,0.06)', 'transparent']}
+        colors={['rgba(53,89,39,0.06)', 'transparent']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0.15, y: 0.6 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(62,39,35,0.04)']}
+        colors={['transparent', 'rgba(30,65,18,0.04)']}
         start={{ x: 0, y: 1 }}
         end={{ x: 0.8, y: 0.3 }}
         style={StyleSheet.absoluteFillObject}
@@ -276,19 +278,29 @@ export function StitchTopBar({
   C,
   onAvatarPress,
   onNotifyPress,
+  notifyCount = 0,
 }: {
   C: ThemeColors;
   onAvatarPress?: () => void;
   onNotifyPress?: () => void;
+  notifyCount?: number;
 }) {
   return (
     <GlassSurface level="float" style={styles.topBar}>
       <Pressable onPress={onAvatarPress} style={styles.avatarRing}>
         <AppImage uri={PROFILE_AVATAR} style={styles.avatar} />
       </Pressable>
-      <Text style={[styles.brandTitle, { color: C.primary }]}>KAFE EMAN</Text>
+      <View style={styles.brandRow}>
+        <Image source={BRAND_ASSETS.logo} style={styles.brandLogo} contentFit="contain" />
+        <Text style={[styles.brandTitle, { color: C.primary }]}>{BRAND_NAME.toUpperCase()}</Text>
+      </View>
       <Pressable onPress={onNotifyPress} style={styles.iconBtn}>
         <Ionicons name="notifications-outline" size={22} color={C.textMuted} />
+        {notifyCount > 0 && (
+          <View style={[styles.notifyBadge, { backgroundColor: C.error }]}>
+            <Text style={styles.notifyBadgeText}>{notifyCount > 9 ? '9+' : notifyCount}</Text>
+          </View>
+        )}
       </Pressable>
     </GlassSurface>
   );
@@ -779,6 +791,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
   },
   avatar: { width: '100%', height: '100%' },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandLogo: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+  },
   brandTitle: {
     fontFamily: FONTS.display,
     fontSize: 20,
@@ -790,6 +812,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
+  },
+  notifyBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  notifyBadgeText: {
+    color: '#fff',
+    fontFamily: FONTS.bold,
+    fontSize: 9,
   },
   navOuter: {
     position: 'absolute',
@@ -819,7 +857,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   navItemActive: {
-    backgroundColor: 'rgba(62,39,35,0.08)',
+    backgroundColor: 'rgba(53,89,39,0.10)',
     borderWidth: 1,
     borderColor: BRAND.outlineVariant,
   },
@@ -988,12 +1026,12 @@ const styles = StyleSheet.create({
   promoCodeChip: {
     alignSelf: 'flex-start',
     marginTop: 10,
-    backgroundColor: 'rgba(255,186,56,0.9)',
+    backgroundColor: 'rgba(168,210,147,0.92)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
   },
-  promoCodeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#281900' },
+  promoCodeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#042100' },
   pillBtn: {
     flexDirection: 'row',
     alignItems: 'center',

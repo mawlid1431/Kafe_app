@@ -1,4 +1,4 @@
-import type { MenuItem, OrderRecord, OrderStatus, PointsActivity, RewardRedemption } from './types';
+import type { AppNotification, MenuItem, OrderRecord, OrderStatus, PointsActivity, RewardRedemption } from './types';
 
 export const MENU: MenuItem[] = [
   { id: 1, name: 'Signature Latte', price: 14.9, category: 'Coffee', image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=400&fit=crop&auto=format', rating: 4.9, calories: 180, description: 'Velvety steamed milk over our signature double espresso, finished with a dusting of pure cocoa.', badge: 'Bestseller' },
@@ -46,6 +46,66 @@ export const POINTS_HISTORY_SEED: PointsActivity[] = [
   { id: 'p3', label: 'Order KE-20250615-3310', delta: 28, date: 'Jun 15' },
   { id: 'p4', label: 'Weekend 2× bonus', delta: 45, date: 'Jun 14' },
 ];
+
+export const NOTIFICATIONS_SEED: AppNotification[] = [
+  {
+    id: 'n1',
+    title: 'Rider is nearby',
+    body: 'Ahmad will arrive in about 8 minutes with order KE-20250624-9102.',
+    time: '2 min ago',
+    read: false,
+    type: 'order',
+    orderId: 'KE-20250624-9102',
+  },
+  {
+    id: 'n2',
+    title: 'Order is being prepared',
+    body: 'Your Matcha Latte at Penang branch is almost ready for pickup.',
+    time: '8 min ago',
+    read: false,
+    type: 'order',
+    orderId: 'KE-20250626-1188',
+  },
+  {
+    id: 'n3',
+    title: 'Weekend 2× points',
+    body: 'Earn double points on all orders this Saturday & Sunday.',
+    time: 'Yesterday',
+    read: true,
+    type: 'promo',
+  },
+  {
+    id: 'n4',
+    title: 'You earned 32 points',
+    body: 'Thanks for your order KE-20250615-3310. Redeem rewards anytime.',
+    time: 'Jun 15',
+    read: true,
+    type: 'reward',
+  },
+];
+
+export const HELP_FAQ = [
+  {
+    q: 'How do I track my delivery?',
+    a: 'Open Orders → tap your active delivery. You’ll see a live map, rider contact, and chat.',
+  },
+  {
+    q: 'Can I use points at checkout?',
+    a: 'Yes. In your cart, turn on Use points and pick how many to redeem (100 pts = RM 1).',
+  },
+  {
+    q: 'How do I add special instructions?',
+    a: 'Use the Special instructions field in your cart before checkout.',
+  },
+  {
+    q: 'Can I cancel an order?',
+    a: 'You can cancel while your order is still being prepared. Open the order and tap Cancel order.',
+  },
+  {
+    q: 'What payment methods are accepted?',
+    a: "Touch 'n Go eWallet, credit/debit cards, and online banking (FPX).",
+  },
+] as const;
 
 export function createSeedOrders(): OrderRecord[] {
   const latte = MENU[0];

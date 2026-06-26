@@ -19,7 +19,11 @@ export type Screen =
   | 'orders'
   | 'profile'
   | 'rewards'
-  | 'favorites';
+  | 'favorites'
+  | 'notifications'
+  | 'help'
+  | 'order-receipt'
+  | 'addresses';
 
 export type TabKey = 'home' | 'menu' | 'cart' | 'orders' | 'profile';
 
@@ -77,4 +81,27 @@ export interface PointsActivity {
   label: string;
   delta: number;
   date: string;
+}
+
+export interface UserProfile {
+  name: string;
+  email: string;
+}
+
+export interface SavedAddress {
+  id: string;
+  label: string;
+  line1: string;
+  line2?: string;
+  isDefault?: boolean;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+  type: 'order' | 'promo' | 'reward';
+  orderId?: string;
 }
