@@ -76,8 +76,13 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
         list.map((order) => {
           const isActive = order.status === 'active';
           const status = orderStatusLabel(order.trackingStep, order.orderType);
+          const tapHint = isActive
+            ? order.orderType === 'delivery'
+              ? 'Tap to track on map'
+              : 'Tap for pickup status'
+            : 'Tap for order details';
           return (
-            <Pressable key={order.id} onPress={() => isActive && onTrack(order)}>
+            <Pressable key={order.id} onPress={() => onTrack(order)}>
               <GlassCard level="sheet" style={{ marginBottom: 12 }}>
               <View style={styles.orderTop}>
                 <View style={{ flex: 1 }}>
@@ -95,7 +100,7 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
               <View style={styles.orderFooter}>
                 <View>
                   <Text style={[styles.status, { color: isActive ? C.accent : '#22c55e' }]}>
-                    {isActive ? `${status} · Tap to track` : status}
+                    {status} · {tapHint}
                   </Text>
                   <Text style={[styles.total, { color: C.primary }]}>{formatRM(order.total)}</Text>
                 </View>

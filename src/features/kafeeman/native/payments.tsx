@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
+import { pointsToRmDiscount } from '../lib/promos';
 import type { CartLine } from '../types';
 import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW } from '../theme';
@@ -66,9 +67,15 @@ export function generateOrderRef(): string {
   return `KE-${date}-${rand}`;
 }
 
-export function orderTotal(cartTotal: number, isDelivery: boolean, discount = 0): number {
+export function orderTotal(
+  cartTotal: number,
+  isDelivery: boolean,
+  discount = 0,
+  pointsRedeemed = 0,
+): number {
   const fee = isDelivery ? DELIVERY_FEE : 0;
-  return Math.max(0, cartTotal - discount + fee);
+  const pointsOff = pointsToRmDiscount(pointsRedeemed);
+  return Math.max(0, cartTotal - discount + fee - pointsOff);
 }
 
 type CheckoutSummaryProps = {
@@ -76,7 +83,9 @@ type CheckoutSummaryProps = {
   cart: CartLine[];
   cartTotal: number;
   discountAmount?: number;
+  pointsRedeemed?: number;
   promoCode?: string | null;
+  orderNote?: string;
   orderType: 'delivery' | 'pickup';
   orderRef: string;
   selectedBranch: string;
@@ -87,13 +96,16 @@ export function CheckoutSummary({
   cart,
   cartTotal,
   discountAmount = 0,
+  pointsRedeemed = 0,
   promoCode,
+  orderNote,
   orderType,
   orderRef,
   selectedBranch,
 }: CheckoutSummaryProps) {
   const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
-  const total = Math.max(0, cartTotal - discountAmount + deliveryFee);
+  const pointsOff = pointsToRmDiscount(pointsRedeemed);
+  const total = Math.max(0, cartTotal - discountAmount + deliveryFee - pointsOff);
 
   return (
     <GlassCard level="sheet" style={{ marginBottom: 4 }}>
@@ -129,6 +141,20 @@ export function CheckoutSummary({
           <Text style={{ color: '#22c55e', fontFamily: FONTS.semiBold }}>- {formatRM(discountAmount)}</Text>
         </View>
       )}
+      {pointsOff > 0 && (
+        <View style={checkoutStyles.lineRow}>
+          <Text style={{ color: C.textMuted, fontFamily: FONTS.regular }}>
+            Points ({pointsRedeemed.toLocaleString()} pts)
+          </Text>
+          <Text style={{ color: '#22c55e', fontFamily: FONTS.semiBold }}>- {formatRM(pointsOff)}</Text>
+        </View>
+      )}
+      {orderNote?.trim() ? (
+        <View style={[checkoutStyles.noteBox, { backgroundColor: C.secondaryContainer, borderColor: C.glassBorder }]}>
+          <Text style={{ color: C.textFaint, fontSize: 11, fontFamily: FONTS.semiBold }}>ORDER NOTE</Text>
+          <Text style={{ color: C.text, fontSize: 13, marginTop: 4, fontFamily: FONTS.regular }}>{orderNote.trim()}</Text>
+        </View>
+      ) : null}
       <View style={checkoutStyles.lineRow}>
         <Text style={{ color: C.textMuted, fontFamily: FONTS.regular }}>
           {orderType === 'delivery' ? 'Delivery fee' : 'Pickup'}
@@ -526,6 +552,7 @@ const checkoutStyles = StyleSheet.create({
   refRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   lineRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, gap: 8 },
   divider: { height: 1, marginVertical: 4 },
+  noteBox: { borderRadius: 12, borderWidth: 1, padding: 12, marginTop: 8, marginBottom: 4 },
   methodRow: {
     flexDirection: 'row',
     alignItems: 'center',

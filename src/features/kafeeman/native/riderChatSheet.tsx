@@ -12,12 +12,16 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RIDER_CONTACT } from '../data';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
-import { GlassSurface } from './stitchUi';
+import { AppImage } from './ui';
+
+const RIDER_AVATAR =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuAzHgLdX0YOS86mh9XCTI25Jfp3B3rtaFkqo1rw3sPXHIShW94u6XXZG9O-FdMjYyfoadG3VgRfdyTaanH3J9ITMzmy4rOSudki5us3xLhgu3e4nsx6xaOIvQYX_9nWLo7Hfe3S7wpRwr8O2lrJtL5xZGDREa-IHHvd2SiKWRg8DxgYhWiBd60plNflKjjY6g1Y_UO0RTF5V1BkhTtEUQN3dcddi1YCsxXeRCMVHZaH-TTf81qWW0ibkVdpCcTWsgdD2vs7XVSVlYbw';
 
 type ChatMessage = {
   id: string;
@@ -26,11 +30,13 @@ type ChatMessage = {
   time: string;
 };
 
+const QUICK_REPLIES = ["I'm at the lobby", 'Coming down now', 'Please call when here'];
+
 const RIDER_REPLIES = [
-  "On my way with your coffee! I'll keep it upright.",
-  'Traffic is light — should reach you in about 8 minutes.',
-  'Almost there. Meet me at the lobby?',
-  'Thanks! Enjoy your brew.',
+  "On my way with your coffee — keeping it upright!",
+  'Light traffic. ETA about 8 minutes.',
+  'Almost there. I’m at your building entrance.',
+  'No worries, I’ll wait at the lobby.',
 ];
 
 function nowLabel() {
@@ -41,18 +47,20 @@ export function RiderChatSheet({
   C,
   visible,
   onClose,
+  onCall,
 }: {
   C: ThemeColors;
   visible: boolean;
   onClose: () => void;
+  onCall?: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const sheetBottom = Math.round(height * 0.36);
+  const sheetHeight = Math.min(420, Math.round(height * 0.52));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [typing, setTyping] = useState(false);
-  const slide = useRef(new Animated.Value(320)).current;
-  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(sheetHeight)).current;
   const scrollRef = useRef<ScrollView>(null);
   const replyIdx = useRef(0);
 
@@ -62,58 +70,51 @@ export function RiderChatSheet({
       {
         id: 'welcome',
         from: 'rider',
-        text: `Hi! I'm ${RIDER_CONTACT.name}, your rider today. Your order is on the way.`,
+        text: `Hi! ${RIDER_CONTACT.name} here — I’ve picked up your order and I’m heading to you now.`,
         time: nowLabel(),
       },
     ]);
     setDraft('');
-    Animated.parallel([
-      Animated.spring(slide, { toValue: 0, friction: 8, tension: 80, useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
-    ]).start();
-  }, [fade, slide, visible]);
+    slide.setValue(sheetHeight);
+    Animated.spring(slide, { toValue: 0, friction: 9, tension: 70, useNativeDriver: true }).start();
+  }, [sheetHeight, slide, visible]);
 
   const close = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(slide, { toValue: 320, duration: 220, useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(({ finished }) => {
+    Animated.timing(slide, { toValue: sheetHeight, duration: 240, useNativeDriver: true }).start(({ finished }) => {
       if (finished) onClose();
     });
-  }, [fade, onClose, slide]);
+  }, [onClose, sheetHeight, slide]);
 
-  const send = useCallback(() => {
-    const text = draft.trim();
-    if (!text || typing) return;
-
-    const userMsg: ChatMessage = { id: `u-${Date.now()}`, from: 'user', text, time: nowLabel() };
-    setMessages((prev) => [...prev, userMsg]);
-    setDraft('');
+  const pushRiderReply = useCallback((text: string) => {
     setTyping(true);
-
     setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    }, 50);
-
-    setTimeout(() => {
-      const reply = RIDER_REPLIES[replyIdx.current % RIDER_REPLIES.length] ?? RIDER_REPLIES[0]!;
-      replyIdx.current += 1;
-      setMessages((prev) => [
-        ...prev,
-        { id: `r-${Date.now()}`, from: 'rider', text: reply, time: nowLabel() },
-      ]);
+      setMessages((prev) => [...prev, { id: `r-${Date.now()}`, from: 'rider', text, time: nowLabel() }]);
       setTyping(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
-    }, 1400);
-  }, [draft, typing]);
+    }, 1100 + Math.random() * 600);
+  }, []);
+
+  const send = useCallback(
+    (textOverride?: string) => {
+      const text = (textOverride ?? draft).trim();
+      if (!text || typing) return;
+
+      setMessages((prev) => [...prev, { id: `u-${Date.now()}`, from: 'user', text, time: nowLabel() }]);
+      setDraft('');
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+
+      const reply = RIDER_REPLIES[replyIdx.current % RIDER_REPLIES.length] ?? RIDER_REPLIES[0]!;
+      replyIdx.current += 1;
+      pushRiderReply(reply);
+    },
+    [draft, pushRiderReply, typing],
+  );
 
   if (!visible) return null;
 
   return (
-    <View style={styles.root} pointerEvents="box-none">
-      <Animated.View style={[styles.backdrop, { opacity: fade }]}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={close} />
-      </Animated.View>
+    <View style={styles.root}>
+      <Pressable style={styles.backdrop} onPress={close} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -123,82 +124,103 @@ export function RiderChatSheet({
         <Animated.View
           style={[
             styles.sheet,
-            { bottom: sheetBottom, transform: [{ translateY: slide }] },
+            {
+              height: sheetHeight,
+              paddingBottom: insets.bottom + 8,
+              transform: [{ translateY: slide }],
+            },
             STITCH_SHADOW_FLOAT,
           ]}
         >
-          <GlassSurface level="float" style={styles.glass} strong>
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <View style={[styles.liveDot, { backgroundColor: '#22c55e' }]} />
-                <View>
-                  <Text style={[styles.headerTitle, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
-                  <Text style={[styles.headerSub, { color: C.textMuted }]}>Live chat · Rider</Text>
+          <View style={[styles.handle, { backgroundColor: C.outlineVariant }]} />
+          <View style={[styles.header, { borderBottomColor: C.glassBorderStrong }]}>
+            <AppImage uri={RIDER_AVATAR} style={styles.avatar} />
+            <View style={{ flex: 1 }}>
+              <View style={styles.liveRow}>
+                <View style={styles.liveDot} />
+                <Text style={[styles.liveText, { color: '#16a34a' }]}>Live</Text>
+              </View>
+              <Text style={[styles.headerTitle, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
+              <Text style={[styles.headerSub, { color: C.textMuted }]}>Your delivery rider</Text>
+            </View>
+            {onCall ? (
+              <Pressable onPress={onCall} style={[styles.iconBtn, { backgroundColor: C.primaryContainer }]}>
+                <Ionicons name="call" size={18} color={C.onPrimary} />
+              </Pressable>
+            ) : null}
+            <Pressable onPress={close} style={[styles.iconBtn, { backgroundColor: C.surfaceContainer }]}>
+              <Ionicons name="close" size={18} color={C.textMuted} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            ref={scrollRef}
+            style={styles.messages}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+          >
+            {messages.map((msg) => {
+              const isUser = msg.from === 'user';
+              return (
+                <View key={msg.id} style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
+                  {!isUser && <AppImage uri={RIDER_AVATAR} style={styles.bubbleAvatar} />}
+                  <View
+                    style={[
+                      styles.bubble,
+                      isUser
+                        ? { backgroundColor: C.primaryContainer }
+                        : { backgroundColor: C.secondaryContainer },
+                    ]}
+                  >
+                    <Text style={[styles.bubbleText, { color: isUser ? C.onPrimary : C.text }]}>{msg.text}</Text>
+                    <Text style={[styles.bubbleTime, { color: isUser ? 'rgba(255,255,255,0.72)' : C.textFaint }]}>
+                      {msg.time}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+            {typing && (
+              <View style={styles.bubbleRow}>
+                <AppImage uri={RIDER_AVATAR} style={styles.bubbleAvatar} />
+                <View style={[styles.bubble, styles.typingBubble, { backgroundColor: C.secondaryContainer }]}>
+                  <Text style={[styles.typingText, { color: C.textMuted }]}>Typing…</Text>
                 </View>
               </View>
-              <Pressable onPress={close} hitSlop={8} style={[styles.closeBtn, { backgroundColor: C.surfaceContainer }]}>
-                <Ionicons name="close" size={18} color={C.textMuted} />
-              </Pressable>
-            </View>
+            )}
+          </ScrollView>
 
-            <ScrollView
-              ref={scrollRef}
-              style={styles.messages}
-              contentContainerStyle={styles.messagesContent}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
-            >
-              {messages.map((msg) => {
-                const isUser = msg.from === 'user';
-                return (
-                  <View key={msg.id} style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
-                    <View
-                      style={[
-                        styles.bubble,
-                        isUser
-                          ? { backgroundColor: C.primaryContainer }
-                          : { backgroundColor: C.secondaryContainer, borderColor: C.outlineVariant },
-                      ]}
-                    >
-                      <Text style={[styles.bubbleText, { color: isUser ? C.onPrimary : C.text }]}>{msg.text}</Text>
-                      <Text style={[styles.bubbleTime, { color: isUser ? 'rgba(255,255,255,0.7)' : C.textFaint }]}>
-                        {msg.time}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-              {typing && (
-                <View style={styles.bubbleRow}>
-                  <View style={[styles.bubble, styles.typingBubble, { backgroundColor: C.secondaryContainer }]}>
-                    <Text style={[styles.typingText, { color: C.textMuted }]}>{RIDER_CONTACT.name} is typing…</Text>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-
-            <View style={[styles.inputRow, { borderTopColor: C.outlineVariant }]}>
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="Message your rider…"
-                placeholderTextColor={C.textFaint}
-                style={[styles.input, { color: C.text, backgroundColor: C.inputBg }]}
-                returnKeyType="send"
-                onSubmitEditing={send}
-              />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickReplies}>
+            {QUICK_REPLIES.map((q) => (
               <Pressable
-                onPress={send}
-                disabled={!draft.trim() || typing}
-                style={[
-                  styles.sendBtn,
-                  { backgroundColor: draft.trim() ? C.primaryContainer : C.surfaceContainer },
-                ]}
+                key={q}
+                onPress={() => send(q)}
+                style={[styles.quickChip, { borderColor: C.outlineVariant, backgroundColor: C.surfaceLowest }]}
               >
-                <Ionicons name="send" size={16} color={draft.trim() ? C.onPrimary : C.textFaint} />
+                <Text style={[styles.quickChipText, { color: C.primary }]}>{q}</Text>
               </Pressable>
-            </View>
-          </GlassSurface>
+            ))}
+          </ScrollView>
+
+          <View style={[styles.inputRow, { borderTopColor: C.outlineVariant }]}>
+            <TextInput
+              value={draft}
+              onChangeText={setDraft}
+              placeholder="Type a message…"
+              placeholderTextColor={C.textFaint}
+              style={[styles.input, { color: C.text, backgroundColor: C.inputBg }]}
+              returnKeyType="send"
+              onSubmitEditing={() => send()}
+            />
+            <Pressable
+              onPress={() => send()}
+              disabled={!draft.trim() || typing}
+              style={[styles.sendBtn, { backgroundColor: draft.trim() ? C.primaryContainer : C.surfaceContainer }]}
+            >
+              <Ionicons name="send" size={16} color={draft.trim() ? C.onPrimary : C.textFaint} />
+            </Pressable>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </View>
@@ -206,67 +228,88 @@ export function RiderChatSheet({
 }
 
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFillObject, zIndex: 50 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(26,28,28,0.35)' },
-  keyboard: { ...StyleSheet.absoluteFillObject },
+  root: { ...StyleSheet.absoluteFillObject, zIndex: 100 },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
+  keyboard: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    borderRadius: 24,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     overflow: 'hidden',
-    maxHeight: 340,
   },
-  glass: { borderRadius: 24, overflow: 'hidden', padding: 0 },
+  handle: {
+    alignSelf: 'center',
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 10,
+    marginBottom: 8,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  liveDot: { width: 8, height: 8, borderRadius: 4 },
-  headerTitle: { fontFamily: FONTS.semiBold, fontSize: 15 },
-  headerSub: { fontFamily: FONTS.regular, fontSize: 11, marginTop: 1 },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  messages: { maxHeight: 200 },
-  messagesContent: { paddingHorizontal: 14, paddingBottom: 8, gap: 8 },
-  bubbleRow: { alignItems: 'flex-start' },
-  bubbleRowUser: { alignItems: 'flex-end' },
+  avatar: { width: 44, height: 44, borderRadius: 22 },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#22c55e' },
+  liveText: { fontFamily: FONTS.semiBold, fontSize: 11 },
+  headerTitle: { fontFamily: FONTS.semiBold, fontSize: 16 },
+  headerSub: { fontFamily: FONTS.regular, fontSize: 12 },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  messages: { flex: 1 },
+  messagesContent: { padding: 16, gap: 10 },
+  bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  bubbleRowUser: { justifyContent: 'flex-end' },
+  bubbleAvatar: { width: 28, height: 28, borderRadius: 14 },
   bubble: {
-    maxWidth: '82%',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    maxWidth: '78%',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   bubbleText: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20 },
   bubbleTime: { fontFamily: FONTS.regular, fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
-  typingBubble: { paddingVertical: 10 },
+  typingBubble: { paddingVertical: 12 },
   typingText: { fontFamily: FONTS.regular, fontSize: 13, fontStyle: 'italic' },
+  quickReplies: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
+  quickChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  quickChipText: { fontFamily: FONTS.semiBold, fontSize: 12 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingTop: 8,
     borderTopWidth: 1,
   },
   input: {
     flex: 1,
     borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontFamily: FONTS.regular,
     fontSize: 14,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
   },

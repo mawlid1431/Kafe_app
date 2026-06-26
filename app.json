@@ -17,7 +17,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.devmalitos.kafeeman",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["tel", "telprompt"],
+        "NSLocationWhenInUseUsageDescription": "Show your location on the live delivery map."
+      }
     },
     "plugins": [
       [

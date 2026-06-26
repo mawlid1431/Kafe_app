@@ -214,6 +214,9 @@ export function GlassInputField({
   secureTextEntry,
   keyboardType,
   autoCapitalize,
+  multiline,
+  numberOfLines,
+  noMargin,
 }: {
   C: ThemeColors;
   label?: string;
@@ -223,9 +226,12 @@ export function GlassInputField({
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'number-pad';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  multiline?: boolean;
+  numberOfLines?: number;
+  noMargin?: boolean;
 }) {
   return (
-    <View style={{ marginBottom: 14 }}>
+    <View style={{ marginBottom: noMargin ? 0 : 14 }}>
       {label ? (
         <Text style={[styles.glassFieldLabel, { color: C.textMuted }]}>{label}</Text>
       ) : null}
@@ -238,7 +244,14 @@ export function GlassInputField({
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
-          style={[styles.glassFieldInput, { color: C.text }]}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          style={[
+            styles.glassFieldInput,
+            { color: C.text },
+            multiline && { minHeight: (numberOfLines ?? 3) * 22, paddingTop: 12 },
+          ]}
         />
       </GlassSurface>
     </View>

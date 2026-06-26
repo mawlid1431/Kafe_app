@@ -1,12 +1,14 @@
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { RIDER_CONTACT } from '../data';
-import type { OrderStatus } from '../types';
+import { ORDER_STEPS, RIDER_CONTACT } from '../data';
+import { hapticLight, hapticMedium } from '../lib/haptics';
+import type { OrderRecord } from '../types';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
+import { formatRM } from './payments';
 import { RiderChatSheet } from './riderChatSheet';
 import { GlassSurface, StitchPillButton } from './stitchUi';
 import { TrackingMap } from './trackingMap';
@@ -15,200 +17,227 @@ import { AppImage } from './ui';
 const RIDER_AVATAR =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuAzHgLdX0YOS86mh9XCTI25Jfp3B3rtaFkqo1rw3sPXHIShW94u6XXZG9O-FdMjYyfoadG3VgRfdyTaanH3J9ITMzmy4rOSudki5us3xLhgu3e4nsx6xaOIvQYX_9nWLo7Hfe3S7wpRwr8O2lrJtL5xZGDREa-IHHvd2SiKWRg8DxgYhWiBd60plNflKjjY6g1Y_UO0RTF5V1BkhTtEUQN3dcddi1YCsxXeRCMVHZaH-TTf81qWW0ibkVdpCcTWsgdD2vs7XVSVlYbw';
 
-const STEPS: { key: OrderStatus; label: string; sub: string }[] = [
-  { key: 'placed', label: 'Order Placed', sub: '10:42 AM' },
-  { key: 'preparing', label: 'Brewing', sub: 'Your order is being prepared' },
-  { key: 'on-the-way', label: 'On the Way', sub: 'Rider is heading to you' },
-  { key: 'arrived', label: 'Delivered', sub: 'Enjoy your coffee!' },
-];
+const STEP_LABELS = ['Placed', 'Preparing', 'On the way', 'Delivered'];
 
-function etaForStep(step: number, orderType: 'delivery' | 'pickup'): string {
-  if (orderType === 'pickup') {
-    return step >= 3 ? 'Ready now' : step >= 2 ? '3 mins' : '8 mins';
-  }
+function etaForDelivery(step: number): string {
   if (step >= 3) return 'Arrived';
-  if (step >= 2) return '8 mins';
-  if (step >= 1) return '15 mins';
-  return '25 mins';
+  if (step >= 2) return '8 min';
+  if (step >= 1) return '15 min';
+  return '25 min';
 }
 
-function statusLine(step: number, orderType: 'delivery' | 'pickup'): string {
-  if (orderType === 'pickup') {
-    return step >= 3 ? 'Ready for pickup' : step >= 2 ? 'Order is ready' : 'Barista is crafting your drink';
+function statusForDelivery(step: number): string {
+  if (step >= 3) return 'Your order has been delivered';
+  if (step >= 2) return `${RIDER_CONTACT.name} is heading to you with your order`;
+  if (step >= 1) return 'Your coffee is being prepared at the branch';
+  return 'Order confirmed — we’ll start preparing soon';
+}
+
+async function dialRider(phone: string) {
+  const normalized = phone.replace(/[\s-]/g, '');
+  const urls = [`telprompt:${normalized}`, `tel:${normalized}`];
+  for (const url of urls) {
+    try {
+      await Linking.openURL(url);
+      return true;
+    } catch {
+      // try next scheme
+    }
   }
-  if (step >= 3) return 'Delivered';
-  if (step >= 2) return 'Rider is on the way';
-  if (step >= 1) return 'Your coffee is brewing';
-  return 'Order confirmed';
+  return false;
 }
 
-export function OrderTrackingScreen({
+/** Live map tracking — delivery orders only (Foodpanda-style). */
+export function DeliveryTrackingScreen({
   C,
-  orderRef,
-  trackingStep,
-  orderType,
-  branchName,
+  order,
   onBack,
   onDone,
 }: {
   C: ThemeColors;
-  orderRef: string;
-  trackingStep: number;
-  orderType: 'delivery' | 'pickup';
-  branchName: string;
+  order: OrderRecord;
   onBack: () => void;
   onDone: () => void;
 }) {
   const [chatOpen, setChatOpen] = useState(false);
-  const eta = etaForStep(trackingStep, orderType);
-  const status = statusLine(trackingStep, orderType);
-  const showRider = orderType === 'delivery' && trackingStep >= 2;
+  const trackingStep = order.trackingStep;
+  const eta = etaForDelivery(trackingStep);
+  const status = statusForDelivery(trackingStep);
+  const isActive = order.status === 'active';
+  const riderLive = isActive && trackingStep >= 2;
 
   const callRider = useCallback(async () => {
-    const url = `tel:${RIDER_CONTACT.phone}`;
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (!supported) {
-        Alert.alert('Cannot place call', 'Phone calls are not supported on this device.');
-        return;
-      }
-      await Linking.openURL(url);
-    } catch {
-      Alert.alert('Call failed', `Try calling ${RIDER_CONTACT.phone} manually.`);
+    void hapticMedium();
+    const ok = await dialRider(RIDER_CONTACT.phone);
+    if (!ok) {
+      Alert.alert('Call rider', `Dial ${RIDER_CONTACT.phone}`, [{ text: 'OK' }]);
     }
+  }, []);
+
+  const openChat = useCallback(() => {
+    void hapticLight();
+    setChatOpen(true);
   }, []);
 
   return (
     <View style={styles.root}>
-      <TrackingMap C={C} branchName={branchName} orderType={orderType} trackingStep={trackingStep} />
+      <TrackingMap
+        C={C}
+        branchName={order.branch}
+        trackingStep={trackingStep}
+        isLive={isActive}
+      />
 
       <View style={styles.mapHeader}>
         <Pressable onPress={onBack} style={[styles.headerBtn, { borderColor: C.glassBorderStrong }]}>
           <Ionicons name="arrow-back" size={22} color={C.textMuted} />
         </Pressable>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.orderId, { color: C.textMuted }]}>ORDER #{orderRef.replace('KE-', '')}</Text>
-          <Text style={[styles.headerTitle, { color: C.primary }]}>Live Tracking</Text>
-        </View>
-        <Pressable style={[styles.headerBtn, { borderColor: C.glassBorderStrong }]}>
-          <Ionicons name="help-circle-outline" size={22} color={C.textMuted} />
-        </Pressable>
-      </View>
-
-      <View style={styles.mapLegend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: C.primaryContainer }]} />
-          <Text style={[styles.legendText, { color: C.text }]}>{branchName}</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: C.accent }]} />
-          <Text style={[styles.legendText, { color: C.text }]}>
-            {orderType === 'delivery' ? 'Your address' : 'Pickup counter'}
-          </Text>
-        </View>
-      </View>
-
-      <GlassSurface style={[styles.sheet, STITCH_SHADOW_FLOAT]} strong intensity={55}>
-        <View style={styles.handle} />
-        <Text style={[styles.eta, { color: C.primary }]}>{eta}</Text>
-        <Text style={[styles.etaSub, { color: C.textMuted }]}>{status}</Text>
-
-        {showRider && (
-          <View style={[styles.riderCard, { borderColor: C.glassBorderStrong, backgroundColor: C.glassStrong }]}>
-            <View style={styles.riderLeft}>
-              <AppImage uri={RIDER_AVATAR} style={styles.riderAvatar} />
-              <View>
-                <Text style={[styles.riderName, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
-                <View style={styles.riderRating}>
-                  <Ionicons name="star" size={14} color={C.onTertiaryContainer} />
-                  <Text style={{ color: C.onTertiaryContainer, fontFamily: FONTS.semiBold, fontSize: 12 }}>
-                    {RIDER_CONTACT.rating}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <View style={styles.riderActions}>
-              <Pressable
-                onPress={() => setChatOpen(true)}
-                style={[styles.riderBtn, { borderColor: C.outlineVariant, backgroundColor: C.surfaceLowest }]}
-              >
-                <Ionicons name="chatbubble-outline" size={18} color={C.primary} />
-              </Pressable>
-              <Pressable
-                onPress={() => void callRider()}
-                style={[styles.riderBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
-              >
-                <Ionicons name="call" size={18} color={C.onPrimary} />
-              </Pressable>
-            </View>
+        {isActive && (
+          <View style={[styles.liveBadge, { backgroundColor: '#fff' }]}>
+            <View style={styles.liveDot} />
+            <Text style={[styles.liveBadgeText, { color: '#16a34a' }]}>Live tracking</Text>
           </View>
         )}
+        <View style={{ width: 40 }} />
+      </View>
 
-        <View style={styles.timeline}>
-          {STEPS.map((step, i) => {
+      {riderLive && (
+        <View style={[styles.mapEtaCard, STITCH_SHADOW_FLOAT, { backgroundColor: '#fff' }]}>
+          <Text style={[styles.mapEtaValue, { color: C.primary }]}>{eta}</Text>
+          <Text style={[styles.mapEtaLabel, { color: C.textMuted }]}>Estimated arrival</Text>
+        </View>
+      )}
+
+      <GlassSurface style={[styles.sheet, STITCH_SHADOW_FLOAT]} strong intensity={60}>
+        <View style={styles.handle} />
+
+        <View style={styles.etaRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.eta, { color: C.primary }]}>{eta}</Text>
+            <Text style={[styles.etaSub, { color: C.textMuted }]} numberOfLines={2}>
+              {status}
+            </Text>
+          </View>
+          <View style={[styles.orderPill, { backgroundColor: C.secondaryContainer }]}>
+            <Text style={[styles.orderPillText, { color: C.primary }]}>{formatRM(order.total)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.stepRow}>
+          {STEP_LABELS.map((label, i) => {
             const done = i <= trackingStep;
-            const active = i === trackingStep;
+            const active = isActive && i === trackingStep;
             return (
-              <View key={step.key} style={styles.timelineRow}>
-                <View style={styles.timelineRail}>
-                  {i < STEPS.length - 1 && (
-                    <View
-                      style={[
-                        styles.timelineLine,
-                        { backgroundColor: i < trackingStep ? C.primaryContainer : C.surfaceContainer },
-                      ]}
-                    />
-                  )}
-                  <View
-                    style={[
-                      styles.timelineDot,
-                      {
-                        borderColor: active ? C.accent : done ? C.primaryContainer : C.outlineVariant,
-                        backgroundColor: done ? C.primaryContainer : C.surfaceLowest,
-                      },
-                      active && styles.timelineDotActive,
-                    ]}
-                  >
-                    {done && !active && <Ionicons name="checkmark" size={12} color={C.onPrimary} />}
-                    {active && <View style={[styles.timelineDotInner, { backgroundColor: C.accent }]} />}
-                  </View>
+              <View key={label} style={styles.stepItem}>
+                <View
+                  style={[
+                    styles.stepDot,
+                    {
+                      backgroundColor: done ? C.primaryContainer : C.surfaceContainer,
+                      borderColor: active ? C.accent : 'transparent',
+                      borderWidth: active ? 2 : 0,
+                    },
+                  ]}
+                >
+                  {done && <Ionicons name="checkmark" size={10} color={C.onPrimary} />}
                 </View>
-                <View style={styles.timelineBody}>
-                  <Text
-                    style={[
-                      styles.timelineLabel,
-                      { color: active ? C.primary : done ? C.text : C.textFaint },
-                      active && { fontFamily: FONTS.bold },
-                    ]}
-                  >
-                    {step.label}
-                  </Text>
-                  <Text style={[styles.timelineSub, { color: C.textMuted }]}>{step.sub}</Text>
-                </View>
+                <Text
+                  style={[
+                    styles.stepLabel,
+                    { color: active ? C.primary : done ? C.text : C.textFaint },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {label}
+                </Text>
               </View>
             );
           })}
         </View>
 
-        {trackingStep >= STEPS.length - 1 && (
+        {riderLive ? (
+          <View style={[styles.riderCard, { borderColor: C.glassBorderStrong, backgroundColor: C.glassStrong }]}>
+            <View style={styles.riderLeft}>
+              <AppImage uri={RIDER_AVATAR} style={styles.riderAvatar} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.riderName, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
+                <Text style={[styles.riderMeta, { color: C.textMuted }]}>
+                  ★ {RIDER_CONTACT.rating} · Motorcycle delivery
+                </Text>
+              </View>
+            </View>
+            <View style={styles.riderActions}>
+              <Pressable
+                onPress={openChat}
+                style={[styles.actionBtn, { backgroundColor: C.surfaceLowest, borderColor: C.outlineVariant }]}
+              >
+                <Ionicons name="chatbubble-ellipses" size={18} color={C.primary} />
+                <Text style={[styles.actionLabel, { color: C.primary }]}>Message</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void callRider()}
+                style={[styles.actionBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
+              >
+                <Ionicons name="call" size={18} color={C.onPrimary} />
+                <Text style={[styles.actionLabel, { color: C.onPrimary }]}>Call</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.waitCard, { backgroundColor: C.secondaryContainer }]}>
+            <Ionicons name="cafe" size={20} color={C.primaryContainer} />
+            <Text style={[styles.waitText, { color: C.textMuted }]}>
+              {trackingStep < 2
+                ? 'Rider will be assigned when your order is ready for pickup from the branch.'
+                : 'Delivery complete'}
+            </Text>
+          </View>
+        )}
+
+        {order.orderNote ? (
+          <View style={[styles.orderNoteCard, { backgroundColor: C.secondaryContainer, borderColor: C.glassBorder }]}>
+            <Ionicons name="document-text-outline" size={16} color={C.primaryContainer} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.orderNoteLabel, { color: C.textFaint }]}>Order note</Text>
+              <Text style={[styles.orderNoteText, { color: C.text }]} numberOfLines={3}>
+                {order.orderNote}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.itemsScroll}>
+          {order.items.map((line) => (
+            <View key={`${line.item.id}-${line.sugar}`} style={[styles.itemChip, { borderColor: C.outlineVariant }]}>
+              <AppImage uri={line.item.image} style={styles.itemThumb} />
+              <Text style={[styles.itemChipText, { color: C.text }]} numberOfLines={1}>
+                {line.item.name} ×{line.qty}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {isActive && trackingStep >= ORDER_STEPS.length - 1 && (
           <StitchPillButton label="Done" onPress={onDone} C={C} />
         )}
       </GlassSurface>
 
-      <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} />
+      <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} onCall={() => void callRider()} />
     </View>
   );
 }
 
+/** @deprecated Use DeliveryTrackingScreen */
+export const OrderTrackingScreen = DeliveryTrackingScreen;
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#ece0dc' },
+  root: { flex: 1, backgroundColor: '#e8e0dc' },
   mapHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 12,
     zIndex: 2,
   },
   headerBtn: {
@@ -217,101 +246,130 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.88)',
+    backgroundColor: 'rgba(255,255,255,0.94)',
     borderWidth: 1,
   },
-  headerCenter: { alignItems: 'center' },
-  orderId: { fontFamily: FONTS.semiBold, fontSize: 11, letterSpacing: 1.2 },
-  headerTitle: { fontFamily: FONTS.display, fontSize: 22 },
-  mapLegend: {
-    position: 'absolute',
-    top: 72,
-    left: 24,
-    right: 24,
+  liveBadge: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
+  liveBadgeText: { fontFamily: FONTS.semiBold, fontSize: 12 },
+  mapEtaCard: {
+    position: 'absolute',
+    top: 64,
+    right: 16,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
     zIndex: 2,
   },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { fontFamily: FONTS.semiBold, fontSize: 11 },
+  mapEtaValue: { fontFamily: FONTS.display, fontSize: 22 },
+  mapEtaLabel: { fontFamily: FONTS.regular, fontSize: 10, marginTop: 2 },
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 32,
-    maxHeight: '58%',
+    borderColor: 'rgba(255,255,255,0.5)',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 28,
+    maxHeight: '48%',
     zIndex: 3,
   },
   handle: {
     position: 'absolute',
-    top: 10,
+    top: 8,
     alignSelf: 'center',
-    width: 48,
-    height: 5,
-    borderRadius: 3,
+    width: 44,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: '#d3c3c0',
   },
-  eta: { fontFamily: FONTS.display, fontSize: 36, textAlign: 'center' },
-  etaSub: { fontFamily: FONTS.regular, fontSize: 16, textAlign: 'center', marginBottom: 16 },
-  riderCard: {
-    flexDirection: 'row',
+  etaRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
+  eta: { fontFamily: FONTS.display, fontSize: 32 },
+  etaSub: { fontFamily: FONTS.regular, fontSize: 14, marginTop: 4, lineHeight: 20 },
+  orderPill: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  orderPillText: { fontFamily: FONTS.bold, fontSize: 14 },
+  stepRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
+  stepItem: { alignItems: 'center', flex: 1, gap: 6 },
+  stepDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 14,
+    justifyContent: 'center',
+  },
+  stepLabel: { fontFamily: FONTS.semiBold, fontSize: 9, textAlign: 'center' },
+  riderCard: {
+    padding: 12,
     borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: 10,
+    gap: 12,
   },
-  riderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  riderAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: '#fff' },
-  riderName: { fontFamily: FONTS.semiBold, fontSize: 14 },
-  riderRating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  riderActions: { flexDirection: 'row', gap: 8 },
-  riderBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  riderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  riderAvatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, borderColor: '#fff' },
+  riderName: { fontFamily: FONTS.semiBold, fontSize: 15 },
+  riderMeta: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 2 },
+  riderActions: { flexDirection: 'row', gap: 10 },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 12,
     borderWidth: 1,
   },
-  timeline: { gap: 4, marginBottom: 8 },
-  timelineRow: { flexDirection: 'row', gap: 12, minHeight: 52 },
-  timelineRail: { width: 24, alignItems: 'center' },
-  timelineLine: {
-    position: 'absolute',
-    top: 22,
-    bottom: -8,
-    width: 2,
-    left: 11,
-  },
-  timelineDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
+  actionLabel: { fontFamily: FONTS.semiBold, fontSize: 13 },
+  waitCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-    zIndex: 1,
+    gap: 10,
+    padding: 12,
+    borderRadius: 14,
+    marginBottom: 10,
   },
-  timelineDotActive: {
-    shadowColor: '#ffba38',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 4,
+  waitText: { flex: 1, fontFamily: FONTS.regular, fontSize: 13, lineHeight: 18 },
+  orderNoteCard: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 10,
   },
-  timelineDotInner: { width: 8, height: 8, borderRadius: 4 },
-  timelineBody: { flex: 1, paddingTop: 2 },
-  timelineLabel: { fontFamily: FONTS.semiBold, fontSize: 14 },
-  timelineSub: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 2 },
+  orderNoteLabel: { fontFamily: FONTS.semiBold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 },
+  orderNoteText: { fontFamily: FONTS.regular, fontSize: 13, marginTop: 4, lineHeight: 18 },
+  itemsScroll: { marginBottom: 8 },
+  itemChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 12,
+    paddingLeft: 4,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  itemThumb: { width: 36, height: 36, borderRadius: 10 },
+  itemChipText: { fontFamily: FONTS.semiBold, fontSize: 12, maxWidth: 120 },
 });

@@ -60,6 +60,8 @@ export interface OrderRecord {
   payMethod: 'tng' | 'card' | 'banking';
   createdAt: number;
   pointsEarned: number;
+  pointsRedeemed?: number;
+  orderNote?: string;
 }
 
 export interface RewardRedemption {

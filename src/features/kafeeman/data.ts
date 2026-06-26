@@ -66,6 +66,23 @@ export function createSeedOrders(): OrderRecord[] {
       payMethod: 'tng',
       createdAt: Date.now() - 1000 * 60 * 18,
       pointsEarned: 33,
+      orderNote: 'Less ice on both lattes, please leave at guard house.',
+    },
+    {
+      id: 'KE-20250626-1188',
+      items: [{ item: MENU[3], qty: 1, sugar: '50%', ice: 'Less Ice' }],
+      subtotal: 15.5,
+      discount: 0,
+      deliveryFee: 0,
+      total: 15.5,
+      status: 'active',
+      trackingStep: 1,
+      branch: 'Penang',
+      orderType: 'pickup',
+      payMethod: 'card',
+      createdAt: Date.now() - 1000 * 60 * 8,
+      pointsEarned: 16,
+      orderNote: 'Extra hot matcha, no straw.',
     },
     {
       id: 'KE-20250620-4821',
@@ -141,6 +158,13 @@ export const ORDER_STEPS = [
   { key: 'preparing' as OrderStatus, label: 'Being Prepared', sub: 'Barista is crafting your drink' },
   { key: 'on-the-way' as OrderStatus, label: 'On The Way', sub: 'Rider is heading to you now' },
   { key: 'arrived' as OrderStatus, label: 'Delivered', sub: 'Enjoy your coffee! ☕' },
+];
+
+export const PICKUP_ORDER_STEPS = [
+  { key: 'placed' as OrderStatus, label: 'Order Received', sub: 'Confirmed at the branch' },
+  { key: 'preparing' as OrderStatus, label: 'Being Prepared', sub: 'Barista is crafting your order' },
+  { key: 'on-the-way' as OrderStatus, label: 'Ready for Pickup', sub: 'Collect at the counter' },
+  { key: 'arrived' as OrderStatus, label: 'Collected', sub: 'Enjoy your coffee!' },
 ];
 
 export type OnboardingSlideIcon = {

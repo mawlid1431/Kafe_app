@@ -28,7 +28,7 @@ import {
   PROMOS,
   REWARD_TIERS,
 } from './data';
-import { calcPromoDiscount, findPromo, pointsForSpend, type PromoCode } from './lib/promos';
+import { calcPromoDiscount, findPromo, maxRedeemablePoints, pointsForSpend, pointsToRmDiscount, POINTS_PER_RM, type PromoCode } from './lib/promos';
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess, hapticWarning } from './lib/haptics';
 import { ToastProvider, useToast } from './native/feedback';
 import { FONTS } from './native/fonts';
@@ -69,7 +69,9 @@ import {
   StitchStickyFooter,
   StitchTopBar,
 } from './native/stitchUi';
-import { OrderTrackingScreen } from './native/orderTracking';
+import { OrderNoteField, PointsRedeemSection } from './native/cartExtras';
+import { DeliveryTrackingScreen } from './native/orderTracking';
+import { PickupOrderScreen } from './native/pickupOrderScreen';
 import { OrdersScreen } from './native/ordersScreen';
 import { RewardsScreen } from './native/rewardsScreen';
 import { FavoritesScreen } from './native/favoritesScreen';
@@ -140,12 +142,17 @@ function KafeemanApp() {
   const [sugar, setSugar] = useState('50%');
   const [ice, setIce] = useState('Full Ice');
   const [tngPin, setTngPin] = useState<string[]>([]);
+  const [orderNote, setOrderNote] = useState('');
+  const [usePointsEnabled, setUsePointsEnabled] = useState(false);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const otpRefs = useRef<(TextInput | null)[]>([]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartTotal = cart.reduce((a, c) => a + c.item.price * c.qty, 0);
   const discountAmount = calcPromoDiscount(cartTotal, appliedPromo);
-  const totalDue = orderTotal(cartTotal, orderType === 'delivery', discountAmount);
+  const orderTotalBeforePoints = orderTotal(cartTotal, orderType === 'delivery', discountAmount, 0);
+  const effectivePointsRedeem = usePointsEnabled ? pointsToRedeem : 0;
+  const totalDue = orderTotal(cartTotal, orderType === 'delivery', discountAmount, effectivePointsRedeem);
   const filtered = useMemo(() => {
     let items = category === 'All' ? MENU : MENU.filter((m) => m.category === category);
     if (searchQuery.trim()) {
@@ -175,7 +182,16 @@ function KafeemanApp() {
       : Math.max(0, (REWARD_TIERS[REWARD_TIERS.indexOf(rewardTier) + 1]?.min ?? 1500) - points);
   const showNav = ['home', 'menu', 'cart', 'orders', 'profile'].includes(screen);
   const showTopBar = screen === 'home' || screen === 'menu';
-  const showLiquidBg = ['home', 'menu', 'cart', 'orders', 'profile', 'rewards', 'favorites'].includes(screen);
+  const viewingOrder = useMemo(() => {
+    const id = activeOrderId ?? orderRef;
+    const found = orders.find((o) => o.id === id);
+    if (!found) return null;
+    if (found.status !== 'active') return found;
+    return { ...found, trackingStep: Math.max(found.trackingStep, trackingStep) };
+  }, [orders, activeOrderId, orderRef, trackingStep]);
+  const showLiquidBg =
+    ['home', 'menu', 'cart', 'orders', 'profile', 'rewards', 'favorites'].includes(screen) ||
+    (screen === 'order-tracking' && viewingOrder?.orderType === 'pickup');
   const showFloatingCart = cartCount > 0 && FLOATING_CART_SCREENS.includes(screen);
   const floatingCartBottom =
     screen === 'product-detail' ? 96 : showNav ? 110 : insets.bottom + 24;
@@ -275,7 +291,9 @@ function KafeemanApp() {
     (paid: number) => {
       const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
       const total = paid;
+      const redeemed = effectivePointsRedeem;
       const earned = pointsForSpend(total);
+      const trimmedNote = orderNote.trim();
       const newOrder: OrderRecord = {
         id: orderRef,
         items: cart.map((c) => ({ ...c })),
@@ -290,27 +308,46 @@ function KafeemanApp() {
         payMethod,
         createdAt: Date.now(),
         pointsEarned: earned,
+        pointsRedeemed: redeemed > 0 ? redeemed : undefined,
+        orderNote: trimmedNote || undefined,
       };
       setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== orderRef)]);
-      setPoints((p) => p + earned);
-      setPointsHistory((prev) => [
-        { id: `p-${orderRef}`, label: `Order ${orderRef}`, delta: earned, date: 'Today' },
-        ...prev,
-      ]);
+      if (redeemed > 0) {
+        setPoints((p) => p - redeemed + earned);
+        setPointsHistory((prev) => [
+          { id: `p-${orderRef}`, label: `Order ${orderRef}`, delta: earned, date: 'Today' },
+          { id: `pr-${orderRef}`, label: `Points used on ${orderRef}`, delta: -redeemed, date: 'Today' },
+          ...prev,
+        ]);
+      } else {
+        setPoints((p) => p + earned);
+        setPointsHistory((prev) => [
+          { id: `p-${orderRef}`, label: `Order ${orderRef}`, delta: earned, date: 'Today' },
+          ...prev,
+        ]);
+      }
       setActiveOrderId(orderRef);
       setTrackingStep(0);
       setPaidAmount(total);
       setCart([]);
+      setOrderNote('');
+      setUsePointsEnabled(false);
+      setPointsToRedeem(0);
       setAppliedPromo(null);
       setPromoCode('');
       setPromoMessage('');
       void hapticSuccess();
-      showToast(`Order ${orderRef} confirmed`, 'success', { label: 'Track', onPress: () => setScreen('order-tracking') });
+      showToast(`Order ${orderRef} confirmed`, 'success', {
+        label: orderType === 'delivery' ? 'Track delivery' : 'View order',
+        onPress: () => setScreen('order-tracking'),
+      });
     },
     [
       cart,
       cartTotal,
       discountAmount,
+      effectivePointsRedeem,
+      orderNote,
       orderRef,
       orderType,
       payMethod,
@@ -401,6 +438,9 @@ function KafeemanApp() {
 
   useEffect(() => {
     if (screen !== 'order-tracking') return;
+    const orderId = activeOrderId ?? orderRef;
+    const order = orders.find((o) => o.id === orderId);
+    if (!order || order.status !== 'active') return;
     if (trackingStep >= ORDER_STEPS.length - 1) {
       setOrders((prev) =>
         prev.map((o) =>
@@ -421,7 +461,7 @@ function KafeemanApp() {
       );
     }, 5000);
     return () => clearTimeout(t);
-  }, [screen, trackingStep, activeOrderId, orderRef]);
+  }, [screen, trackingStep, activeOrderId, orderRef, orders]);
 
   const BackBtn = ({ onPress }: { onPress: () => void }) => (
     <Pressable onPress={onPress} style={styles.backBtn}>
@@ -1068,6 +1108,27 @@ function KafeemanApp() {
                       {promoMessage}
                     </Text>
                   ) : null}
+                  <OrderNoteField C={C} value={orderNote} onChangeText={setOrderNote} />
+                  <PointsRedeemSection
+                    C={C}
+                    balance={points}
+                    enabled={usePointsEnabled}
+                    pointsToRedeem={pointsToRedeem}
+                    orderTotalBeforePoints={orderTotalBeforePoints}
+                    onToggle={(on) => {
+                      setUsePointsEnabled(on);
+                      if (on) {
+                        const max = maxRedeemablePoints(points, orderTotalBeforePoints);
+                        const preset = ([100, 500, 1000] as const).find((p) => p <= max) ?? max;
+                        setPointsToRedeem(
+                          preset >= POINTS_PER_RM ? preset : max >= POINTS_PER_RM ? max : 0,
+                        );
+                      } else {
+                        setPointsToRedeem(0);
+                      }
+                    }}
+                    onSelectPoints={setPointsToRedeem}
+                  />
                 <GlassCard level="sheet" style={{ marginTop: 12 }}>
                   <View style={styles.summaryRow}>
                     <Text style={{ color: C.textMuted }}>Subtotal</Text>
@@ -1077,6 +1138,16 @@ function KafeemanApp() {
                     <View style={styles.summaryRow}>
                       <Text style={{ color: C.textMuted }}>Discount ({appliedPromo?.code})</Text>
                       <Text style={{ color: '#22c55e' }}>- RM {discountAmount.toFixed(2)}</Text>
+                    </View>
+                  )}
+                  {effectivePointsRedeem > 0 && (
+                    <View style={styles.summaryRow}>
+                      <Text style={{ color: C.textMuted }}>
+                        Points ({effectivePointsRedeem.toLocaleString()} pts)
+                      </Text>
+                      <Text style={{ color: '#22c55e' }}>
+                        - RM {pointsToRmDiscount(effectivePointsRedeem).toFixed(2)}
+                      </Text>
                     </View>
                   )}
                   <View style={styles.summaryRow}>
@@ -1138,7 +1209,9 @@ function KafeemanApp() {
                   cart={cart}
                   cartTotal={cartTotal}
                   discountAmount={discountAmount}
+                  pointsRedeemed={effectivePointsRedeem}
                   promoCode={appliedPromo?.code}
+                  orderNote={orderNote}
                   orderType={orderType}
                   orderRef={orderRef}
                   selectedBranch={selectedBranch}
@@ -1250,20 +1323,39 @@ function KafeemanApp() {
               Your coffee is being prepared. Track your order in real time.
             </Text>
             <View style={{ height: 24, width: '100%' }} />
-            <PrimaryBtn label="Track Order" onPress={startTracking} />
+            <PrimaryBtn
+              label={orderType === 'delivery' ? 'Track delivery' : 'View pickup status'}
+              onPress={startTracking}
+            />
             <View style={{ height: 12, width: '100%' }} />
             <GhostBtn label="Back to Home" onPress={() => go('home')} />
           </ScrollView>
         );
 
       case 'order-tracking':
+        if (!viewingOrder) {
+          return (
+            <View style={[styles.flex, styles.center, styles.padH]}>
+              <Text style={styles.bodyText}>Order not found.</Text>
+              <View style={{ height: 16, width: '100%' }} />
+              <GhostBtn label="Back to Orders" onPress={() => go('orders')} />
+            </View>
+          );
+        }
+        if (viewingOrder.orderType === 'pickup') {
+          return (
+            <PickupOrderScreen
+              C={C}
+              order={viewingOrder}
+              onBack={() => go('orders')}
+              onDone={() => go('home')}
+            />
+          );
+        }
         return (
-          <OrderTrackingScreen
+          <DeliveryTrackingScreen
             C={C}
-            orderRef={orderRef}
-            trackingStep={trackingStep}
-            orderType={orderType}
-            branchName={selectedBranch}
+            order={viewingOrder}
             onBack={() => go('orders')}
             onDone={() => go('home')}
           />
@@ -1383,7 +1475,11 @@ function KafeemanApp() {
                 ]);
               }
               void hapticSuccess();
-              showToast(`Redeemed ${title}`, 'success');
+              showToast(
+                cost > 0 ? `Redeemed ${title} — show at pickup or use on your next order` : `Enjoy your ${title}!`,
+                'success',
+                cost > 0 ? { label: 'Order now', onPress: () => go('menu') } : undefined,
+              );
               return true;
             }}
           />

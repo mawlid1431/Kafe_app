@@ -29,3 +29,15 @@ export function calcPromoDiscount(subtotal: number, promo: PromoCode | null): nu
 export function pointsForSpend(amount: number): number {
   return Math.max(1, Math.floor(amount));
 }
+
+/** 100 points = RM 1 off */
+export const POINTS_PER_RM = 100;
+
+export function pointsToRmDiscount(points: number): number {
+  return Math.floor(points / POINTS_PER_RM);
+}
+
+export function maxRedeemablePoints(balance: number, orderTotalBeforePoints: number): number {
+  const capByTotal = Math.floor(orderTotalBeforePoints) * POINTS_PER_RM;
+  return Math.min(balance, Math.max(0, capByTotal));
+}
