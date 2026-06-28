@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -97,6 +96,7 @@ import { PickupOrderScreen } from './native/pickupOrderScreen';
 import { OrdersScreen, type OrderFilterTab } from './native/ordersScreen';
 import { RewardsScreen } from './native/rewardsScreen';
 import { FavoritesScreen } from './native/favoritesScreen';
+import { DeliveryTrackingScreen } from './native/orderTracking';
 import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
 import { AppImage } from './native/ui';
@@ -120,11 +120,6 @@ import type {
   TabKey,
   UserProfile,
 } from './types';
-
-/** Loaded on demand so react-native-maps is not required for the initial app bundle. */
-const DeliveryTrackingScreen = lazy(() =>
-  import('./native/orderTracking').then((module) => ({ default: module.DeliveryTrackingScreen })),
-);
 
 const FLOATING_CART_SCREENS: Screen[] = ['home', 'menu', 'product-detail', 'favorites'];
 
@@ -208,6 +203,11 @@ function KafeemanApp() {
   const [receiptOrder, setReceiptOrder] = useState<OrderRecord | null>(null);
   const [addressReturn, setAddressReturn] = useState<Screen>('checkout');
   const splashNavPending = useRef(false);
+  const trackingNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const screenRef = useRef<Screen>(screen);
+  const ordersRef = useRef(orders);
+  screenRef.current = screen;
+  ordersRef.current = orders;
   const otpRefs = useRef<(TextInput | null)[]>([]);
 
   const selectedAddress = useMemo(
@@ -467,13 +467,21 @@ function KafeemanApp() {
       setScreen('order-receipt');
       return;
     }
+    if (trackingNavTimerRef.current) {
+      clearTimeout(trackingNavTimerRef.current);
+      trackingNavTimerRef.current = null;
+    }
+    const sameOrder = order.id === activeOrderId || order.id === orderRef;
+    if (sameOrder && screenRef.current === 'order-tracking') {
+      return;
+    }
     setOrderRef(order.id);
-    setTrackingStep(order.trackingStep);
+    setTrackingStep((prev) => (sameOrder ? Math.max(prev, order.trackingStep) : order.trackingStep));
     setOrderType(order.orderType);
     setSelectedBranch(order.branch);
     setActiveOrderId(order.id);
     setScreen('order-tracking');
-  }, []);
+  }, [activeOrderId, orderRef]);
 
   const cancelOrder = useCallback(
     (orderId: string) => {
@@ -540,15 +548,32 @@ function KafeemanApp() {
     [go, showToast],
   );
 
-  const startTracking = () => {
-    const active = orders.find((o) => o.id === (activeOrderId ?? orderRef) && o.status === 'active');
+  const startTracking = useCallback(() => {
+    if (trackingNavTimerRef.current) {
+      clearTimeout(trackingNavTimerRef.current);
+      trackingNavTimerRef.current = null;
+    }
+    const active = ordersRef.current.find(
+      (o) => o.id === (activeOrderId ?? orderRef) && o.status === 'active',
+    );
     if (active) {
       trackOrder(active);
       return;
     }
     setTrackingStep(0);
     setScreen('order-tracking');
-  };
+  }, [activeOrderId, orderRef, trackOrder]);
+
+  const queueAutoTracking = useCallback(
+    (delayMs: number) => {
+      if (trackingNavTimerRef.current) clearTimeout(trackingNavTimerRef.current);
+      trackingNavTimerRef.current = setTimeout(() => {
+        trackingNavTimerRef.current = null;
+        if (screenRef.current === 'order-success') startTracking();
+      }, delayMs);
+    },
+    [startTracking],
+  );
 
   const openCheckout = () => {
     setOrderRef(generateOrderRef());
@@ -570,7 +595,7 @@ function KafeemanApp() {
     setPaidAmount(totalDue);
     completeOrder(totalDue);
     setScreen('order-success');
-    setTimeout(startTracking, 1500);
+    queueAutoTracking(1500);
   };
 
   const handleTngPinKey = (key: number | 'del') => {
@@ -591,7 +616,7 @@ function KafeemanApp() {
         setTngPhase('pin');
         completeOrder(totalDue);
         setScreen('order-success');
-        setTimeout(startTracking, 1200);
+        queueAutoTracking(1200);
       }, 1400);
     }, 1800);
   };
@@ -667,7 +692,7 @@ function KafeemanApp() {
   useEffect(() => {
     if (screen !== 'order-tracking') return;
     const orderId = activeOrderId ?? orderRef;
-    const order = orders.find((o) => o.id === orderId);
+    const order = ordersRef.current.find((o) => o.id === orderId);
     if (!order || order.status !== 'active') return;
     if (trackingStep >= ORDER_STEPS.length - 1) {
       setOrders((prev) =>
@@ -690,7 +715,14 @@ function KafeemanApp() {
       );
     }, delayMs);
     return () => clearTimeout(t);
-  }, [screen, trackingStep, activeOrderId, orderRef, orders]);
+  }, [screen, trackingStep, activeOrderId, orderRef]);
+
+  useEffect(
+    () => () => {
+      if (trackingNavTimerRef.current) clearTimeout(trackingNavTimerRef.current);
+    },
+    [],
+  );
 
   const BackBtn = ({ onPress }: { onPress: () => void }) => (
     <Pressable onPress={onPress} style={styles.backBtn}>
@@ -1615,7 +1647,7 @@ function KafeemanApp() {
             onPay={() => {
               completeOrder(totalDue);
               setScreen('order-success');
-              setTimeout(startTracking, 1500);
+              queueAutoTracking(1500);
             }}
           />
         );
@@ -1696,14 +1728,6 @@ function KafeemanApp() {
           );
         }
         return (
-          <Suspense
-            fallback={
-              <View style={[styles.flex, styles.center, { backgroundColor: C.bg }]}>
-                <ActivityIndicator size="large" color={C.primaryContainer} />
-                <Text style={[styles.bodyText, { marginTop: 12 }]}>Loading map…</Text>
-              </View>
-            }
-          >
             <DeliveryTrackingScreen
               C={C}
               order={viewingOrder}
@@ -1711,7 +1735,6 @@ function KafeemanApp() {
               onDone={() => go('home')}
               onCancel={() => cancelOrder(viewingOrder.id)}
             />
-          </Suspense>
         );
 
       case 'order-receipt':

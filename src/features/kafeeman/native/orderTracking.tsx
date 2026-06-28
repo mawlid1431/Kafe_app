@@ -92,7 +92,16 @@ export function DeliveryTrackingScreen({
   const liveUpdatedLabel = useMemoLiveAge(liveTracking?.updatedAt, liveClock);
 
   const handleLiveUpdate = useCallback((state: LiveTrackingState) => {
-    setLiveTracking(state);
+    setLiveTracking((prev) => {
+      if (
+        prev &&
+        prev.etaMinutes === state.etaMinutes &&
+        Math.abs(prev.routeProgress - state.routeProgress) < 0.03
+      ) {
+        return prev;
+      }
+      return state;
+    });
   }, []);
 
   const callRider = useCallback(async () => {

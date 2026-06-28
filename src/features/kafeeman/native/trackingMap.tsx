@@ -87,6 +87,7 @@ export function TrackingMap({
 }) {
   const mapRef = useRef<MapView>(null);
   const pulse = useRef(new Animated.Value(1)).current;
+  const riderRef = useRef<Coord>({ latitude: 0, longitude: 0 });
   const [liveOffset, setLiveOffset] = useState(0);
   const [followRider, setFollowRider] = useState(true);
 
@@ -98,6 +99,7 @@ export function TrackingMap({
 
   useEffect(() => {
     setLiveOffset(0);
+    setFollowRider(true);
   }, [trackingStep, branchName]);
 
   useEffect(() => {
@@ -113,6 +115,7 @@ export function TrackingMap({
     () => interpolateCoord(origin, destination, routeProgress),
     [destination, origin, routeProgress],
   );
+  riderRef.current = rider;
   const etaMinutes = etaMinutesForProgress(routeProgress, trackingStep);
 
   useEffect(() => {
@@ -123,20 +126,41 @@ export function TrackingMap({
     () => regionForRoute(origin, destination, rider),
     [destination, origin, rider],
   );
+  const overviewRegionRef = useRef(overviewRegion);
+  overviewRegionRef.current = overviewRegion;
 
   const focusRider = useCallback(() => {
     setFollowRider(true);
     if (trackingStep < 2) {
-      mapRef.current?.animateToRegion(overviewRegion, 500);
+      mapRef.current?.animateToRegion(overviewRegionRef.current, 500);
       return;
     }
-    mapRef.current?.animateToRegion(regionAround(rider, trackingStep >= 3 ? 0.008 : 0.011), 600);
-  }, [overviewRegion, rider, trackingStep]);
+    mapRef.current?.animateToRegion(
+      regionAround(riderRef.current, trackingStep >= 3 ? 0.008 : 0.011),
+      600,
+    );
+  }, [trackingStep]);
 
+  // Focus map once when the delivery step or branch changes — not on every rider tick.
   useEffect(() => {
-    if (!followRider) return;
-    focusRider();
-  }, [followRider, focusRider]);
+    if (trackingStep < 2) {
+      mapRef.current?.animateToRegion(overviewRegionRef.current, 500);
+      return;
+    }
+    mapRef.current?.animateToRegion(
+      regionAround(riderRef.current, trackingStep >= 3 ? 0.008 : 0.011),
+      600,
+    );
+  }, [trackingStep, branchName]);
+
+  // Gentle follow while en route — throttled so the map does not jitter every tick.
+  useEffect(() => {
+    if (!followRider || trackingStep < 2 || trackingStep >= 3) return;
+    const id = setInterval(() => {
+      mapRef.current?.animateToRegion(regionAround(riderRef.current, 0.011), 350);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [followRider, trackingStep]);
 
   useEffect(() => {
     if (trackingStep < 2) return;
