@@ -68,12 +68,14 @@ import {
 } from './native/appShell';
 import {
   StitchEmptyState,
+  ScreenHeader,
   StitchStoreBar,
   TabScreenHeader,
 } from './native/screenChrome';
 import {
   GlassSurface,
   GlassCard,
+  GlassInputField,
   GlassSearchBar,
   LiquidGlassBackground,
   PROFILE_AVATAR,
@@ -162,6 +164,10 @@ function KafeemanApp() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [showPw, setShowPw] = useState(false);
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
   const [promoMessage, setPromoMessage] = useState('');
@@ -733,17 +739,24 @@ function KafeemanApp() {
               </View>
               <View style={styles.dots}>
                 {ONBOARDING_SLIDES.map((_, i) => (
-                  <Pressable key={i} onPress={() => setSlide(i)}>
-                    <View style={[styles.dot, i === slide && styles.dotActive]} />
-                  </Pressable>
+                  <Pressable key={i} onPress={() => setSlide(i)} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
+                  <View style={[styles.dot, i === slide && styles.dotActive]} />
+                </Pressable>
                 ))}
               </View>
             </ScrollView>
             <View style={[styles.onboardFooter, { paddingBottom: insets.bottom + 16 }]}>
               {slide < 2 ? (
-                <PrimaryBtn label="Next →" onPress={() => setSlide(slide + 1)} />
+                <StitchPillButton label="Next" icon="arrow-forward" onPress={() => setSlide(slide + 1)} C={C} />
               ) : (
-                <PrimaryBtn label="Get Started" onPress={() => { setOnboardingDone(true); setScreen('auth'); }} />
+                <StitchPillButton
+                  label="Get Started"
+                  onPress={() => {
+                    setOnboardingDone(true);
+                    setScreen('auth');
+                  }}
+                  C={C}
+                />
               )}
             </View>
           </View>
@@ -824,100 +837,121 @@ function KafeemanApp() {
 
       case 'signup':
         return (
-          <ScrollView contentContainerStyle={styles.padH}>
-            <View style={styles.rowHeader}>
-              <BackBtn onPress={() => setScreen('auth')} />
-              <Text style={styles.headerTitle}>Create Account</Text>
-            </View>
-            {['Full Name', 'Email', 'Password', 'Confirm Password'].map((label) => (
-              <View key={label} style={{ marginBottom: 16 }}>
-                <Text style={styles.label}>{label}</Text>
-                <TextInput
-                  placeholder={label === 'Full Name' ? 'Ahmad Eman' : label === 'Email' ? 'ahmad@email.com' : '••••••••'}
-                  placeholderTextColor={C.textFaint}
-                  secureTextEntry={label.includes('Password') && !showPw}
-                  keyboardType={label === 'Email' ? 'email-address' : 'default'}
-                  style={styles.input}
-                />
-              </View>
-            ))}
-            <Pressable onPress={() => setShowPw(!showPw)} style={{ marginBottom: 16 }}>
-              <Text style={{ color: C.primary, fontSize: 13 }}>{showPw ? 'Hide password' : 'Show password'}</Text>
-            </Pressable>
-            <PrimaryBtn label="Continue" onPress={() => setScreen('otp')} />
+          <ScrollView contentContainerStyle={[styles.padH, { paddingBottom: 40 }]} keyboardShouldPersistTaps="handled">
+            <ScreenHeader C={C} title="Create Account" onBack={() => setScreen('auth')} />
+            <GlassInputField
+              C={C}
+              label="Full Name"
+              value={signupName}
+              onChangeText={setSignupName}
+              placeholder="Ahmad Eman"
+              autoCapitalize="words"
+            />
+            <GlassInputField
+              C={C}
+              label="Email"
+              value={signupEmail}
+              onChangeText={setSignupEmail}
+              placeholder="ahmad@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <GlassInputField
+              C={C}
+              label="Password"
+              value={signupPassword}
+              onChangeText={setSignupPassword}
+              placeholder="••••••••"
+              secureTextEntry={!showPw}
+            />
+            <GlassInputField
+              C={C}
+              label="Confirm Password"
+              value={signupConfirmPassword}
+              onChangeText={setSignupConfirmPassword}
+              placeholder="••••••••"
+              secureTextEntry={!showPw}
+            />
+            <StitchPillButton
+              label={showPw ? 'Hide password' : 'Show password'}
+              onPress={() => setShowPw(!showPw)}
+              C={C}
+              variant="outline"
+            />
+            <View style={{ height: 16 }} />
+            <StitchPillButton label="Continue" onPress={() => setScreen('otp')} C={C} />
           </ScrollView>
         );
 
       case 'otp':
         return (
-          <View style={styles.padH}>
-            <View style={styles.rowHeader}>
-              <BackBtn onPress={() => setScreen('signup')} />
-              <Text style={styles.headerTitle}>Verify Phone</Text>
-            </View>
-            <View style={styles.otpIcon}>
-              <Ionicons name="call" size={28} color={C.primary} />
-            </View>
-            <Text style={styles.screenTitleSm}>Enter OTP Code</Text>
-            <Text style={[styles.bodyText, { marginBottom: 24 }]}>We sent a 6-digit code to +60 12-345 6789</Text>
+          <View style={[styles.padH, { flex: 1, paddingBottom: 24 }]}>
+            <ScreenHeader C={C} title="Verify Phone" onBack={() => setScreen('signup')} />
+            <GlassCard level="sheet" style={styles.otpHeroCard}>
+              <View style={[styles.otpIcon, { backgroundColor: C.secondaryContainer }]}>
+                <Ionicons name="call-outline" size={26} color={C.primaryContainer} />
+              </View>
+              <Text style={[styles.screenTitleSm, { textAlign: 'center' }]}>Enter OTP Code</Text>
+              <Text style={[styles.bodyText, { textAlign: 'center', marginTop: 8 }]}>
+                We sent a 6-digit code to +60 12-345 6789
+              </Text>
+            </GlassCard>
             <View style={styles.otpRow}>
               {otp.map((d, i) => (
-                <TextInput
-                  key={i}
-                  ref={(el) => {
-                    otpRefs.current[i] = el;
-                  }}
-                  maxLength={1}
-                  value={d}
-                  keyboardType="number-pad"
-                  onChangeText={(v) => {
-                    const digit = v.replace(/\D/g, '');
-                    setOtp((prev) => {
-                      const next = [...prev];
-                      next[i] = digit;
-                      return next;
-                    });
-                    if (digit && i < 5) otpRefs.current[i + 1]?.focus();
-                  }}
-                  style={[styles.otpBox, d ? { borderColor: C.primary, backgroundColor: `${C.primary}22` } : null]}
-                />
+                <GlassSurface key={i} level="inset" style={[styles.otpBoxGlass, d ? styles.otpBoxFilled : null]}>
+                  <TextInput
+                    ref={(el) => {
+                      otpRefs.current[i] = el;
+                    }}
+                    maxLength={1}
+                    value={d}
+                    keyboardType="number-pad"
+                    onChangeText={(v) => {
+                      const digit = v.replace(/\D/g, '');
+                      setOtp((prev) => {
+                        const next = [...prev];
+                        next[i] = digit;
+                        return next;
+                      });
+                      if (digit && i < 5) otpRefs.current[i + 1]?.focus();
+                    }}
+                    style={[styles.otpInput, { color: C.text }]}
+                  />
+                </GlassSurface>
               ))}
             </View>
-            <PrimaryBtn label="Verify" onPress={() => setScreen('profile-setup')} />
+            <StitchPillButton label="Verify" onPress={() => setScreen('profile-setup')} C={C} />
           </View>
         );
 
       case 'profile-setup':
         return (
-          <ScrollView contentContainerStyle={styles.padH}>
-            <Text style={styles.screenTitle}>Set Up Profile</Text>
+          <ScrollView contentContainerStyle={[styles.padH, { paddingBottom: 40 }]} keyboardShouldPersistTaps="handled">
+            <Text style={[styles.screenTitle, { marginTop: 8 }]}>Set Up Profile</Text>
             <Text style={[styles.bodyText, { marginBottom: 24 }]}>Tell us a little about yourself</Text>
-            <View style={styles.avatarWrap}>
-              <Ionicons name="person" size={40} color={C.primary} />
-            </View>
-            <View style={{ marginBottom: 16 }}>
-              <Text style={styles.label}>Full name</Text>
-              <TextInput
-                value={setupName}
-                onChangeText={setSetupName}
-                placeholder="Ahmad Eman"
-                placeholderTextColor={C.textFaint}
-                style={styles.input}
-              />
-            </View>
-            <View style={{ marginBottom: 24 }}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                value={setupEmail}
-                onChangeText={setSetupEmail}
-                placeholder="ahmad@email.com"
-                placeholderTextColor={C.textFaint}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={styles.input}
-              />
-            </View>
-            <PrimaryBtn
+            <GlassCard level="sheet" style={styles.profileAvatarCard}>
+              <View style={[styles.avatarWrap, { backgroundColor: C.secondaryContainer, borderColor: C.glassBorderStrong }]}>
+                <Ionicons name="person-outline" size={36} color={C.primaryContainer} />
+              </View>
+            </GlassCard>
+            <GlassInputField
+              C={C}
+              label="Full name"
+              value={setupName}
+              onChangeText={setSetupName}
+              placeholder="Ahmad Eman"
+              autoCapitalize="words"
+            />
+            <GlassInputField
+              C={C}
+              label="Email"
+              value={setupEmail}
+              onChangeText={setSetupEmail}
+              placeholder="ahmad@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <StitchPillButton
               label="Continue"
               onPress={() => {
                 if (setupName.trim()) {
@@ -927,35 +961,52 @@ function KafeemanApp() {
                 setOnboardingDone(true);
                 setScreen('branch');
               }}
+              C={C}
             />
           </ScrollView>
         );
 
       case 'branch':
         return (
-          <ScrollView contentContainerStyle={styles.padH}>
-            <Ionicons name="location" size={28} color={C.primary} style={{ marginBottom: 12 }} />
-            <Text style={styles.screenTitle}>Select Branch</Text>
-            <Text style={[styles.bodyText, { marginBottom: 20 }]}>Choose your nearest Kafe Eman</Text>
-            {BRANCHES.map((b) => (
-              <Pressable
-                key={b.name}
-                onPress={() => {
-                  setSelectedBranch(b.name);
-                  setOnboardingDone(true);
-                  setIsLoggedIn(true);
-                  setScreen('order-type');
-                }}
-                style={[styles.branchCard, selectedBranch === b.name && { borderColor: C.primary, borderWidth: 2 }]}
-              >
-                <AppImage uri={b.img} style={styles.branchImage} />
-                <View style={styles.branchBody}>
-                  <Text style={styles.branchName}>{b.name}</Text>
-                  <Text style={styles.bodyText}>{b.addr}</Text>
-                  <Text style={{ color: C.primary, fontSize: 12, fontWeight: '700', marginTop: 6 }}>{b.time}</Text>
-                </View>
-              </Pressable>
-            ))}
+          <ScrollView contentContainerStyle={[styles.padH, { paddingBottom: 40 }]}>
+            <View style={styles.branchHeader}>
+              <View style={[styles.branchHeaderIcon, { backgroundColor: C.secondaryContainer }]}>
+                <Ionicons name="location-outline" size={22} color={C.primaryContainer} />
+              </View>
+              <Text style={styles.screenTitle}>Select Branch</Text>
+              <Text style={[styles.bodyText, { textAlign: 'center' }]}>Choose your nearest Kafe Eman</Text>
+            </View>
+            {BRANCHES.map((b) => {
+              const selected = selectedBranch === b.name;
+              return (
+                <Pressable
+                  key={b.name}
+                  onPress={() => {
+                    setSelectedBranch(b.name);
+                    setOnboardingDone(true);
+                    setIsLoggedIn(true);
+                    setScreen('order-type');
+                  }}
+                  style={({ pressed }) => [{ marginBottom: 12, opacity: pressed ? 0.94 : 1 }]}
+                >
+                  <GlassCard
+                    level="sheet"
+                    noPadding
+                    style={selected ? { borderWidth: 2, borderColor: C.primaryContainer } : undefined}
+                  >
+                    <AppImage uri={b.img} style={styles.branchImage} />
+                    <View style={styles.branchBody}>
+                      <Text style={styles.branchName}>{b.name}</Text>
+                      <Text style={styles.bodyText}>{b.addr}</Text>
+                      <View style={styles.branchEtaRow}>
+                        <Ionicons name="time-outline" size={13} color={C.primaryContainer} />
+                        <Text style={[styles.branchEta, { color: C.primaryContainer }]}>{b.time}</Text>
+                      </View>
+                    </View>
+                  </GlassCard>
+                </Pressable>
+              );
+            })}
           </ScrollView>
         );
 
@@ -972,7 +1023,7 @@ function KafeemanApp() {
               icon="bicycle-outline"
               title="Delivery"
               subtitle="30–45 min to your door"
-              gradientColors={[LOGO_GREEN, LOGO_GREEN_DARK, '#3d5249']}
+              gradientColors={[LOGO_GREEN, LOGO_GREEN_DARK]}
               onPress={() => {
                 setOrderType('delivery');
                 go('home');
@@ -1304,9 +1355,9 @@ function KafeemanApp() {
                     <View style={styles.cartLineInner}>
                       <AppImage uri={c.item.image} style={styles.listThumb} />
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: C.text, fontWeight: '700' }}>{c.item.name}</Text>
-                        <Text style={{ color: C.textFaint, fontSize: 12 }}>{c.sugar} · {c.ice}</Text>
-                        <Text style={{ color: C.primary, fontWeight: '700', marginTop: 4 }}>
+                        <Text style={[styles.cartLineTitle, { color: C.text }]}>{c.item.name}</Text>
+                        <Text style={[styles.cartLineMeta, { color: C.textFaint }]}>{c.sugar} · {c.ice}</Text>
+                        <Text style={[styles.cartLinePrice, { color: C.primaryContainer }]}>
                           RM {(c.item.price * c.qty).toFixed(2)}
                         </Text>
                       </View>
@@ -1314,7 +1365,7 @@ function KafeemanApp() {
                         <Pressable onPress={() => adjustQty(key, -1)} style={styles.qtyBtn}>
                           <Ionicons name="remove" size={14} color={C.text} />
                         </Pressable>
-                        <Text style={{ color: C.text, fontWeight: '700', minWidth: 20, textAlign: 'center' }}>{c.qty}</Text>
+                        <Text style={[styles.cartQtyText, { color: C.text }]}>{c.qty}</Text>
                         <Pressable onPress={() => adjustQty(key, 1)} style={styles.addBtnSm}>
                           <Ionicons name="add" size={14} color={C.onPrimary} />
                         </Pressable>
@@ -1341,9 +1392,11 @@ function KafeemanApp() {
                     </View>
                     <Pressable
                       onPress={() => applyPromoFromCode(promoCode)}
-                      style={[styles.qtyBtn, { paddingHorizontal: 14 }]}
+                      style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
                     >
-                      <Text style={{ color: C.textMuted, fontWeight: '700', fontSize: 12 }}>Apply</Text>
+                      <GlassSurface level="inset" style={styles.applyPromoBtn}>
+                        <Text style={[styles.applyPromoText, { color: C.primaryContainer }]}>Apply</Text>
+                      </GlassSurface>
                     </Pressable>
                   </View>
                   {promoMessage ? (
@@ -1553,46 +1606,47 @@ function KafeemanApp() {
             ]}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.successIcon}>
-              <Ionicons name="checkmark-circle" size={72} color="#00a651" />
+            <View style={[styles.successIcon, { backgroundColor: C.secondaryContainer }]}>
+              <Ionicons name="checkmark-circle" size={64} color={C.success} />
             </View>
             <Text style={[styles.screenTitle, { textAlign: 'center', marginTop: 16 }]}>Payment successful</Text>
             <Text style={[styles.bodyText, { textAlign: 'center', marginTop: 8 }]}>
               {formatRM(paidAmount || totalDue)} paid via{' '}
               {payMethod === 'tng' ? PAYMENT_TNG : payMethod === 'card' ? 'Card' : 'FPX'}
             </Text>
-            <View style={[styles.summaryCard, { width: '100%', marginTop: 20 }]}>
+            <GlassCard level="sheet" style={{ width: '100%', marginTop: 20 }}>
               <View style={styles.summaryRow}>
-                <Text style={{ color: C.textMuted }}>Order ID</Text>
-                <Text style={{ color: C.primary, fontWeight: '700' }}>{orderRef}</Text>
+                <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Order ID</Text>
+                <Text style={[styles.summaryValue, { color: C.primaryContainer }]}>{orderRef}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={{ color: C.textMuted }}>Branch</Text>
-                <Text style={{ color: C.text }}>{selectedBranch}</Text>
+                <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Branch</Text>
+                <Text style={[styles.summaryValue, { color: C.text }]}>{selectedBranch}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={{ color: C.textMuted }}>Status</Text>
-                <Text style={{ color: C.success, fontWeight: '700' }}>Confirmed</Text>
+                <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Status</Text>
+                <Text style={[styles.summaryValue, { color: C.success }]}>Confirmed</Text>
               </View>
               {pointsForSpend(paidAmount || totalDue) > 0 && (
                 <View style={styles.summaryRow}>
-                  <Text style={{ color: C.textMuted }}>Points earned</Text>
-                  <Text style={{ color: C.accent, fontWeight: '700' }}>
+                  <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Points earned</Text>
+                  <Text style={[styles.summaryValue, { color: C.primaryContainer }]}>
                     +{pointsForSpend(paidAmount || totalDue)} pts
                   </Text>
                 </View>
               )}
-            </View>
+            </GlassCard>
             <Text style={[styles.bodyText, { textAlign: 'center', marginTop: 16 }]}>
               Your coffee is being prepared. Track your order in real time.
             </Text>
             <View style={{ height: 24, width: '100%' }} />
-            <PrimaryBtn
+            <StitchPillButton
               label={orderType === 'delivery' ? 'Track delivery' : 'View pickup status'}
               onPress={startTracking}
+              C={C}
             />
             <View style={{ height: 12, width: '100%' }} />
-            <GhostBtn label="Back to Home" onPress={() => go('home')} />
+            <StitchPillButton label="Back to Home" onPress={() => go('home')} C={C} variant="outline" />
           </ScrollView>
         );
 
@@ -2007,25 +2061,32 @@ function createStyles(C: ThemeColors) {
     otpIcon: {
       width: 64,
       height: 64,
-      borderRadius: 22,
-      backgroundColor: `${C.primary}18`,
-      borderWidth: 1,
-      borderColor: `${C.primary}35`,
+      borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 16,
+      marginBottom: 12,
+      alignSelf: 'center',
     },
-    otpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-    otpBox: {
-      width: 46,
-      height: 56,
-      borderRadius: 16,
-      borderWidth: 1.5,
-      borderColor: C.glassBorder,
-      backgroundColor: C.inputBg,
+    otpHeroCard: { alignItems: 'center', padding: 24, marginBottom: 24, borderRadius: 20 },
+    otpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 6 },
+    otpBoxGlass: {
+      flex: 1,
+      maxWidth: 48,
+      height: 54,
+      borderRadius: 14,
+      overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'center',
     },
+    otpBoxFilled: {},
+    otpInput: {
+      width: '100%',
+      height: '100%',
+      textAlign: 'center',
+      fontFamily: FONTS.bold,
+      fontSize: 20,
+    },
+    profileAvatarCard: { alignItems: 'center', paddingVertical: 20, marginBottom: 8, borderRadius: 20 },
     avatarWrap: {
       width: 96,
       height: 96,
@@ -2045,17 +2106,19 @@ function createStyles(C: ThemeColors) {
       alignItems: 'center',
       padding: 16,
     },
-    branchCard: {
-      borderRadius: 24,
-      overflow: 'hidden',
-      marginBottom: 16,
-      backgroundColor: C.glass,
-      borderWidth: 1,
-      borderColor: C.glassBorder,
-    },
     branchImage: { width: '100%', height: 100 },
     branchBody: { padding: 16 },
-    branchName: { color: C.text, fontWeight: '800', fontSize: 16, marginBottom: 4 },
+    branchName: { color: C.text, fontFamily: FONTS.bold, fontSize: 16, marginBottom: 4 },
+    branchHeader: { alignItems: 'center', marginBottom: 24, gap: 8 },
+    branchHeaderIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    branchEtaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
+    branchEta: { fontFamily: FONTS.semiBold, fontSize: 12 },
     orderTypeScreen: { flex: 1, justifyContent: 'center', paddingBottom: 24 },
     orderTypeBranchRow: {
       flexDirection: 'row',
@@ -2114,6 +2177,19 @@ function createStyles(C: ThemeColors) {
       alignItems: 'center',
       gap: 12,
     },
+    cartLineTitle: { fontFamily: FONTS.semiBold, fontSize: 15 },
+    cartLineMeta: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 2 },
+    cartLinePrice: { fontFamily: FONTS.bold, fontSize: 14, marginTop: 4 },
+    cartQtyText: { fontFamily: FONTS.bold, fontSize: 14, minWidth: 20, textAlign: 'center' },
+    applyPromoBtn: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 12,
+      minWidth: 72,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    applyPromoText: { fontFamily: FONTS.semiBold, fontSize: 13 },
     promoDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 12 },
     promoDot: { width: 8, height: 8, borderRadius: 4 },
     offerChip: { minWidth: 110, marginRight: 10 },
@@ -2328,6 +2404,8 @@ function createStyles(C: ThemeColors) {
       borderColor: C.glassBorder,
     },
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+    summaryLabel: { fontFamily: FONTS.regular, fontSize: 14 },
+    summaryValue: { fontFamily: FONTS.semiBold, fontSize: 14 },
     stickyFooter: {
       position: 'absolute',
       bottom: 0,
@@ -2425,6 +2503,12 @@ function createStyles(C: ThemeColors) {
       zIndex: 1,
     },
     badgeText: { color: C.onPrimary, fontSize: 9, fontWeight: '900' },
-    successIcon: { marginBottom: 4 },
+    successIcon: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   });
 }

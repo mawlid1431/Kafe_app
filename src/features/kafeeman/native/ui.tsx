@@ -11,6 +11,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import type { ThemeColors } from '../theme';
 import { BRAND } from '../theme';
@@ -69,7 +70,7 @@ export function AppImage({
           !fillsContainer && width != null && height != null ? { width, height, borderRadius: radius } : null,
         ]}
       >
-        <Text style={{ fontSize: 22 }}>☕</Text>
+        <Ionicons name="cafe-outline" size={22} color={BRAND.primaryContainer} />
       </View>
     );
   }

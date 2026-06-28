@@ -5,6 +5,7 @@ import { formatOrderDate, orderStatusLabel } from '../data';
 import { UnderlineTabBar } from './appShell';
 import { formatRM } from './payments';
 import { StitchEmptyState } from './screenChrome';
+import { GlassSurface } from './stitchUi';
 import { AppImage } from './ui';
 import { FONTS } from './fonts';
 import type { ThemeColors } from '../theme';
@@ -37,7 +38,7 @@ function filterOrders(orders: OrderRecord[], tab: OrderFilterTab): OrderRecord[]
 
 function statusBadge(order: OrderRecord, C: ThemeColors) {
   if (order.status === 'cancelled') {
-    return { label: 'Order Canceled', color: '#b42318', bg: '#fef3f2' };
+    return { label: 'Order Canceled', color: C.error, bg: `${C.error}14` };
   }
   if (order.status === 'delivered') {
     return { label: 'Completed', color: C.primaryContainer, bg: C.secondaryContainer };
@@ -84,48 +85,50 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
                 <Pressable
                   key={order.id}
                   onPress={() => onTrack(order)}
-                  style={[styles.orderRow, { borderBottomColor: C.outlineVariant }]}
+                  style={({ pressed }) => [styles.orderOuter, { opacity: pressed ? 0.94 : 1 }]}
                 >
-                  {order.items[0] ? (
-                    <AppImage uri={order.items[0].item.image} style={styles.thumb} />
-                  ) : (
-                    <View style={[styles.thumb, { backgroundColor: C.surfaceContainer }]} />
-                  )}
-                  <View style={styles.orderBody}>
-                    <Text style={[styles.branch, { color: C.text }]} numberOfLines={1}>
-                      {order.branch}
-                    </Text>
-                    <View style={styles.metaRow}>
-                      <Ionicons
-                        name={order.orderType === 'delivery' ? 'bicycle-outline' : 'bag-outline'}
-                        size={12}
-                        color={C.textMuted}
-                      />
-                      <Text style={[styles.meta, { color: C.textMuted }]}>
-                        {mode} · {itemCount} item{itemCount === 1 ? '' : 's'}
+                  <GlassSurface level="sheet" style={styles.orderCard}>
+                    {order.items[0] ? (
+                      <AppImage uri={order.items[0].item.image} style={styles.thumb} />
+                    ) : (
+                      <View style={[styles.thumb, { backgroundColor: C.surfaceContainer }]} />
+                    )}
+                    <View style={styles.orderBody}>
+                      <Text style={[styles.branch, { color: C.text }]} numberOfLines={1}>
+                        {order.branch}
                       </Text>
+                      <View style={styles.metaRow}>
+                        <Ionicons
+                          name={order.orderType === 'delivery' ? 'bicycle-outline' : 'bag-outline'}
+                          size={12}
+                          color={C.textMuted}
+                        />
+                        <Text style={[styles.meta, { color: C.textMuted }]}>
+                          {mode} · {itemCount} item{itemCount === 1 ? '' : 's'}
+                        </Text>
+                      </View>
+                      <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+                        <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+                      </View>
+                      {order.status === 'active' && order.orderType === 'delivery' ? (
+                        <Pressable
+                          onPress={() => onTrack(order)}
+                          style={[styles.mapLink, { borderColor: C.primaryContainer }]}
+                        >
+                          <Ionicons name="map-outline" size={12} color={C.primaryContainer} />
+                          <Text style={[styles.mapLinkText, { color: C.primaryContainer }]}>Live map</Text>
+                        </Pressable>
+                      ) : null}
+                      <Text style={[styles.date, { color: C.textFaint }]}>{formatOrderDate(order.createdAt)}</Text>
                     </View>
-                    <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-                      <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-                    </View>
-                    {order.status === 'active' && order.orderType === 'delivery' ? (
-                      <Pressable
-                        onPress={() => onTrack(order)}
-                        style={[styles.mapLink, { borderColor: C.primaryContainer }]}
-                      >
-                        <Ionicons name="map-outline" size={12} color={C.primaryContainer} />
-                        <Text style={[styles.mapLinkText, { color: C.primaryContainer }]}>Live map</Text>
+                    <View style={styles.orderAside}>
+                      <Text style={[styles.price, { color: C.primaryContainer }]}>{formatRM(order.total)}</Text>
+                      <Pressable onPress={() => onReorder(order)} style={styles.reorderLink}>
+                        <Text style={[styles.reorderText, { color: C.primaryContainer }]}>Reorder</Text>
+                        <Ionicons name="chevron-forward" size={12} color={C.primaryContainer} />
                       </Pressable>
-                    ) : null}
-                    <Text style={[styles.date, { color: C.textFaint }]}>{formatOrderDate(order.createdAt)}</Text>
-                  </View>
-                  <View style={styles.orderAside}>
-                    <Text style={[styles.price, { color: C.primaryContainer }]}>{formatRM(order.total)}</Text>
-                    <Pressable onPress={() => onReorder(order)} style={styles.reorderLink}>
-                      <Text style={[styles.reorderText, { color: C.primaryContainer }]}>Reorder</Text>
-                      <Ionicons name="chevron-forward" size={12} color={C.primaryContainer} />
-                    </Pressable>
-                  </View>
+                    </View>
+                  </GlassSurface>
                 </Pressable>
               );
             })}
@@ -139,13 +142,15 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { paddingBottom: 120, paddingHorizontal: 20, backgroundColor: 'transparent' },
-  orderRow: {
+  scroll: { paddingBottom: 120, paddingHorizontal: 20, backgroundColor: 'transparent', gap: 10 },
+  orderOuter: { marginBottom: 2 },
+  orderCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    padding: 12,
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   thumb: { width: 52, height: 52, borderRadius: 8 },
   orderBody: { flex: 1, gap: 4 },
@@ -181,7 +186,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: FONTS.regular,
     fontSize: 13,
-    marginTop: 28,
+    marginTop: 20,
     marginBottom: 12,
   },
 });

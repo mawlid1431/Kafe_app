@@ -8,10 +8,11 @@ import { LOGO_GREEN } from '../brand';
 import { hapticLight, hapticMedium } from '../lib/haptics';
 import type { OrderRecord } from '../types';
 import type { ThemeColors } from '../theme';
+import { BRAND } from '../theme';
 import { FONTS } from './fonts';
 import { formatRM } from './payments';
 import { RiderChatSheet } from './riderChatSheet';
-import { StitchPillButton } from './stitchUi';
+import { StitchPillButton, GlassSurface } from './stitchUi';
 import { TrackingMap, type LiveTrackingState } from './trackingMap';
 import { AppImage } from './ui';
 
@@ -138,7 +139,7 @@ export function DeliveryTrackingScreen({
         </View>
       )}
 
-      <View style={[styles.sheet, { backgroundColor: C.surfaceLowest, paddingBottom: insets.bottom + 20 }]}>
+      <GlassSurface level="float" strong style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
         <View style={[styles.handle, { backgroundColor: C.outlineVariant }]} />
 
         <View style={styles.etaRow}>
@@ -255,7 +256,7 @@ export function DeliveryTrackingScreen({
             <Text style={[styles.cancelText, { color: C.error }]}>Cancel order</Text>
           </Pressable>
         )}
-      </View>
+      </GlassSurface>
 
       <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} onCall={() => void callRider()} />
     </View>
@@ -266,7 +267,7 @@ export function DeliveryTrackingScreen({
 export const OrderTrackingScreen = DeliveryTrackingScreen;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#e8ede4' },
+  root: { flex: 1, backgroundColor: BRAND.bg },
   mapHeader: {
     position: 'absolute',
     top: 0,
@@ -334,17 +335,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
     paddingHorizontal: 20,
     paddingTop: 20,
     maxHeight: '46%',
     zIndex: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
+    overflow: 'hidden',
   },
   handle: {
     alignSelf: 'center',

@@ -28,9 +28,9 @@ export const HOME_OFFERS = [
 ];
 
 export const REWARD_TIERS = [
-  { name: 'Bronze', min: 0, max: 499, emoji: '🥉' },
-  { name: 'Silver', min: 500, max: 1499, emoji: '🥈' },
-  { name: 'Gold', min: 1500, max: 99999, emoji: '🥇' },
+  { name: 'Bronze', min: 0, max: 499, icon: 'medal-outline' as const },
+  { name: 'Silver', min: 500, max: 1499, icon: 'medal-outline' as const },
+  { name: 'Gold', min: 1500, max: 99999, icon: 'trophy-outline' as const },
 ] as const;
 
 export const REWARD_CATALOG: RewardRedemption[] = [
@@ -226,7 +226,7 @@ export const ORDER_STEPS = [
   { key: 'placed' as OrderStatus, label: 'Order Received', sub: 'Your order has been confirmed' },
   { key: 'preparing' as OrderStatus, label: 'Being Prepared', sub: 'Barista is crafting your drink' },
   { key: 'on-the-way' as OrderStatus, label: 'On The Way', sub: 'Rider is heading to you now' },
-  { key: 'arrived' as OrderStatus, label: 'Delivered', sub: 'Enjoy your coffee! ☕' },
+  { key: 'arrived' as OrderStatus, label: 'Delivered', sub: 'Enjoy your coffee!' },
 ];
 
 export const PICKUP_ORDER_STEPS = [

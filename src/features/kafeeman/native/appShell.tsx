@@ -327,24 +327,35 @@ export function StoreInfoBanner({
   onPress?: () => void;
 }) {
   const wait = orderType === 'delivery' ? '30–45 minutes' : '5–10 minutes';
+  const mode = orderType === 'delivery' ? 'Delivery' : 'Pickup';
+
   return (
-    <View style={styles.storeBannerWrap}>
-      <View style={styles.storeBannerTop}>
-        <Text style={[styles.storeBannerName, { color: C.text }]}>{branch}</Text>
-        <View style={[styles.openBadge, { backgroundColor: C.secondaryContainer }]}>
-          <Text style={[styles.openBadgeText, { color: C.primaryContainer }]}>Open</Text>
-        </View>
-        <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.storeBannerWrap, { opacity: pressed ? 0.94 : 1 }]}>
+      <GlassSurface level="sheet" style={styles.storeBannerGlass}>
+        <View style={styles.storeBannerTop}>
+          <View style={[styles.storeBannerIcon, { backgroundColor: C.secondaryContainer }]}>
+            <Ionicons
+              name={orderType === 'delivery' ? 'bicycle-outline' : 'storefront-outline'}
+              size={18}
+              color={C.primaryContainer}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.storeBannerName, { color: C.text }]} numberOfLines={1}>
+              {branch}
+            </Text>
+            <Text style={[styles.storeBannerMeta, { color: C.textMuted }]}>
+              {mode} · {wait}
+            </Text>
+          </View>
           <Text style={[styles.storeBannerChange, { color: C.primaryContainer }]}>Change</Text>
-        </Pressable>
-      </View>
-      <View style={[styles.waitBanner, { backgroundColor: `${C.secondaryContainer}88` }]}>
-        <Ionicons name="time-outline" size={16} color={C.primaryContainer} />
-        <Text style={[styles.waitBannerText, { color: C.primaryContainer }]}>
-          Estimated waiting time {wait}
-        </Text>
-      </View>
-    </View>
+          <Ionicons name="chevron-forward" size={16} color={C.textFaint} />
+        </View>
+        <View style={[styles.openBadge, { backgroundColor: C.secondaryContainer, alignSelf: 'flex-start' }]}>
+          <Text style={[styles.openBadgeText, { color: C.primaryContainer }]}>Open now</Text>
+        </View>
+      </GlassSurface>
+    </Pressable>
   );
 }
 
@@ -372,8 +383,9 @@ export function AccountMenu({
               <Pressable
                 key={row.label}
                 onPress={row.onPress}
-                style={[
+                style={({ pressed }) => [
                   styles.accountRow,
+                  pressed && { backgroundColor: 'rgba(96,128,112,0.06)' },
                   index < section.rows.length - 1 && {
                     borderBottomWidth: StyleSheet.hairlineWidth,
                     borderBottomColor: C.outlineVariant,
@@ -656,26 +668,20 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   storeBannerWrap: { paddingBottom: 12 },
-  storeBannerTop: {
-    flexDirection: 'row',
+  storeBannerGlass: { borderRadius: 16, padding: 14, overflow: 'hidden', gap: 10 },
+  storeBannerTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  storeBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
-  storeBannerName: { fontFamily: FONTS.bold, fontSize: 18 },
+  storeBannerName: { fontFamily: FONTS.bold, fontSize: 15 },
+  storeBannerMeta: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 2 },
+  storeBannerChange: { fontFamily: FONTS.semiBold, fontSize: 13 },
   openBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   openBadgeText: { fontFamily: FONTS.semiBold, fontSize: 11 },
-  storeBannerChange: { fontFamily: FONTS.semiBold, fontSize: 13 },
-  waitBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  waitBannerText: { fontFamily: FONTS.medium, fontSize: 13 },
   liveDeliveryBanner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -11,10 +11,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { pointsToRmDiscount } from '../lib/promos';
+import { BRAND_ASSETS } from '../brand';
 import type { CartLine } from '../types';
 import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW } from '../theme';
 import { FONTS } from './fonts';
+import { Image } from 'expo-image';
 import { GradientButton } from './stitchUi';
 import { AppImage } from './ui';
 import { GlassCard, GlassInputField } from './stitchUi';
@@ -269,7 +271,7 @@ export function TngPaymentScreen({
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.merchantCard}>
           <View style={styles.merchantIcon}>
-            <Text style={{ fontSize: 28 }}>☕</Text>
+            <Image source={BRAND_ASSETS.icon} style={{ width: 36, height: 36, borderRadius: 10 }} contentFit="cover" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.merchantName}>{merchant}</Text>

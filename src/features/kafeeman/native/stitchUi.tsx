@@ -565,7 +565,10 @@ const BTN_RADIUS = 14;
 const BTN_MIN_HEIGHT = 50;
 
 function buttonPressStyle(pressed: boolean) {
-  return { opacity: pressed ? 0.88 : 1 };
+  return {
+    opacity: pressed ? 0.9 : 1,
+    transform: [{ scale: pressed ? 0.98 : 1 }],
+  };
 }
 
 export function StitchPillButton({
