@@ -19,6 +19,7 @@ import { LOGO_GREEN_DARK, BRAND_ASSETS, BRAND_NAME } from '../brand';
 import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW, STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
+import { BOTTOM_NAV_SIDE_INSET } from './layoutChrome';
 import { AppImage } from './ui';
 
 const PROFILE_AVATAR =
@@ -753,7 +754,7 @@ export function StitchFloatingCart({
       <Pressable onPress={onPress} style={[styles.floatingCart, STITCH_SHADOW_FLOAT]}>
         <GlassSurface level="float" style={styles.floatingCartInner} strong>
           <View style={[styles.floatingCartIcon, { backgroundColor: C.accent }]}>
-            <Ionicons name="bag" size={16} color={C.tertiaryContainer} />
+            <Ionicons name="bag-outline" size={18} color={C.tertiaryContainer} />
             <View style={[styles.floatingCartBadge, { backgroundColor: C.error }]}>
               <Text style={styles.floatingCartBadgeText}>{count > 9 ? '9+' : count}</Text>
             </View>
@@ -764,10 +765,7 @@ export function StitchFloatingCart({
               {count} item{count !== 1 ? 's' : ''} · RM {total.toFixed(2)}
             </Text>
           </View>
-          <View style={[styles.floatingCartCta, { backgroundColor: C.primaryContainer }]}>
-            <Text style={[styles.floatingCartCtaText, { color: C.onPrimary }]}>Checkout</Text>
-            <Ionicons name="arrow-forward" size={14} color={C.onPrimary} />
-          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.primaryContainer} />
         </GlassSurface>
       </Pressable>
     </Animated.View>
@@ -1142,25 +1140,25 @@ const styles = StyleSheet.create({
   optionPillText: { fontSize: 14 },
   floatingCartWrap: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    zIndex: 40,
+    left: BOTTOM_NAV_SIDE_INSET,
+    right: BOTTOM_NAV_SIDE_INSET,
+    zIndex: 45,
   },
-  floatingCart: { borderRadius: 20, overflow: 'hidden' },
+  floatingCart: { borderRadius: 18, overflow: 'hidden' },
   floatingCartInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 20,
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
   },
   floatingCartIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1183,18 +1181,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 12,
   },
-  floatingCartCopy: { flex: 1, gap: 2 },
-  floatingCartText: { fontFamily: FONTS.semiBold, fontSize: 15 },
-  floatingCartSub: { fontFamily: FONTS.regular, fontSize: 12 },
-  floatingCartCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  floatingCartCtaText: { fontFamily: FONTS.bold, fontSize: 12 },
+  floatingCartCopy: { flex: 1, gap: 1 },
+  floatingCartText: { fontFamily: FONTS.semiBold, fontSize: 14 },
+  floatingCartSub: { fontFamily: FONTS.regular, fontSize: 11 },
   stickyFooter: {
     position: 'absolute',
     left: 24,

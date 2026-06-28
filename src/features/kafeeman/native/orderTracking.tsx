@@ -154,36 +154,64 @@ export function DeliveryTrackingScreen({
           </View>
         </View>
 
-        <View style={styles.stepRow}>
-          {STEP_LABELS.map((label, i) => {
-            const done = i <= trackingStep;
-            const active = isActive && i === trackingStep;
-            return (
-              <View key={label} style={styles.stepItem}>
-                <View
-                  style={[
-                    styles.stepDot,
-                    {
-                      backgroundColor: done ? C.primaryContainer : C.surfaceContainer,
-                      borderColor: active ? C.accent : 'transparent',
-                      borderWidth: active ? 2 : 0,
-                    },
-                  ]}
-                >
-                  {done && <Ionicons name="checkmark" size={10} color={C.onPrimary} />}
+        <View style={styles.stepperWrap}>
+          <View style={styles.stepperRail} pointerEvents="none">
+            <View style={[styles.stepperTrack, { backgroundColor: C.surfaceContainer }]} />
+            <View
+              style={[
+                styles.stepperTrackFill,
+                {
+                  backgroundColor: C.primaryContainer,
+                  width: `${(trackingStep / Math.max(1, STEP_LABELS.length - 1)) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+          <View style={styles.stepRow}>
+            {STEP_LABELS.map((label, i) => {
+              const done = i <= trackingStep;
+              const active = isActive && i === trackingStep;
+              const upcoming = i > trackingStep;
+              return (
+                <View key={label} style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepDot,
+                      {
+                        backgroundColor: done ? C.primaryContainer : C.surfaceLowest,
+                        borderColor: done
+                          ? C.primaryContainer
+                          : active
+                            ? C.primaryContainer
+                            : C.outlineVariant,
+                        borderWidth: done ? 0 : 2,
+                      },
+                      active && styles.stepDotActive,
+                    ]}
+                  >
+                    {done ? (
+                      <Ionicons name="checkmark" size={12} color={C.onPrimary} />
+                    ) : active ? (
+                      <View style={[styles.stepDotInner, { backgroundColor: C.primaryContainer }]} />
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      {
+                        color: active ? C.primaryContainer : done ? C.text : C.textMuted,
+                        fontFamily: active ? FONTS.bold : FONTS.semiBold,
+                        opacity: upcoming && !active ? 0.85 : 1,
+                      },
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {label}
+                  </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.stepLabel,
-                    { color: active ? C.primary : done ? C.text : C.textFaint },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-              </View>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
 
         {riderLive ? (
@@ -200,28 +228,35 @@ export function DeliveryTrackingScreen({
             <View style={styles.riderActions}>
               <Pressable
                 onPress={openChat}
-                style={[styles.actionBtn, { backgroundColor: C.surfaceLowest, borderColor: C.outlineVariant }]}
+                style={[styles.actionBtn, styles.actionBtnPrimary, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
               >
-                <Ionicons name="chatbubble-ellipses" size={15} color={C.primary} />
-                <Text style={[styles.actionLabel, { color: C.primary }]}>Message</Text>
+                <Ionicons name="chatbubble-ellipses" size={17} color={C.onPrimary} />
+                <Text style={[styles.actionLabel, { color: C.onPrimary }]}>Message rider</Text>
               </Pressable>
               <Pressable
                 onPress={() => void callRider()}
-                style={[styles.actionBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
+                style={[styles.actionBtn, { backgroundColor: C.surfaceLowest, borderColor: C.primaryContainer }]}
               >
-                <Ionicons name="call" size={15} color={C.onPrimary} />
-                <Text style={[styles.actionLabel, { color: C.onPrimary }]}>Call</Text>
+                <Ionicons name="call" size={17} color={C.primaryContainer} />
+                <Text style={[styles.actionLabel, { color: C.primaryContainer }]}>Call</Text>
               </Pressable>
             </View>
           </View>
         ) : (
-          <View style={[styles.waitCard, { backgroundColor: C.secondaryContainer }]}>
-            <Ionicons name="cafe" size={20} color={C.primaryContainer} />
-            <Text style={[styles.waitText, { color: C.textMuted }]}>
-              {trackingStep < 2
-                ? 'Rider will be assigned when your order is ready for pickup from the branch.'
-                : 'Delivery complete'}
-            </Text>
+          <View style={[styles.waitCard, { backgroundColor: C.secondaryContainer, borderColor: C.glassBorder }]}>
+            <View style={[styles.waitIconWrap, { backgroundColor: C.surfaceLowest }]}>
+              <Ionicons name="bicycle-outline" size={22} color={C.primaryContainer} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.waitTitle, { color: C.text }]}>
+                {trackingStep < 2 ? 'Rider not assigned yet' : 'Delivery complete'}
+              </Text>
+              <Text style={[styles.waitText, { color: C.textMuted }]}>
+                {trackingStep < 2
+                  ? 'We’ll notify you when your rider picks up the order. You can message them once they’re on the way.'
+                  : 'Your order has been delivered.'}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -337,7 +372,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 20,
-    maxHeight: '46%',
+    maxHeight: '48%',
     zIndex: 6,
     overflow: 'hidden',
   },
@@ -353,16 +388,39 @@ const styles = StyleSheet.create({
   etaSub: { fontFamily: FONTS.regular, fontSize: 14, marginTop: 4, lineHeight: 20 },
   orderPill: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
   orderPillText: { fontFamily: FONTS.bold, fontSize: 14 },
-  stepRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
-  stepItem: { alignItems: 'center', flex: 1, gap: 6 },
+  stepperWrap: { marginBottom: 16, paddingHorizontal: 2, position: 'relative' },
+  stepperRail: {
+    position: 'absolute',
+    left: '10%',
+    right: '10%',
+    top: 13,
+    height: 4,
+    zIndex: 0,
+  },
+  stepperTrack: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 2,
+    height: 4,
+  },
+  stepperTrackFill: { height: 4, borderRadius: 2 },
+  stepRow: { flexDirection: 'row', justifyContent: 'space-between', zIndex: 1 },
+  stepItem: { alignItems: 'center', flex: 1, gap: 8, paddingHorizontal: 2 },
   stepDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepLabel: { fontFamily: FONTS.semiBold, fontSize: 9, textAlign: 'center' },
+  stepDotActive: {
+    shadowColor: LOGO_GREEN,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  stepDotInner: { width: 10, height: 10, borderRadius: 5 },
+  stepLabel: { fontFamily: FONTS.semiBold, fontSize: 10, textAlign: 'center', lineHeight: 13 },
   riderCard: {
     padding: 12,
     borderRadius: 16,
@@ -380,21 +438,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1.5,
   },
-  actionLabel: { fontFamily: FONTS.semiBold, fontSize: 12 },
+  actionBtnPrimary: {},
+  actionLabel: { fontFamily: FONTS.semiBold, fontSize: 13 },
   waitCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderRadius: 14,
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
     marginBottom: 10,
   },
-  waitText: { flex: 1, fontFamily: FONTS.regular, fontSize: 13, lineHeight: 18 },
+  waitIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  waitTitle: { fontFamily: FONTS.semiBold, fontSize: 14, marginBottom: 4 },
+  waitText: { fontFamily: FONTS.regular, fontSize: 13, lineHeight: 19 },
   orderNoteCard: {
     flexDirection: 'row',
     gap: 10,

@@ -100,6 +100,7 @@ import { FavoritesScreen } from './native/favoritesScreen';
 import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
 import { AppImage } from './native/ui';
+import { floatingChromeBottom, scrollPaddingAboveChrome } from './native/layoutChrome';
 import { GradientButton } from './native/stitchUi';
 import { AppleSignInButton } from './auth/AppleSignInButton';
 import { ClerkProfileSync } from './auth/ClerkProfileSync';
@@ -255,7 +256,7 @@ function KafeemanApp() {
       : Math.max(0, (REWARD_TIERS[REWARD_TIERS.indexOf(rewardTier) + 1]?.min ?? 1500) - points);
   const showNav = ['home', 'menu', 'cart', 'orders', 'profile', 'order-type'].includes(screen);
   const showPickupHeader = screen === 'home' || screen === 'menu';
-  const showOrderNowFab = screen === 'home';
+  const showOrderNowFab = screen === 'home' && cartCount === 0;
   const viewingOrder = useMemo(() => {
     const id = activeOrderId ?? orderRef;
     const found = orders.find((o) => o.id === id);
@@ -274,8 +275,14 @@ function KafeemanApp() {
     screen === 'order-receipt';
   const unreadNotifications = notifications.filter((n) => !n.read).length;
   const showFloatingCart = cartCount > 0 && FLOATING_CART_SCREENS.includes(screen);
-  const floatingCartBottom =
-    screen === 'product-detail' ? 96 : showNav ? 72 : insets.bottom + 24;
+  const floatingCartBottom = showNav
+    ? floatingChromeBottom(insets)
+    : insets.bottom + 24;
+  const floatingBarBottom = showNav ? floatingChromeBottom(insets) : insets.bottom + 24;
+  const listBottomPadding = scrollPaddingAboveChrome(insets, {
+    hasNav: showNav,
+    hasFloatingBar: showFloatingCart || showOrderNowFab,
+  });
 
   const go = useCallback((s: Screen) => {
     const tabMap: Partial<Record<Screen, TabKey>> = {
@@ -1063,7 +1070,7 @@ function KafeemanApp() {
         return (
           <ScrollView
             style={{ backgroundColor: 'transparent' }}
-            contentContainerStyle={{ paddingBottom: showOrderNowFab ? 160 : 120, paddingTop: 16 }}
+            contentContainerStyle={{ paddingBottom: listBottomPadding, paddingTop: 20 }}
           >
             <View style={styles.padH}>
               <LoyaltyHeroCard
@@ -1212,7 +1219,7 @@ function KafeemanApp() {
           <View style={styles.flex}>
             <ScrollView
               style={styles.flex}
-              contentContainerStyle={{ paddingBottom: 140 }}
+              contentContainerStyle={{ paddingBottom: listBottomPadding, paddingTop: 4 }}
               showsVerticalScrollIndicator={false}
               stickyHeaderIndices={[1]}
             >
@@ -1925,7 +1932,7 @@ function KafeemanApp() {
         )}
         <View style={styles.flex}>{renderScreen()}</View>
         {showOrderNowFab && (
-          <OrderNowFab C={C} bottom={showNav ? 88 : insets.bottom + 24} onPress={() => go('menu')} />
+          <OrderNowFab C={C} bottom={floatingBarBottom} onPress={() => go('menu')} />
         )}
         {showFloatingCart && (
           <StitchFloatingCart

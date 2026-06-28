@@ -57,7 +57,7 @@ export function RiderChatSheet({
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const sheetHeight = Math.min(420, Math.round(height * 0.52));
+  const sheetHeight = Math.min(500, Math.round(height * 0.58));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [typing, setTyping] = useState(false);
@@ -192,17 +192,32 @@ export function RiderChatSheet({
             )}
           </ScrollView>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickReplies}>
-            {QUICK_REPLIES.map((q) => (
-              <Pressable
-                key={q}
-                onPress={() => send(q)}
-                style={[styles.quickChip, { borderColor: C.outlineVariant, backgroundColor: C.surfaceLowest }]}
-              >
-                <Text style={[styles.quickChipText, { color: C.primary }]}>{q}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <View style={[styles.quickSection, { borderTopColor: C.glassBorderStrong, backgroundColor: C.surfaceLow }]}>
+            <Text style={[styles.quickSectionLabel, { color: C.textMuted }]}>Quick replies</Text>
+            <View style={styles.quickReplyList}>
+              {QUICK_REPLIES.map((q) => (
+                <Pressable
+                  key={q}
+                  onPress={() => send(q)}
+                  disabled={typing}
+                  style={({ pressed }) => [
+                    styles.quickReplyBtn,
+                    {
+                      backgroundColor: C.secondaryContainer,
+                      borderColor: C.primaryContainer,
+                      opacity: pressed || typing ? 0.75 : 1,
+                    },
+                  ]}
+                >
+                  <View style={[styles.quickReplyIcon, { backgroundColor: C.surfaceLowest }]}>
+                    <Ionicons name="chatbubble-outline" size={16} color={C.primaryContainer} />
+                  </View>
+                  <Text style={[styles.quickReplyText, { color: C.text }]}>{q}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={C.primaryContainer} />
+                </Pressable>
+              ))}
+            </View>
+          </View>
 
           <View style={[styles.inputRow, { borderTopColor: C.outlineVariant }]}>
             <TextInput
@@ -282,15 +297,37 @@ const styles = StyleSheet.create({
   bubbleTime: { fontFamily: FONTS.regular, fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
   typingBubble: { paddingVertical: 12 },
   typingText: { fontFamily: FONTS.regular, fontSize: 13, fontStyle: 'italic' },
-  quickReplies: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
-  quickChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    marginRight: 8,
+  quickSection: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
+    borderTopWidth: 1,
   },
-  quickChipText: { fontFamily: FONTS.semiBold, fontSize: 12 },
+  quickSectionLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 10,
+  },
+  quickReplyList: { gap: 8 },
+  quickReplyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  quickReplyIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickReplyText: { flex: 1, fontFamily: FONTS.semiBold, fontSize: 14, lineHeight: 18 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -306,6 +343,8 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     fontFamily: FONTS.regular,
     fontSize: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(96,128,112,0.2)',
   },
   sendBtn: {
     width: 42,

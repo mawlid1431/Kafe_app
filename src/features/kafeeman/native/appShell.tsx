@@ -9,6 +9,7 @@ import { BRAND_ASSETS, LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from '../
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW, STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
+import { BOTTOM_NAV_SIDE_INSET } from './layoutChrome';
 import { GlassSurface } from './stitchUi';
 import { AppImage } from './ui';
 
@@ -32,7 +33,7 @@ export function AppPickupHeader({
   const eta = orderType === 'delivery' ? '30–45 min' : 'Today, ASAP';
 
   return (
-    <View style={[styles.pickupHeader, { backgroundColor: C.primaryContainer, paddingTop: insets.top + 8 }]}>
+    <View style={[styles.pickupHeader, { backgroundColor: C.primaryContainer, paddingTop: insets.top + 12 }]}>
       <View style={styles.pickupHeaderRow}>
         <Pressable onPress={onPress} style={styles.pickupHeaderMain}>
           <Text style={styles.pickupHeaderMode}>
@@ -475,7 +476,7 @@ export function ScreenTitleBar({
 const styles = StyleSheet.create({
   pickupHeader: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 18,
   },
   pickupHeaderRow: {
     flexDirection: 'row',
@@ -555,8 +556,8 @@ const styles = StyleSheet.create({
   loyaltyFooterText: { flex: 1, fontFamily: FONTS.medium, fontSize: 14, color: '#fff' },
   orderFabOuter: {
     position: 'absolute',
-    left: 20,
-    right: 20,
+    left: BOTTOM_NAV_SIDE_INSET,
+    right: BOTTOM_NAV_SIDE_INSET,
     zIndex: 40,
     ...STITCH_SHADOW_FLOAT,
   },
@@ -576,8 +577,8 @@ const styles = StyleSheet.create({
   orderFabText: { color: '#fff', fontFamily: FONTS.semiBold, fontSize: 15 },
   bottomNavOuter: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: BOTTOM_NAV_SIDE_INSET,
+    right: BOTTOM_NAV_SIDE_INSET,
     bottom: 0,
     zIndex: 50,
   },
