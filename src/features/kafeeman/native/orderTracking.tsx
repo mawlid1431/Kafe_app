@@ -80,14 +80,15 @@ export function DeliveryTrackingScreen({
   const eta = etaLabel(trackingStep, liveTracking?.etaMinutes);
   const status = statusForDelivery(trackingStep);
   const isActive = order.status === 'active';
-  const riderLive = isActive && trackingStep >= 2;
+  const riderAssigned = isActive && trackingStep >= 1;
+  const riderOnRoute = isActive && trackingStep >= 2;
   const canCancel = isActive && trackingStep < 2;
 
   useEffect(() => {
-    if (!isActive || trackingStep < 2) return;
+    if (!isActive || !riderOnRoute) return;
     const timer = setInterval(() => setLiveClock(new Date()), 1000);
     return () => clearInterval(timer);
-  }, [isActive, trackingStep]);
+  }, [isActive, riderOnRoute]);
 
   const liveUpdatedLabel = useMemoLiveAge(liveTracking?.updatedAt, liveClock);
 
@@ -114,8 +115,65 @@ export function DeliveryTrackingScreen({
 
   const openChat = useCallback(() => {
     void hapticLight();
+    if (!riderOnRoute) {
+      Alert.alert(
+        'Rider not on the way yet',
+        `${RIDER_CONTACT.name} will be available to chat once your order is picked up from the branch.`,
+        [{ text: 'OK' }],
+      );
+      return;
+    }
     setChatOpen(true);
-  }, []);
+  }, [riderOnRoute]);
+
+  const riderContactCard = isActive ? (
+    <View style={[styles.riderCard, { borderColor: C.glassBorderStrong, backgroundColor: C.glassStrong }]}>
+      <View style={styles.riderLeft}>
+        <AppImage uri={RIDER_AVATAR} style={styles.riderAvatar} />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.riderName, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
+          <Text style={[styles.riderMeta, { color: C.textMuted }]}>
+            ★ {RIDER_CONTACT.rating} ·{' '}
+            {riderOnRoute ? 'On the way to you' : riderAssigned ? 'Preparing your pickup' : 'Your delivery rider'}
+          </Text>
+        </View>
+      </View>
+      {!riderOnRoute && (
+        <Text style={[styles.riderHint, { color: C.textMuted }]}>
+          Call anytime. Message opens once {RIDER_CONTACT.name} picks up your order.
+        </Text>
+      )}
+      <View style={styles.riderActions}>
+        <Pressable
+          onPress={openChat}
+          style={[
+            styles.actionBtn,
+            styles.actionBtnPrimary,
+            {
+              backgroundColor: riderOnRoute ? C.primaryContainer : C.surfaceContainer,
+              borderColor: riderOnRoute ? C.primaryContainer : C.outlineVariant,
+            },
+          ]}
+        >
+          <Ionicons
+            name="chatbubble-ellipses"
+            size={17}
+            color={riderOnRoute ? C.onPrimary : C.primaryContainer}
+          />
+          <Text style={[styles.actionLabel, { color: riderOnRoute ? C.onPrimary : C.primaryContainer }]}>
+            Message
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => void callRider()}
+          style={[styles.actionBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
+        >
+          <Ionicons name="call" size={17} color={C.onPrimary} />
+          <Text style={[styles.actionLabel, { color: C.onPrimary }]}>Call</Text>
+        </Pressable>
+      </View>
+    </View>
+  ) : null;
 
   return (
     <View style={styles.root}>
@@ -137,10 +195,24 @@ export function DeliveryTrackingScreen({
             <Text style={styles.liveBadgeText}>Live tracking</Text>
           </View>
         )}
-        <View style={{ width: 34 }} />
+        {isActive && (
+          <View style={styles.headerActions}>
+            <Pressable onPress={openChat} style={styles.headerBtn} accessibilityLabel="Message rider">
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.primaryContainer} />
+            </Pressable>
+            <Pressable
+              onPress={() => void callRider()}
+              style={[styles.headerBtn, styles.headerBtnCall, { backgroundColor: C.primaryContainer }]}
+              accessibilityLabel="Call rider"
+            >
+              <Ionicons name="call" size={18} color={C.onPrimary} />
+            </Pressable>
+          </View>
+        )}
+        {!isActive && <View style={{ width: 34 }} />}
       </View>
 
-      {riderLive && (
+      {riderOnRoute && (
         <View style={[styles.mapEtaCard, { top: insets.top + 56 }]}>
           <Text style={[styles.mapEtaValue, { color: C.primary }]}>{eta}</Text>
           <Text style={[styles.mapEtaLabel, { color: C.textMuted }]}>ETA</Text>
@@ -148,22 +220,30 @@ export function DeliveryTrackingScreen({
         </View>
       )}
 
-      <GlassSurface level="float" strong style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
+      <GlassSurface level="float" strong style={[styles.sheet, { paddingBottom: insets.bottom + 12 }]}>
         <View style={[styles.handle, { backgroundColor: C.outlineVariant }]} />
 
-        <View style={styles.etaRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.eta, { color: C.primary }]}>{eta}</Text>
-            <Text style={[styles.etaSub, { color: C.textMuted }]} numberOfLines={2}>
-              {status}
-            </Text>
+        <ScrollView
+          style={styles.sheetScroll}
+          contentContainerStyle={styles.sheetScrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.etaRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.eta, { color: C.primary }]}>{eta}</Text>
+              <Text style={[styles.etaSub, { color: C.textMuted }]} numberOfLines={2}>
+                {status}
+              </Text>
+            </View>
+            <View style={[styles.orderPill, { backgroundColor: C.secondaryContainer }]}>
+              <Text style={[styles.orderPillText, { color: C.primary }]}>{formatRM(order.total)}</Text>
+            </View>
           </View>
-          <View style={[styles.orderPill, { backgroundColor: C.secondaryContainer }]}>
-            <Text style={[styles.orderPillText, { color: C.primary }]}>{formatRM(order.total)}</Text>
-          </View>
-        </View>
 
-        <View style={styles.stepperWrap}>
+          {riderContactCard}
+
+          <View style={styles.stepperWrap}>
           <View style={styles.stepperRail} pointerEvents="none">
             <View style={[styles.stepperTrack, { backgroundColor: C.surfaceContainer }]} />
             <View
@@ -223,52 +303,6 @@ export function DeliveryTrackingScreen({
           </View>
         </View>
 
-        {riderLive ? (
-          <View style={[styles.riderCard, { borderColor: C.glassBorderStrong, backgroundColor: C.glassStrong }]}>
-            <View style={styles.riderLeft}>
-              <AppImage uri={RIDER_AVATAR} style={styles.riderAvatar} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.riderName, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
-                <Text style={[styles.riderMeta, { color: C.textMuted }]}>
-                  ★ {RIDER_CONTACT.rating} · Motorcycle delivery
-                </Text>
-              </View>
-            </View>
-            <View style={styles.riderActions}>
-              <Pressable
-                onPress={openChat}
-                style={[styles.actionBtn, styles.actionBtnPrimary, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
-              >
-                <Ionicons name="chatbubble-ellipses" size={17} color={C.onPrimary} />
-                <Text style={[styles.actionLabel, { color: C.onPrimary }]}>Message rider</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => void callRider()}
-                style={[styles.actionBtn, { backgroundColor: C.surfaceLowest, borderColor: C.primaryContainer }]}
-              >
-                <Ionicons name="call" size={17} color={C.primaryContainer} />
-                <Text style={[styles.actionLabel, { color: C.primaryContainer }]}>Call</Text>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <View style={[styles.waitCard, { backgroundColor: C.secondaryContainer, borderColor: C.glassBorder }]}>
-            <View style={[styles.waitIconWrap, { backgroundColor: C.surfaceLowest }]}>
-              <Ionicons name="bicycle-outline" size={22} color={C.primaryContainer} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.waitTitle, { color: C.text }]}>
-                {trackingStep < 2 ? 'Rider not assigned yet' : 'Delivery complete'}
-              </Text>
-              <Text style={[styles.waitText, { color: C.textMuted }]}>
-                {trackingStep < 2
-                  ? 'We’ll notify you when your rider picks up the order. You can message them once they’re on the way.'
-                  : 'Your order has been delivered.'}
-              </Text>
-            </View>
-          </View>
-        )}
-
         {order.orderNote ? (
           <View style={[styles.orderNoteCard, { backgroundColor: C.secondaryContainer, borderColor: C.glassBorder }]}>
             <Ionicons name="document-text-outline" size={16} color={C.primaryContainer} />
@@ -300,6 +334,7 @@ export function DeliveryTrackingScreen({
             <Text style={[styles.cancelText, { color: C.error }]}>Cancel order</Text>
           </Pressable>
         )}
+        </ScrollView>
       </GlassSurface>
 
       <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} onCall={() => void callRider()} />
@@ -338,6 +373,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  headerBtnCall: { borderColor: 'transparent' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -380,11 +417,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    maxHeight: '48%',
+    paddingTop: 12,
+    maxHeight: '54%',
     zIndex: 6,
     overflow: 'hidden',
   },
+  sheetScroll: { flexGrow: 0 },
+  sheetScrollContent: { paddingBottom: 8 },
   handle: {
     alignSelf: 'center',
     width: 40,
@@ -441,6 +480,7 @@ const styles = StyleSheet.create({
   riderAvatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, borderColor: '#fff' },
   riderName: { fontFamily: FONTS.semiBold, fontSize: 15 },
   riderMeta: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 2 },
+  riderHint: { fontFamily: FONTS.regular, fontSize: 12, lineHeight: 17 },
   riderActions: { flexDirection: 'row', gap: 10 },
   actionBtn: {
     flex: 1,

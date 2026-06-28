@@ -202,6 +202,16 @@ export const BRANCHES = [
   { name: 'Kuala Lumpur', addr: 'Bukit Bintang, 55100 Kuala Lumpur', time: 'Open until 12 AM', img: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=400&h=200&fit=crop&auto=format', lat: 3.1478, lng: 101.7103 },
 ] as const;
 
+/** Compact branch label for headers and banners. */
+export function shortBranchLabel(branchName: string): string {
+  const map: Record<string, string> = {
+    'Kuala Lumpur': 'KL',
+    Penang: 'Penang',
+    'Alor Setar': 'Alor Setar',
+  };
+  return map[branchName] ?? branchName;
+}
+
 /** Demo customer pin — offset from branch for delivery tracking. */
 export const DEMO_DELIVERY_DEST = { lat: 3.139, lng: 101.7069 } as const;
 
