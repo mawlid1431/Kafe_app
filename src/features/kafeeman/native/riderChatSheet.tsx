@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RIDER_CONTACT } from '../data';
+import { LOGO_GREEN } from '../brand';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
@@ -138,7 +139,7 @@ export function RiderChatSheet({
             <View style={{ flex: 1 }}>
               <View style={styles.liveRow}>
                 <View style={styles.liveDot} />
-                <Text style={[styles.liveText, { color: '#16a34a' }]}>Live</Text>
+                <Text style={[styles.liveText, { color: C.success }]}>Live</Text>
               </View>
               <Text style={[styles.headerTitle, { color: C.text }]}>{RIDER_CONTACT.name}</Text>
               <Text style={[styles.headerSub, { color: C.textMuted }]}>Your delivery rider</Text>
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   },
   avatar: { width: 44, height: 44, borderRadius: 22 },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#22c55e' },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: LOGO_GREEN },
   liveText: { fontFamily: FONTS.semiBold, fontSize: 11 },
   headerTitle: { fontFamily: FONTS.semiBold, fontSize: 16 },
   headerSub: { fontFamily: FONTS.regular, fontSize: 12 },

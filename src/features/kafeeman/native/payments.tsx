@@ -15,7 +15,8 @@ import type { CartLine } from '../types';
 import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW } from '../theme';
 import { FONTS } from './fonts';
-import { AppImage, GradientButton } from './ui';
+import { GradientButton } from './stitchUi';
+import { AppImage } from './ui';
 import { GlassCard, GlassInputField } from './stitchUi';
 
 export const PAYMENT_TNG = "Touch 'n Go eWallet";
@@ -138,7 +139,7 @@ export function CheckoutSummary({
           <Text style={{ color: C.textMuted, fontFamily: FONTS.regular }}>
             Discount{promoCode ? ` (${promoCode})` : ''}
           </Text>
-          <Text style={{ color: '#22c55e', fontFamily: FONTS.semiBold }}>- {formatRM(discountAmount)}</Text>
+          <Text style={{ color: C.success, fontFamily: FONTS.semiBold }}>- {formatRM(discountAmount)}</Text>
         </View>
       )}
       {pointsOff > 0 && (
@@ -146,7 +147,7 @@ export function CheckoutSummary({
           <Text style={{ color: C.textMuted, fontFamily: FONTS.regular }}>
             Points ({pointsRedeemed.toLocaleString()} pts)
           </Text>
-          <Text style={{ color: '#22c55e', fontFamily: FONTS.semiBold }}>- {formatRM(pointsOff)}</Text>
+          <Text style={{ color: C.success, fontFamily: FONTS.semiBold }}>- {formatRM(pointsOff)}</Text>
         </View>
       )}
       {orderNote?.trim() ? (
@@ -159,7 +160,7 @@ export function CheckoutSummary({
         <Text style={{ color: C.textMuted, fontFamily: FONTS.regular }}>
           {orderType === 'delivery' ? 'Delivery fee' : 'Pickup'}
         </Text>
-        <Text style={{ color: orderType === 'delivery' ? C.text : '#22c55e', fontFamily: FONTS.semiBold }}>
+        <Text style={{ color: orderType === 'delivery' ? C.text : C.success, fontFamily: FONTS.semiBold }}>
           {orderType === 'delivery' ? formatRM(DELIVERY_FEE) : 'Free'}
         </Text>
       </View>

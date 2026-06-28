@@ -36,7 +36,7 @@ export function ScreenHeader({
           style={[styles.backBtn, { backgroundColor: C.glassStrong }]}
           hitSlop={8}
         >
-          <Ionicons name="chevron-back" size={20} color={C.text} accessible={false} />
+          <Ionicons name="chevron-back" size={18} color={C.text} accessible={false} />
         </Pressable>
       ) : (
         <View style={styles.backSpacer} />
@@ -130,7 +130,7 @@ export function StitchEmptyState({
   return (
     <GlassCard level="sheet" style={styles.empty}>
       <View style={[styles.emptyIcon, { backgroundColor: C.secondaryContainer }]}>
-        <Ionicons name={icon} size={32} color={C.primary} />
+        <Ionicons name={icon} size={24} color={C.primary} />
       </View>
       <Text style={[TYPE.sectionTitle, { color: C.text, textAlign: 'center', marginTop: 16 }]}>{title}</Text>
       <Text style={[TYPE.body, { color: C.textMuted, textAlign: 'center', marginTop: 8 }]}>{message}</Text>
@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backSpacer: { width: 40 },
+  backSpacer: { width: 34 },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { fontFamily: FONTS.display, fontSize: 20, textAlign: 'center' },
   headerSub: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 2, textAlign: 'center' },
@@ -171,17 +171,17 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   storeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  empty: { alignItems: 'center', paddingVertical: 32, marginTop: SPACING.lg },
+  empty: { alignItems: 'center', paddingVertical: 28, marginTop: SPACING.lg },
   emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

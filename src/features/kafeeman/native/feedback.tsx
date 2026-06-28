@@ -11,6 +11,7 @@ import { Animated, Pressable, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { LOGO_GREEN } from '../brand';
 import { BRAND } from '../theme';
 import { FONTS } from './fonts';
 import { GlassSurface } from './stitchUi';
@@ -37,7 +38,7 @@ const TONE_ICON: Record<ToastTone, keyof typeof Ionicons.glyphMap> = {
 };
 
 const TONE_COLOR: Record<ToastTone, string> = {
-  success: '#22c55e',
+  success: LOGO_GREEN,
   error: BRAND.error,
   info: BRAND.accent,
 };

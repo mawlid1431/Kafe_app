@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { GlassSurface, StitchMenuCard } from './stitchUi';
+import { GlassCard, StitchMenuCard } from './stitchUi';
 import { FONTS } from './fonts';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW } from '../theme';
@@ -41,13 +41,13 @@ export function FavoritesScreen({
       </View>
 
       {favoriteItems.length === 0 ? (
-        <GlassSurface style={[styles.empty, STITCH_SHADOW]} strong>
+        <GlassCard style={styles.empty}>
           <Ionicons name="heart-outline" size={44} color={C.textFaint} />
           <Text style={[styles.emptyTitle, { color: C.text }]}>No favourites yet</Text>
           <Text style={[styles.emptySub, { color: C.textMuted }]}>
             Tap the heart on any drink to save it here for quick reordering.
           </Text>
-        </GlassSurface>
+        </GlassCard>
       ) : (
         <View style={styles.grid}>
           {favoriteItems.map((item) => (

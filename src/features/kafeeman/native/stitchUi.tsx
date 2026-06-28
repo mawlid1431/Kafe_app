@@ -15,9 +15,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { LOGO_GREEN_DARK, BRAND_ASSETS, BRAND_NAME } from '../brand';
 import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW, STITCH_SHADOW_FLOAT } from '../theme';
-import { BRAND_ASSETS, BRAND_NAME } from '../brand';
 import { FONTS } from './fonts';
 import { AppImage } from './ui';
 
@@ -57,19 +57,19 @@ export function LiquidGlassBackground({
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['rgba(168,210,147,0.10)', 'transparent', 'rgba(53,89,39,0.05)']}
+        colors={['rgba(96,128,112,0.12)', 'transparent', 'rgba(96,128,112,0.05)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['rgba(53,89,39,0.06)', 'transparent']}
+        colors={['rgba(77,99,89,0.07)', 'transparent']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0.15, y: 0.6 }}
         style={StyleSheet.absoluteFillObject}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(30,65,18,0.04)']}
+        colors={['transparent', 'rgba(96,128,112,0.06)']}
         start={{ x: 0, y: 1 }}
         end={{ x: 0.8, y: 0.3 }}
         style={StyleSheet.absoluteFillObject}
@@ -143,27 +143,39 @@ export function GlassCard({
   level = 'sheet',
   noPadding,
   blur,
+  flat,
 }: {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   level?: GlassLevel;
   noPadding?: boolean;
   blur?: boolean;
+  /** Solid card without blur — use sparingly on dense lists. */
+  flat?: boolean;
 }) {
+  if (flat) {
+    return (
+      <View
+        style={[
+          styles.cleanCard,
+          {
+            backgroundColor: BRAND.surfaceLowest,
+            padding: noPadding ? 0 : 16,
+          },
+          STITCH_SHADOW,
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
   return (
     <GlassSurface
       level={level}
       blur={blur}
-      style={[
-        {
-          borderRadius: BRAND.radiusXl,
-          padding: noPadding ? 0 : 16,
-          borderWidth: 1,
-          borderColor: BRAND.glassBorderStrong,
-          overflow: 'hidden',
-        },
-        style,
-      ]}
+      style={[styles.cleanCard, { padding: noPadding ? 0 : 16 }, style]}
     >
       {children}
     </GlassSurface>
@@ -389,8 +401,8 @@ export function StitchFeaturedCard({
   onToggleFavorite?: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.featuredOuter, STITCH_SHADOW]}>
-      <GlassSurface level="sheet" style={styles.featuredCard} intensity={40}>
+    <Pressable onPress={onPress} style={styles.featuredOuter}>
+      <GlassSurface level="sheet" style={[styles.featuredCard, styles.cleanCard]}>
         <View style={styles.featuredImageWrap}>
           <AppImage uri={image} style={styles.featuredImage} />
           {onToggleFavorite && (
@@ -453,7 +465,7 @@ export function StitchMenuCard({
             <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={16} color={isFavorite ? '#e11d48' : '#fff'} />
           </Pressable>
         )}
-        <GlassSurface level="sheet" blur={false} strong style={styles.menuCardPlate}>
+        <GlassSurface level="float" strong style={styles.menuCardPlate}>
           <Text style={[styles.menuCardName, { color: C.text }]} numberOfLines={1}>
             {name}
           </Text>
@@ -483,16 +495,18 @@ export function StitchCategoryChip({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.chipOuter, active && STITCH_SHADOW]}>
+    <Pressable onPress={onPress} style={styles.chipOuter}>
       {active ? (
-        <GlassSurface style={[styles.chip, styles.chipActive]} strong intensity={50}>
-          {icon && <Ionicons name={icon} size={16} color={C.tertiaryContainer} />}
-          <Text style={[styles.chipTextActive, { color: C.tertiaryContainer }]}>{label}</Text>
-        </GlassSurface>
-      ) : (
-        <View style={[styles.chip, styles.chipInactive, { backgroundColor: BRAND.surfaceLow, borderColor: BRAND.outlineVariant }]}>
-          <Text style={[styles.chipText, { color: C.secondary }]}>{label}</Text>
+        <View style={[styles.chip, { backgroundColor: C.primaryContainer }]}>
+          {icon ? <Ionicons name={icon} size={16} color={C.onPrimary} /> : null}
+          <Text style={[styles.chipTextActive, { color: C.onPrimary, fontFamily: FONTS.semiBold }]}>
+            {label}
+          </Text>
         </View>
+      ) : (
+        <GlassSurface level="inset" style={styles.chipGlass}>
+          <Text style={[styles.chipText, { color: C.textMuted, fontFamily: FONTS.medium }]}>{label}</Text>
+        </GlassSurface>
       )}
     </Pressable>
   );
@@ -546,6 +560,14 @@ export function StitchPromoBanner({
   return content;
 }
 
+/** Clear touch targets — 14px radius, 50px height (design.md rhythm). */
+const BTN_RADIUS = 14;
+const BTN_MIN_HEIGHT = 50;
+
+function buttonPressStyle(pressed: boolean) {
+  return { opacity: pressed ? 0.88 : 1 };
+}
+
 export function StitchPillButton({
   label,
   onPress,
@@ -563,15 +585,10 @@ export function StitchPillButton({
   const isOutline = variant === 'outline';
   const isApple = variant === 'apple';
 
-  const solidBg = isApple ? C.inverseSurface : C.surfaceLowest;
-  const textColor = isOutline ? C.primary : isApple ? C.inverseOnSurface : C.onPrimary;
-
-  const inner = (
-    <>
-      {icon && <Ionicons name={icon} size={18} color={textColor} style={{ marginRight: 8 }} accessible={false} />}
-      <Text style={[styles.pillBtnText, { color: textColor }]} accessible={false}>{label}</Text>
-    </>
-  );
+  const textColor = isOutline ? C.primary : C.onPrimary;
+  const bg = isApple ? C.inverseSurface : isPrimary ? C.primaryContainer : C.surfaceLowest;
+  const borderColor = isOutline ? C.outlineVariant : 'transparent';
+  const borderWidth = isOutline ? 1.5 : 0;
 
   return (
     <Pressable
@@ -579,31 +596,69 @@ export function StitchPillButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       style={({ pressed }) => [
-        styles.pillBtn,
         styles.pillBtnFull,
-        !isPrimary && {
-          backgroundColor: solidBg,
-          borderWidth: isOutline ? 1.5 : 0,
-          borderColor: isOutline ? C.outlineVariant : 'transparent',
-          paddingVertical: 14,
-          paddingHorizontal: 24,
+        styles.pillBtn,
+        {
+          backgroundColor: bg,
+          borderColor,
+          borderWidth,
+          minHeight: BTN_MIN_HEIGHT,
+          borderRadius: BTN_RADIUS,
         },
-        isPrimary && STITCH_SHADOW,
-        { transform: [{ scale: pressed ? 0.97 : 1 }], opacity: pressed ? 0.92 : 1 },
+        isPrimary && styles.btnShadow,
+        buttonPressStyle(pressed),
       ]}
     >
-      {isPrimary ? (
-        <LinearGradient
-          colors={[C.primaryContainer, C.primaryDark]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.pillBtnGradient}
-        >
-          {inner}
-        </LinearGradient>
-      ) : (
-        <View style={styles.pillBtnRow}>{inner}</View>
-      )}
+      <View style={styles.pillBtnRow}>
+        {icon ? <Ionicons name={icon} size={18} color={textColor} style={{ marginRight: 8 }} /> : null}
+        <Text style={[styles.pillBtnText, { color: textColor }]}>{label}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+/** Primary CTA — solid fill, high contrast, no blur layers. */
+export function GradientButton({
+  label,
+  onPress,
+  disabled,
+  C,
+  variant = 'primary',
+}: {
+  label: string;
+  onPress?: () => void;
+  disabled?: boolean;
+  C: ThemeColors;
+  variant?: 'primary' | 'tng' | 'ghost';
+}) {
+  const isGhost = variant === 'ghost';
+  const isTng = variant === 'tng';
+
+  const bg = isGhost ? C.surfaceLowest : isTng ? '#00a651' : C.primaryContainer;
+  const textColor = isGhost ? C.primary : C.onPrimary;
+  const borderColor = isGhost ? C.outlineVariant : 'transparent';
+
+  return (
+    <Pressable
+      onPress={disabled ? undefined : onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      style={({ pressed }) => [
+        styles.pillBtnFull,
+        styles.pillBtn,
+        {
+          backgroundColor: bg,
+          borderColor,
+          borderWidth: isGhost ? 1.5 : 0,
+          minHeight: BTN_MIN_HEIGHT,
+          borderRadius: BTN_RADIUS,
+          opacity: disabled ? 0.45 : pressed ? 0.88 : 1,
+        },
+        !isGhost && !disabled && styles.btnShadow,
+      ]}
+    >
+      <Text style={[styles.pillBtnText, { color: textColor, fontFamily: FONTS.semiBold }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -622,17 +677,21 @@ export function StitchOptionPill({
   return (
     <Pressable
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.optionPill,
         active
-          ? { backgroundColor: C.accent, shadowColor: C.accent, shadowOpacity: 0.3, shadowRadius: 12, elevation: 3 }
-          : { backgroundColor: 'rgba(238,238,238,0.5)' },
+          ? { backgroundColor: C.primaryContainer }
+          : { backgroundColor: C.surfaceLowest, borderWidth: 1, borderColor: C.outlineVariant },
+        buttonPressStyle(pressed),
       ]}
     >
       <Text
         style={[
           styles.optionPillText,
-          { color: active ? C.onTertiaryFixed : C.textMuted, fontFamily: active ? FONTS.bold : FONTS.regular },
+          {
+            color: active ? C.onPrimary : C.textMuted,
+            fontFamily: active ? FONTS.semiBold : FONTS.medium,
+          },
         ]}
       >
         {label}
@@ -988,6 +1047,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 999,
   },
+  chipGlass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   chipActive: {
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
@@ -1038,18 +1105,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  pillBtnGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 24,
-    width: '100%',
+    paddingHorizontal: 20,
+  },
+  btnShadow: {
+    shadowColor: LOGO_GREEN_DARK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  cleanCard: {
+    borderRadius: BRAND.radiusLg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: BRAND.outlineVariant,
+    overflow: 'hidden',
   },
   pillBtnRow: {
     flexDirection: 'row',
@@ -1057,13 +1127,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pillBtnFull: { width: '100%', alignSelf: 'stretch' },
-  pillBtnText: { fontFamily: FONTS.semiBold, fontSize: 14, letterSpacing: 0.5 },
+  pillBtnText: { fontFamily: FONTS.semiBold, fontSize: 15, letterSpacing: 0.2 },
   optionPill: {
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    borderRadius: 16,
+    borderRadius: BTN_RADIUS,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   optionPillText: { fontSize: 14 },
   floatingCartWrap: {

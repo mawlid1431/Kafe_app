@@ -30,6 +30,7 @@ import {
   PROMOS,
   REWARD_TIERS,
 } from './data';
+import { LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from './brand';
 import { calcPromoDiscount, findPromo, maxRedeemablePoints, pointsForSpend, pointsToRmDiscount, POINTS_PER_RM, type PromoCode } from './lib/promos';
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess, hapticWarning } from './lib/haptics';
 import {
@@ -57,9 +58,11 @@ import {
   AccountMenu,
   AppBottomNav,
   AppPickupHeader,
+  LiveDeliveryBanner,
   LoyaltyHeroCard,
   MenuListRow,
   OrderNowFab,
+  OrderTypeChoiceCard,
   SectionHeading,
   StoreInfoBanner,
 } from './native/appShell';
@@ -94,7 +97,8 @@ import { RewardsScreen } from './native/rewardsScreen';
 import { FavoritesScreen } from './native/favoritesScreen';
 import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
-import { AppImage, GradientButton } from './native/ui';
+import { AppImage } from './native/ui';
+import { GradientButton } from './native/stitchUi';
 import { AppleSignInButton } from './auth/AppleSignInButton';
 import { ClerkProfileSync } from './auth/ClerkProfileSync';
 import { isClerkEnabled } from './auth/clerkConfig';
@@ -252,6 +256,11 @@ function KafeemanApp() {
     if (found.status !== 'active') return found;
     return { ...found, trackingStep: Math.max(found.trackingStep, trackingStep) };
   }, [orders, activeOrderId, orderRef, trackingStep]);
+  const activeDeliveryOrder = useMemo(
+    () => orders.find((o) => o.status === 'active' && o.orderType === 'delivery') ?? null,
+    [orders],
+  );
+  const isDeliveryTracking = screen === 'order-tracking' && viewingOrder?.orderType === 'delivery';
   const showLiquidBg =
     ['rewards', 'favorites', 'notifications', 'help', 'addresses'].includes(screen) ||
     (screen === 'order-tracking' && viewingOrder?.orderType === 'pickup') ||
@@ -651,6 +660,7 @@ function KafeemanApp() {
       );
       return;
     }
+    const delayMs = trackingStep === 2 ? 18000 : 8000;
     const t = setTimeout(() => {
       const next = trackingStep + 1;
       setTrackingStep(next);
@@ -659,7 +669,7 @@ function KafeemanApp() {
           o.id === (activeOrderId ?? orderRef) ? { ...o, trackingStep: next } : o,
         ),
       );
-    }, 5000);
+    }, delayMs);
     return () => clearTimeout(t);
   }, [screen, trackingStep, activeOrderId, orderRef, orders]);
 
@@ -951,45 +961,40 @@ function KafeemanApp() {
 
       case 'order-type':
         return (
-          <View style={[styles.padH, { flex: 1, justifyContent: 'center' }]}>
+          <View style={[styles.padH, styles.orderTypeScreen]}>
             <Text style={[styles.screenTitle, { textAlign: 'center' }]}>How would you like it?</Text>
             <Text style={[styles.bodyText, { textAlign: 'center', marginBottom: 8 }]}>You can change this anytime</Text>
-            <Text style={[styles.bodyText, { textAlign: 'center', marginBottom: 24 }]}>📍 {selectedBranch}</Text>
-            <Pressable
+            <View style={styles.orderTypeBranchRow}>
+              <Ionicons name="location-outline" size={15} color={C.primaryContainer} />
+              <Text style={[styles.orderTypeBranchText, { color: C.textMuted }]}>{selectedBranch}</Text>
+            </View>
+            <OrderTypeChoiceCard
+              icon="bicycle-outline"
+              title="Delivery"
+              subtitle="30–45 min to your door"
+              gradientColors={[LOGO_GREEN, LOGO_GREEN_DARK, '#3d5249']}
               onPress={() => {
                 setOrderType('delivery');
                 go('home');
               }}
-              style={styles.orderTypeCard}
-            >
-              <LinearGradient colors={['#8B5A2B', '#5c3d1e', '#3d2817']} style={StyleSheet.absoluteFillObject} />
-              <View style={{ zIndex: 1 }}>
-                <Text style={styles.orderTypeEmoji}>🚗</Text>
-                <Text style={styles.orderTypeTitle}>Delivery</Text>
-                <Text style={styles.orderTypeSub}>30–45 min to your door</Text>
-              </View>
-            </Pressable>
-            <Pressable
+            />
+            <OrderTypeChoiceCard
+              icon="bag-handle-outline"
+              title="Pickup"
+              subtitle="Ready in 5–10 min"
+              gradientColors={[LOGO_GREEN_LIGHT, LOGO_GREEN, LOGO_GREEN_DARK]}
               onPress={() => {
                 setOrderType('pickup');
                 go('home');
               }}
-              style={styles.orderTypeCard}
-            >
-              <LinearGradient colors={['#2d5a8a', '#1e3a5f', '#0f1e35']} style={StyleSheet.absoluteFillObject} />
-              <View style={{ zIndex: 1 }}>
-                <Text style={styles.orderTypeEmoji}>🏪</Text>
-                <Text style={styles.orderTypeTitle}>Pickup</Text>
-                <Text style={styles.orderTypeSub}>Ready in 5–10 min</Text>
-              </View>
-            </Pressable>
+            />
           </View>
         );
 
       case 'home':
         return (
           <ScrollView
-            style={{ backgroundColor: C.surfaceLowest }}
+            style={{ backgroundColor: 'transparent' }}
             contentContainerStyle={{ paddingBottom: showOrderNowFab ? 160 : 120, paddingTop: 16 }}
           >
             <View style={styles.padH}>
@@ -1004,6 +1009,21 @@ function KafeemanApp() {
                 }
                 onPress={() => go('rewards')}
               />
+              {activeDeliveryOrder ? (
+                <LiveDeliveryBanner
+                  C={C}
+                  orderId={activeDeliveryOrder.id}
+                  branch={activeDeliveryOrder.branch}
+                  etaLabel={
+                    activeDeliveryOrder.trackingStep >= 3
+                      ? 'Arrived'
+                      : activeDeliveryOrder.trackingStep >= 2
+                        ? 'On the way'
+                        : 'Preparing'
+                  }
+                  onPress={() => trackOrder(activeDeliveryOrder)}
+                />
+              ) : null}
               <View style={{ marginBottom: 16 }}>
                 <GlassSearchBar
                   C={C}
@@ -1050,7 +1070,7 @@ function KafeemanApp() {
                     applyPromoFromCode(offer.code);
                     go('cart');
                   }}
-                  style={[styles.offerChipClean, { backgroundColor: C.surfaceLow, borderColor: C.outlineVariant }]}
+                  style={[styles.offerChipClean, { backgroundColor: C.glassStrong, borderColor: C.glassBorderStrong }]}
                 >
                   <Text style={[styles.offerTag, { color: C.primaryContainer }]}>{offer.tag}</Text>
                   <Text style={[styles.offerTitle, { color: C.text }]}>{offer.title}</Text>
@@ -1121,7 +1141,7 @@ function KafeemanApp() {
 
       case 'menu':
         return (
-          <View style={[styles.flex, { backgroundColor: C.surfaceLowest }]}>
+          <View style={styles.flex}>
             <ScrollView
               style={styles.flex}
               contentContainerStyle={{ paddingBottom: 140 }}
@@ -1143,7 +1163,7 @@ function KafeemanApp() {
                   onClear={() => setMenuSearch('')}
                 />
               </View>
-              <View style={{ backgroundColor: C.surfaceLowest }}>
+              <View style={{ backgroundColor: 'transparent' }}>
                 <ScrollView
                   horizontal
                   nestedScrollEnabled
@@ -1329,7 +1349,7 @@ function KafeemanApp() {
                   {promoMessage ? (
                     <Text
                       style={{
-                        color: appliedPromo ? '#22c55e' : C.error,
+                        color: appliedPromo ? C.success : C.error,
                         fontSize: 12,
                         marginTop: 6,
                         fontFamily: FONTS.semiBold,
@@ -1367,7 +1387,7 @@ function KafeemanApp() {
                   {discountAmount > 0 && (
                     <View style={styles.summaryRow}>
                       <Text style={{ color: C.textMuted }}>Discount ({appliedPromo?.code})</Text>
-                      <Text style={{ color: '#22c55e' }}>- RM {discountAmount.toFixed(2)}</Text>
+                      <Text style={{ color: C.success }}>- RM {discountAmount.toFixed(2)}</Text>
                     </View>
                   )}
                   {effectivePointsRedeem > 0 && (
@@ -1375,7 +1395,7 @@ function KafeemanApp() {
                       <Text style={{ color: C.textMuted }}>
                         Points ({effectivePointsRedeem.toLocaleString()} pts)
                       </Text>
-                      <Text style={{ color: '#22c55e' }}>
+                      <Text style={{ color: C.success }}>
                         - RM {pointsToRmDiscount(effectivePointsRedeem).toFixed(2)}
                       </Text>
                     </View>
@@ -1384,7 +1404,7 @@ function KafeemanApp() {
                     <Text style={{ color: C.textMuted }}>
                       {orderType === 'delivery' ? 'Delivery fee' : 'Pickup'}
                     </Text>
-                    <Text style={{ color: orderType === 'delivery' ? C.text : '#22c55e' }}>
+                    <Text style={{ color: orderType === 'delivery' ? C.text : C.success }}>
                       {orderType === 'delivery' ? formatRM(DELIVERY_FEE) : 'Free'}
                     </Text>
                   </View>
@@ -1552,7 +1572,7 @@ function KafeemanApp() {
               </View>
               <View style={styles.summaryRow}>
                 <Text style={{ color: C.textMuted }}>Status</Text>
-                <Text style={{ color: '#22c55e', fontWeight: '700' }}>Confirmed</Text>
+                <Text style={{ color: C.success, fontWeight: '700' }}>Confirmed</Text>
               </View>
               {pointsForSpend(paidAmount || totalDue) > 0 && (
                 <View style={styles.summaryRow}>
@@ -1668,7 +1688,7 @@ function KafeemanApp() {
 
       case 'orders':
         return (
-          <View style={[styles.flex, { backgroundColor: C.surfaceLowest }]}>
+          <View style={styles.flex}>
             <View style={[styles.ordersTitleWrap, { borderBottomColor: C.outlineVariant }]}>
               <Text style={[styles.ordersTitle, { color: C.text }]}>Orders</Text>
             </View>
@@ -1704,7 +1724,7 @@ function KafeemanApp() {
       case 'profile':
         return (
           <ScrollView
-            style={{ backgroundColor: C.surfaceLowest }}
+            style={{ backgroundColor: 'transparent' }}
             contentContainerStyle={{ paddingBottom: 100, paddingTop: 20 }}
           >
             <View style={[styles.padH, styles.center]}>
@@ -1809,9 +1829,12 @@ function KafeemanApp() {
   };
 
   return (
-    <SafeAreaView style={[styles.flex, { backgroundColor: showLiquidBg ? 'transparent' : C.surfaceLowest }]} edges={showPickupHeader ? [] : ['top', 'left', 'right']}>
-      <StatusBar style={showPickupHeader ? 'light' : 'dark'} />
-      <LiquidGlassBackground style={[styles.flex, !showLiquidBg && { backgroundColor: C.surfaceLowest }]}>
+    <SafeAreaView
+      style={[styles.flex, { backgroundColor: isDeliveryTracking ? C.surfaceLowest : 'transparent' }]}
+      edges={showPickupHeader || isDeliveryTracking ? [] : ['top', 'left', 'right']}
+    >
+      <StatusBar style={showPickupHeader ? 'light' : isDeliveryTracking ? 'dark' : 'dark'} />
+      <LiquidGlassBackground style={styles.flex}>
         {isClerkEnabled ? (
           <ClerkProfileSync onProfile={handleClerkProfile} onSignedIn={handleClerkSignedIn} />
         ) : null}
@@ -2033,10 +2056,15 @@ function createStyles(C: ThemeColors) {
     branchImage: { width: '100%', height: 100 },
     branchBody: { padding: 16 },
     branchName: { color: C.text, fontWeight: '800', fontSize: 16, marginBottom: 4 },
-    orderTypeCard: { borderRadius: 28, padding: 24, marginBottom: 16, overflow: 'hidden', minHeight: 140 },
-    orderTypeEmoji: { fontSize: 32, marginBottom: 8 },
-    orderTypeTitle: { color: '#fff', fontSize: 24, fontWeight: '900', fontFamily: FONTS.display },
-    orderTypeSub: { color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 4 },
+    orderTypeScreen: { flex: 1, justifyContent: 'center', paddingBottom: 24 },
+    orderTypeBranchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginBottom: 24,
+    },
+    orderTypeBranchText: { fontFamily: FONTS.medium, fontSize: 14 },
     homeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 8 },
     row: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     avatarSmall: {

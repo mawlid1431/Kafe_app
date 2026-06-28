@@ -145,7 +145,7 @@ export function PointsRedeemSection({
       )}
 
       {enabled && discount > 0 && (
-        <Text style={[styles.pointsApplied, { color: '#22c55e' }]}>
+        <Text style={[styles.pointsApplied, { color: C.success }]}>
           {pointsToRedeem.toLocaleString()} pts applied · save {formatRM(discount)}
         </Text>
       )}

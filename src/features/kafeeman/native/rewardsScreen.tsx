@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { REWARD_CATALOG, REWARD_TIERS } from '../data';
 import { RewardGiftIcon } from './onboardingIcons';
-import { GlassSurface, StitchPillButton } from './stitchUi';
+import { GlassCard, StitchPillButton } from './stitchUi';
 import { FONTS } from './fonts';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW } from '../theme';
@@ -75,7 +75,7 @@ export function RewardsScreen({ C, points, history, onBack, onRedeem }: Props) {
         <Text style={styles.heroSub}>≈ RM {(points / 100).toFixed(2)} value · {tier.emoji} {tier.name}</Text>
       </View>
 
-      <GlassSurface style={[styles.progressCard, STITCH_SHADOW]} strong>
+      <GlassCard style={styles.progressCard}>
         <View style={styles.progressHeader}>
           <Text style={[styles.progressTitle, { color: C.text }]}>{progress.label}</Text>
           <Text style={{ color: C.textMuted, fontFamily: FONTS.regular, fontSize: 12 }}>{progress.pct}%</Text>
@@ -83,14 +83,14 @@ export function RewardsScreen({ C, points, history, onBack, onRedeem }: Props) {
         <View style={[styles.progressTrack, { backgroundColor: C.inputBg }]}>
           <View style={[styles.progressFill, { width: `${progress.pct}%`, backgroundColor: C.accent }]} />
         </View>
-      </GlassSurface>
+      </GlassCard>
 
       <Text style={[styles.sectionTitle, { color: C.primary }]}>Redeem rewards</Text>
       {REWARD_CATALOG.map((reward) => {
         const canRedeem = reward.pointsCost === 0 || points >= reward.pointsCost;
         const icon = REWARD_ICONS[reward.icon] ?? 'gift';
         return (
-          <GlassSurface key={reward.id} style={[styles.rewardCard, STITCH_SHADOW]} strong>
+          <GlassCard key={reward.id} style={styles.rewardCard}>
             <View style={[styles.rewardIcon, { backgroundColor: C.tertiaryFixed }]}>
               {reward.icon === 'gift' ? (
                 <RewardGiftIcon size={22} color={C.primaryContainer} />
@@ -114,7 +114,7 @@ export function RewardsScreen({ C, points, history, onBack, onRedeem }: Props) {
               C={C}
               variant={canRedeem ? 'primary' : 'outline'}
             />
-          </GlassSurface>
+          </GlassCard>
         );
       })}
 
@@ -128,7 +128,7 @@ export function RewardsScreen({ C, points, history, onBack, onRedeem }: Props) {
           <Text
             style={[
               styles.historyDelta,
-              { color: entry.delta >= 0 ? '#22c55e' : C.error },
+              { color: entry.delta >= 0 ? C.success : C.error },
             ]}
           >
             {entry.delta >= 0 ? '+' : ''}

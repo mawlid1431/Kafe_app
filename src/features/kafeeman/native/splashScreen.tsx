@@ -41,7 +41,7 @@ export function SplashScreen({ C, onComplete }: Props) {
         style={[
           StyleSheet.absoluteFillObject,
           styles.brandStage,
-          { backgroundColor: C.primary, opacity: brandOpacity, paddingTop: insets.top, paddingBottom: insets.bottom },
+          { backgroundColor: C.primaryContainer, opacity: brandOpacity, paddingTop: insets.top, paddingBottom: insets.bottom },
         ]}
       >
         <Image

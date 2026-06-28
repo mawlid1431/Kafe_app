@@ -1,17 +1,18 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ORDER_STEPS, RIDER_CONTACT } from '../data';
+import { LOGO_GREEN } from '../brand';
 import { hapticLight, hapticMedium } from '../lib/haptics';
 import type { OrderRecord } from '../types';
 import type { ThemeColors } from '../theme';
-import { STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
 import { formatRM } from './payments';
 import { RiderChatSheet } from './riderChatSheet';
-import { GlassSurface, StitchPillButton } from './stitchUi';
-import { TrackingMap } from './trackingMap';
+import { StitchPillButton } from './stitchUi';
+import { TrackingMap, type LiveTrackingState } from './trackingMap';
 import { AppImage } from './ui';
 
 const RIDER_AVATAR =
@@ -19,8 +20,17 @@ const RIDER_AVATAR =
 
 const STEP_LABELS = ['Placed', 'Preparing', 'On the way', 'Delivered'];
 
-function etaForDelivery(step: number): string {
+function useMemoLiveAge(updatedAt: number | undefined, now: Date): string {
+  if (!updatedAt) return 'Updating…';
+  const seconds = Math.max(0, Math.floor((now.getTime() - updatedAt) / 1000));
+  if (seconds < 5) return 'Updated just now';
+  if (seconds < 60) return `Updated ${seconds}s ago`;
+  return `Updated ${Math.floor(seconds / 60)}m ago`;
+}
+
+function etaLabel(step: number, liveMinutes?: number): string {
   if (step >= 3) return 'Arrived';
+  if (step >= 2 && liveMinutes != null) return liveMinutes <= 1 ? '< 1 min' : `${liveMinutes} min`;
   if (step >= 2) return '8 min';
   if (step >= 1) return '15 min';
   return '25 min';
@@ -61,13 +71,28 @@ export function DeliveryTrackingScreen({
   onDone: () => void;
   onCancel?: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const [chatOpen, setChatOpen] = useState(false);
+  const [liveTracking, setLiveTracking] = useState<LiveTrackingState | null>(null);
+  const [liveClock, setLiveClock] = useState(() => new Date());
   const trackingStep = order.trackingStep;
-  const eta = etaForDelivery(trackingStep);
+  const eta = etaLabel(trackingStep, liveTracking?.etaMinutes);
   const status = statusForDelivery(trackingStep);
   const isActive = order.status === 'active';
   const riderLive = isActive && trackingStep >= 2;
   const canCancel = isActive && trackingStep < 2;
+
+  useEffect(() => {
+    if (!isActive || trackingStep < 2) return;
+    const timer = setInterval(() => setLiveClock(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [isActive, trackingStep]);
+
+  const liveUpdatedLabel = useMemoLiveAge(liveTracking?.updatedAt, liveClock);
+
+  const handleLiveUpdate = useCallback((state: LiveTrackingState) => {
+    setLiveTracking(state);
+  }, []);
 
   const callRider = useCallback(async () => {
     void hapticMedium();
@@ -89,30 +114,32 @@ export function DeliveryTrackingScreen({
         branchName={order.branch}
         trackingStep={trackingStep}
         isLive={isActive}
+        onLiveUpdate={handleLiveUpdate}
       />
 
-      <View style={styles.mapHeader}>
-        <Pressable onPress={onBack} style={[styles.headerBtn, { borderColor: C.glassBorderStrong }]}>
-          <Ionicons name="arrow-back" size={22} color={C.textMuted} />
+      <View style={[styles.mapHeader, { paddingTop: insets.top + 8 }]}>
+        <Pressable onPress={onBack} style={styles.headerBtn}>
+          <Ionicons name="arrow-back" size={18} color={C.text} />
         </Pressable>
         {isActive && (
-          <View style={[styles.liveBadge, { backgroundColor: '#fff' }]}>
+          <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
-            <Text style={[styles.liveBadgeText, { color: '#16a34a' }]}>Live tracking</Text>
+            <Text style={styles.liveBadgeText}>Live tracking</Text>
           </View>
         )}
-        <View style={{ width: 40 }} />
+        <View style={{ width: 34 }} />
       </View>
 
       {riderLive && (
-        <View style={[styles.mapEtaCard, STITCH_SHADOW_FLOAT, { backgroundColor: '#fff' }]}>
+        <View style={[styles.mapEtaCard, { top: insets.top + 56 }]}>
           <Text style={[styles.mapEtaValue, { color: C.primary }]}>{eta}</Text>
-          <Text style={[styles.mapEtaLabel, { color: C.textMuted }]}>Estimated arrival</Text>
+          <Text style={[styles.mapEtaLabel, { color: C.textMuted }]}>ETA</Text>
+          <Text style={[styles.mapEtaLive, { color: C.success }]}>{liveUpdatedLabel}</Text>
         </View>
       )}
 
-      <GlassSurface style={[styles.sheet, STITCH_SHADOW_FLOAT]} strong intensity={60}>
-        <View style={styles.handle} />
+      <View style={[styles.sheet, { backgroundColor: C.surfaceLowest, paddingBottom: insets.bottom + 20 }]}>
+        <View style={[styles.handle, { backgroundColor: C.outlineVariant }]} />
 
         <View style={styles.etaRow}>
           <View style={{ flex: 1 }}>
@@ -174,14 +201,14 @@ export function DeliveryTrackingScreen({
                 onPress={openChat}
                 style={[styles.actionBtn, { backgroundColor: C.surfaceLowest, borderColor: C.outlineVariant }]}
               >
-                <Ionicons name="chatbubble-ellipses" size={18} color={C.primary} />
+                <Ionicons name="chatbubble-ellipses" size={15} color={C.primary} />
                 <Text style={[styles.actionLabel, { color: C.primary }]}>Message</Text>
               </Pressable>
               <Pressable
                 onPress={() => void callRider()}
                 style={[styles.actionBtn, { backgroundColor: C.primaryContainer, borderColor: C.primaryContainer }]}
               >
-                <Ionicons name="call" size={18} color={C.onPrimary} />
+                <Ionicons name="call" size={15} color={C.onPrimary} />
                 <Text style={[styles.actionLabel, { color: C.onPrimary }]}>Call</Text>
               </Pressable>
             </View>
@@ -228,7 +255,7 @@ export function DeliveryTrackingScreen({
             <Text style={[styles.cancelText, { color: C.error }]}>Cancel order</Text>
           </Pressable>
         )}
-      </GlassSurface>
+      </View>
 
       <RiderChatSheet C={C} visible={chatOpen} onClose={() => setChatOpen(false)} onCall={() => void callRider()} />
     </View>
@@ -239,23 +266,32 @@ export function DeliveryTrackingScreen({
 export const OrderTrackingScreen = DeliveryTrackingScreen;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#e8e0dc' },
+  root: { flex: 1, backgroundColor: '#e8ede4' },
   mapHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    zIndex: 2,
+    zIndex: 5,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.94)',
+    backgroundColor: '#fff',
     borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -264,49 +300,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LOGO_GREEN },
+  liveBadgeText: { fontFamily: FONTS.semiBold, fontSize: 12, color: LOGO_GREEN },
+  mapEtaCard: {
+    position: 'absolute',
+    right: 16,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    zIndex: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
   },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
-  liveBadgeText: { fontFamily: FONTS.semiBold, fontSize: 12 },
-  mapEtaCard: {
-    position: 'absolute',
-    top: 64,
-    right: 16,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    alignItems: 'center',
-    zIndex: 2,
-  },
   mapEtaValue: { fontFamily: FONTS.display, fontSize: 22 },
   mapEtaLabel: { fontFamily: FONTS.regular, fontSize: 10, marginTop: 2 },
+  mapEtaLive: { fontFamily: FONTS.medium, fontSize: 9, marginTop: 4 },
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: 'rgba(0,0,0,0.06)',
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 28,
-    maxHeight: '48%',
-    zIndex: 3,
+    paddingTop: 20,
+    maxHeight: '46%',
+    zIndex: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   handle: {
-    position: 'absolute',
-    top: 8,
     alignSelf: 'center',
-    width: 44,
+    width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#d3c3c0',
+    marginBottom: 16,
   },
   etaRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
   eta: { fontFamily: FONTS.display, fontSize: 32 },
@@ -340,12 +385,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
-    borderRadius: 12,
+    gap: 5,
+    paddingVertical: 8,
+    borderRadius: 10,
     borderWidth: 1,
   },
-  actionLabel: { fontFamily: FONTS.semiBold, fontSize: 13 },
+  actionLabel: { fontFamily: FONTS.semiBold, fontSize: 12 },
   waitCard: {
     flexDirection: 'row',
     alignItems: 'center',

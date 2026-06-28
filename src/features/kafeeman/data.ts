@@ -205,6 +205,15 @@ export const BRANCHES = [
 /** Demo customer pin — offset from branch for delivery tracking. */
 export const DEMO_DELIVERY_DEST = { lat: 3.139, lng: 101.7069 } as const;
 
+/** Delivery address pin relative to the fulfilling branch (demo). */
+export function deliveryDestinationForBranch(branchName: string): { lat: number; lng: number } {
+  const branch = BRANCHES.find((b) => b.name === branchName) ?? BRANCHES[2];
+  return {
+    lat: branch.lat - 0.014,
+    lng: branch.lng + 0.011,
+  };
+}
+
 export const RIDER_CONTACT = {
   name: 'Ahmad',
   phone: '+60129876543',

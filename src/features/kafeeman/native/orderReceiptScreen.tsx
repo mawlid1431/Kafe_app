@@ -86,13 +86,13 @@ export function OrderReceiptScreen({
           {order.discount > 0 && (
             <View style={styles.summaryRow}>
               <Text style={{ color: C.textMuted }}>Promo discount</Text>
-              <Text style={{ color: '#22c55e' }}>-{formatRM(order.discount)}</Text>
+              <Text style={{ color: C.success }}>-{formatRM(order.discount)}</Text>
             </View>
           )}
           {(order.pointsRedeemed ?? 0) > 0 && (
             <View style={styles.summaryRow}>
               <Text style={{ color: C.textMuted }}>Points used</Text>
-              <Text style={{ color: '#22c55e' }}>
+              <Text style={{ color: C.success }}>
                 -{formatRM(pointsToRmDiscount(order.pointsRedeemed ?? 0))}
               </Text>
             </View>

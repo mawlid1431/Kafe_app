@@ -1,64 +1,70 @@
-/** Artisanal Sage brand tokens — design.md */
+/** Kafe Eman brand tokens — colors sampled from logo (#608070 sage). */
+import { LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT, LOGO_GREEN_SOFT } from './brand';
 import { FONTS } from './native/fonts';
 
-/** Soft ambient occlusion tinted with forest green (design.md Level 2). */
 export const STITCH_SHADOW = {
-  shadowColor: '#355927',
+  shadowColor: LOGO_GREEN_DARK,
   shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.08,
+  shadowOpacity: 0.1,
   shadowRadius: 20,
   elevation: 4,
 } as const;
 
 export const STITCH_SHADOW_FLOAT = {
-  shadowColor: '#355927',
+  shadowColor: LOGO_GREEN_DARK,
   shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.12,
+  shadowOpacity: 0.14,
   shadowRadius: 28,
   elevation: 8,
 } as const;
 
-/** Official Kafe Eman — Artisanal Sage palette (design.md). */
+/** Official palette — anchored to logo sage green, not generic forest green. */
 export const BRAND = {
-  bg: '#f9faf2',
-  surface: '#f9faf2',
-  surfaceLow: '#f3f4ec',
-  surfaceContainer: '#edefe6',
+  bg: '#f7f9f7',
+  surface: '#f7f9f7',
+  surfaceLow: '#f0f3f1',
+  surfaceContainer: '#e8ede9',
   surfaceLowest: '#ffffff',
-  text: '#191c18',
-  textMuted: '#43493e',
-  textFaint: '#73796d',
-  onBackground: '#191c18',
-  onSurface: '#191c18',
-  onSurfaceVariant: '#43493e',
-  primary: '#1e4112',
+  text: '#1a211e',
+  textMuted: '#3f4d48',
+  textFaint: '#6b7a74',
+  onBackground: '#1a211e',
+  onSurface: '#1a211e',
+  onSurfaceVariant: '#3f4d48',
+  /** Headings, strong text on light surfaces */
+  primary: LOGO_GREEN_DARK,
   onPrimary: '#ffffff',
-  primaryDark: '#1e4112',
-  primaryContainer: '#355927',
+  primaryDark: '#3d5249',
+  /** Logo green — buttons, FABs, active nav, live banners */
+  primaryContainer: LOGO_GREEN,
   onPrimaryContainer: '#ffffff',
-  secondary: '#546348',
+  secondary: LOGO_GREEN_LIGHT,
   onSecondary: '#ffffff',
-  secondaryContainer: '#d5e5c3',
-  onSecondaryContainer: '#58674c',
-  accent: '#a8d293',
+  secondaryContainer: LOGO_GREEN_SOFT,
+  onSecondaryContainer: LOGO_GREEN_DARK,
+  accent: '#8fa898',
   tertiaryFixed: '#e9e1d6',
   tertiaryFixedDim: '#cdc5bb',
   tertiaryContainer: '#545048',
   onTertiaryFixed: '#1e1b15',
   onTertiaryContainer: '#c9c2b8',
-  outline: '#73796d',
-  outlineVariant: '#c3c9bb',
+  outline: '#6b7a74',
+  outlineVariant: '#c5cec8',
   inverseSurface: '#2e312c',
   inverseOnSurface: '#f0f2e9',
-  glass: 'rgba(249,250,242,0.70)',
-  glassStrong: 'rgba(249,250,242,0.85)',
-  glassInset: 'rgba(233,225,214,0.55)',
-  glassBorder: 'rgba(195,201,187,0.65)',
-  glassBorderStrong: 'rgba(163,180,148,0.55)',
+  /** Savings, live status, positive deltas — same family as logo */
+  success: LOGO_GREEN,
+  successMuted: LOGO_GREEN_SOFT,
+  onSuccess: '#ffffff',
+  glass: 'rgba(247,249,247,0.72)',
+  glassStrong: 'rgba(247,249,247,0.88)',
+  glassInset: 'rgba(228,235,230,0.6)',
+  glassBorder: 'rgba(197,206,200,0.65)',
+  glassBorderStrong: 'rgba(143,168,152,0.45)',
   glassInnerRim: 'rgba(255,255,255,0.55)',
-  navBg: 'rgba(249,250,242,0.78)',
+  navBg: 'rgba(247,249,247,0.82)',
   inputBg: '#e9e1d6',
-  inputBorder: '#c3c9bb',
+  inputBorder: '#c5cec8',
   error: '#ba1a1a',
   radiusSm: 8,
   radiusMd: 12,
@@ -67,15 +73,11 @@ export const BRAND = {
   radiusMax: 32,
 } as const;
 
-/** @deprecated Artisanal Sage is light-only; kept for type compatibility. */
 export const LIGHT = BRAND;
-
-/** @deprecated Artisanal Sage is light-only. */
 export const DARK = BRAND;
 
 export type ThemeColors = typeof BRAND;
 
-/** Layout rhythm — design.md 8px base */
 export const SPACING = {
   xs: 4,
   sm: 12,
@@ -87,7 +89,6 @@ export const SPACING = {
   gutter: 24,
 } as const;
 
-/** Typography scale — Plus Jakarta Sans (design.md) */
 export const TYPE = {
   screenTitle: {
     fontFamily: FONTS.display,

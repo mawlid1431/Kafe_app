@@ -14,6 +14,7 @@ import {
 
 import type { ThemeColors } from '../theme';
 import { BRAND } from '../theme';
+import { LOGO_GREEN_DARK } from '../brand';
 import { FONTS } from './fonts';
 
 function resolveImageLayout(style?: StyleProp<ImageStyle>) {
@@ -118,69 +119,6 @@ export function GlassCard({
   return <View style={[glass(C), style]}>{children}</View>;
 }
 
-export function GradientButton({
-  label,
-  onPress,
-  disabled,
-  C,
-  variant = 'primary',
-}: {
-  label: string;
-  onPress?: () => void;
-  disabled?: boolean;
-  C: ThemeColors;
-  variant?: 'primary' | 'tng' | 'ghost';
-}) {
-  if (variant === 'ghost') {
-    return (
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        style={({ pressed }) => [
-          styles.btnWrap,
-          styles.ghost,
-          {
-            borderColor: C.outlineVariant,
-            backgroundColor: C.glassStrong,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
-          },
-        ]}
-      >
-        <Text style={[styles.btnText, { color: C.primary, fontFamily: FONTS.bold }]}>{label}</Text>
-      </Pressable>
-    );
-  }
-
-  const colors =
-    variant === 'tng'
-      ? (['#00a651', '#007a3d'] as const)
-      : ([C.primaryContainer, C.primaryDark] as const);
-
-  return (
-    <Pressable
-      onPress={disabled ? undefined : onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled }}
-      style={({ pressed }) => [
-        disabled ? { opacity: 0.5 } : undefined,
-        styles.btnWrap,
-        { transform: [{ scale: pressed ? 0.98 : 1 }] },
-      ]}
-    >
-      <LinearGradient
-        colors={[...colors]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.gradient, { borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' }]}
-      >
-        <Text style={[styles.btnText, { color: C.onPrimary }]}>{label}</Text>
-      </LinearGradient>
-    </Pressable>
-  );
-}
-
 export function displayTitle(color: string, extra?: TextStyle): TextStyle {
   return { fontFamily: FONTS.display, color, ...extra };
 }
@@ -195,7 +133,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: '#355927',
+    shadowColor: LOGO_GREEN_DARK,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 16,

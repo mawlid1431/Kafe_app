@@ -40,7 +40,7 @@ function statusBadge(order: OrderRecord, C: ThemeColors) {
     return { label: 'Order Canceled', color: '#b42318', bg: '#fef3f2' };
   }
   if (order.status === 'delivered') {
-    return { label: 'Completed', color: '#027a48', bg: '#ecfdf3' };
+    return { label: 'Completed', color: C.primaryContainer, bg: C.secondaryContainer };
   }
   return {
     label: orderStatusLabel(order.trackingStep, order.orderType),
@@ -98,7 +98,7 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
                     <View style={styles.metaRow}>
                       <Ionicons
                         name={order.orderType === 'delivery' ? 'bicycle-outline' : 'bag-outline'}
-                        size={13}
+                        size={12}
                         color={C.textMuted}
                       />
                       <Text style={[styles.meta, { color: C.textMuted }]}>
@@ -108,13 +108,22 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
                     <View style={[styles.badge, { backgroundColor: badge.bg }]}>
                       <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
                     </View>
+                    {order.status === 'active' && order.orderType === 'delivery' ? (
+                      <Pressable
+                        onPress={() => onTrack(order)}
+                        style={[styles.mapLink, { borderColor: C.primaryContainer }]}
+                      >
+                        <Ionicons name="map-outline" size={12} color={C.primaryContainer} />
+                        <Text style={[styles.mapLinkText, { color: C.primaryContainer }]}>Live map</Text>
+                      </Pressable>
+                    ) : null}
                     <Text style={[styles.date, { color: C.textFaint }]}>{formatOrderDate(order.createdAt)}</Text>
                   </View>
                   <View style={styles.orderAside}>
                     <Text style={[styles.price, { color: C.primaryContainer }]}>{formatRM(order.total)}</Text>
                     <Pressable onPress={() => onReorder(order)} style={styles.reorderLink}>
                       <Text style={[styles.reorderText, { color: C.primaryContainer }]}>Reorder</Text>
-                      <Ionicons name="chevron-forward" size={14} color={C.primaryContainer} />
+                      <Ionicons name="chevron-forward" size={12} color={C.primaryContainer} />
                     </Pressable>
                   </View>
                 </Pressable>
@@ -130,31 +139,44 @@ export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReor
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { paddingBottom: 120, paddingHorizontal: 20 },
+  scroll: { paddingBottom: 120, paddingHorizontal: 20, backgroundColor: 'transparent' },
   orderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
-    paddingVertical: 18,
+    gap: 12,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  thumb: { width: 64, height: 64, borderRadius: 10 },
-  orderBody: { flex: 1, gap: 6 },
-  branch: { fontFamily: FONTS.bold, fontSize: 15 },
+  thumb: { width: 52, height: 52, borderRadius: 8 },
+  orderBody: { flex: 1, gap: 4 },
+  branch: { fontFamily: FONTS.bold, fontSize: 14 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   meta: { fontFamily: FONTS.regular, fontSize: 12 },
   badge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
   },
-  badgeText: { fontFamily: FONTS.semiBold, fontSize: 11 },
+  badgeText: { fontFamily: FONTS.semiBold, fontSize: 10 },
+  mapLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 3,
+    marginTop: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  mapLinkText: { fontFamily: FONTS.semiBold, fontSize: 11 },
   date: { fontFamily: FONTS.regular, fontSize: 11 },
-  orderAside: { alignItems: 'flex-end', gap: 10, paddingTop: 2 },
-  price: { fontFamily: FONTS.bold, fontSize: 15 },
-  reorderLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  reorderText: { fontFamily: FONTS.semiBold, fontSize: 13 },
+  orderAside: { alignItems: 'flex-end', gap: 6, paddingTop: 2 },
+  price: { fontFamily: FONTS.bold, fontSize: 14 },
+  reorderLink: { flexDirection: 'row', alignItems: 'center', gap: 1 },
+  reorderText: { fontFamily: FONTS.semiBold, fontSize: 12 },
   endLabel: {
     textAlign: 'center',
     fontFamily: FONTS.regular,

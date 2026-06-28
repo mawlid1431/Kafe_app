@@ -1,17 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline, type Region } from 'react-native-maps';
 
-import { BRANCHES, DEMO_DELIVERY_DEST } from '../data';
+import { BRANCHES, deliveryDestinationForBranch } from '../data';
+import { LOGO_GREEN } from '../brand';
 import type { ThemeColors } from '../theme';
+import { FONTS } from './fonts';
 import { DeliveryMopedIcon } from './onboardingIcons';
 
 type Coord = { latitude: number; longitude: number };
 
+export type LiveTrackingState = {
+  routeProgress: number;
+  etaMinutes: number;
+  updatedAt: number;
+};
+
 function branchCoord(branchName: string): Coord {
-  const branch = BRANCHES.find((b) => b.name === branchName) ?? BRANCHES[2];
-  return { latitude: branch.lat, longitude: branch.lng };
+  const b = BRANCHES.find((x) => x.name === branchName) ?? BRANCHES[2];
+  return { latitude: b.lat, longitude: b.lng };
 }
 
 function interpolateCoord(origin: Coord, destination: Coord, progress: number): Coord {
@@ -24,9 +32,16 @@ function interpolateCoord(origin: Coord, destination: Coord, progress: number): 
 
 function baseProgressForStep(step: number): number {
   if (step >= 3) return 1;
-  if (step >= 2) return 0.52;
-  if (step >= 1) return 0.08;
+  if (step >= 2) return 0.45;
+  if (step >= 1) return 0.06;
   return 0;
+}
+
+function etaMinutesForProgress(progress: number, step: number): number {
+  if (step >= 3 || progress >= 1) return 0;
+  if (step < 2) return step >= 1 ? 15 : 25;
+  const remaining = Math.max(0, 1 - progress);
+  return Math.max(1, Math.ceil(remaining * 18));
 }
 
 function regionAround(center: Coord, delta = 0.014): Region {
@@ -48,41 +63,48 @@ function regionForRoute(origin: Coord, destination: Coord, rider: Coord): Region
   return {
     latitude: (minLat + maxLat) / 2,
     longitude: (minLng + maxLng) / 2,
-    latitudeDelta: Math.max(0.016, (maxLat - minLat) * 2.2),
-    longitudeDelta: Math.max(0.016, (maxLng - minLng) * 2.2),
+    latitudeDelta: Math.max(0.018, (maxLat - minLat) * 2.4),
+    longitudeDelta: Math.max(0.018, (maxLng - minLng) * 2.4),
   };
 }
+
+const LIVE_TICK_MS = 800;
+const LIVE_STEP = 0.018;
+const SHEET_MAP_PADDING = { top: 72, right: 16, bottom: 320, left: 16 };
 
 export function TrackingMap({
   C,
   branchName,
   trackingStep,
   isLive,
+  onLiveUpdate,
 }: {
   C: ThemeColors;
   branchName: string;
   trackingStep: number;
   isLive: boolean;
+  onLiveUpdate?: (state: LiveTrackingState) => void;
 }) {
   const mapRef = useRef<MapView>(null);
   const pulse = useRef(new Animated.Value(1)).current;
   const [liveOffset, setLiveOffset] = useState(0);
+  const [followRider, setFollowRider] = useState(true);
 
   const origin = useMemo(() => branchCoord(branchName), [branchName]);
-  const destination = useMemo<Coord>(
-    () => ({ latitude: DEMO_DELIVERY_DEST.lat, longitude: DEMO_DELIVERY_DEST.lng }),
-    [],
-  );
+  const destination = useMemo<Coord>(() => {
+    const dest = deliveryDestinationForBranch(branchName);
+    return { latitude: dest.lat, longitude: dest.lng };
+  }, [branchName]);
 
   useEffect(() => {
     setLiveOffset(0);
-  }, [trackingStep]);
+  }, [trackingStep, branchName]);
 
   useEffect(() => {
     if (!isLive || trackingStep < 2 || trackingStep >= 3) return;
     const timer = setInterval(() => {
-      setLiveOffset((v) => Math.min(0.38, v + 0.012));
-    }, 1800);
+      setLiveOffset((v) => Math.min(0.48, v + LIVE_STEP));
+    }, LIVE_TICK_MS);
     return () => clearInterval(timer);
   }, [isLive, trackingStep]);
 
@@ -91,34 +113,44 @@ export function TrackingMap({
     () => interpolateCoord(origin, destination, routeProgress),
     [destination, origin, routeProgress],
   );
+  const etaMinutes = etaMinutesForProgress(routeProgress, trackingStep);
+
+  useEffect(() => {
+    onLiveUpdate?.({ routeProgress, etaMinutes, updatedAt: Date.now() });
+  }, [etaMinutes, onLiveUpdate, routeProgress]);
 
   const overviewRegion = useMemo(
     () => regionForRoute(origin, destination, rider),
     [destination, origin, rider],
   );
 
-  useEffect(() => {
+  const focusRider = useCallback(() => {
+    setFollowRider(true);
     if (trackingStep < 2) {
-      mapRef.current?.animateToRegion(overviewRegion, 600);
+      mapRef.current?.animateToRegion(overviewRegion, 500);
       return;
     }
-    mapRef.current?.animateToRegion(regionAround(rider, trackingStep >= 3 ? 0.01 : 0.012), 900);
+    mapRef.current?.animateToRegion(regionAround(rider, trackingStep >= 3 ? 0.008 : 0.011), 600);
   }, [overviewRegion, rider, trackingStep]);
+
+  useEffect(() => {
+    if (!followRider) return;
+    focusRider();
+  }, [followRider, focusRider]);
 
   useEffect(() => {
     if (trackingStep < 2) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.35, duration: 900, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.in(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.3, duration: 800, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 800, easing: Easing.in(Easing.ease), useNativeDriver: true }),
       ]),
     );
     loop.start();
     return () => loop.stop();
   }, [pulse, trackingStep]);
 
-  const traveledRoute =
-    routeProgress > 0 ? [origin, rider] : [origin];
+  const traveledRoute = routeProgress > 0 ? [origin, rider] : [origin];
   const remainingRoute = routeProgress < 1 ? [rider, destination] : [];
 
   return (
@@ -127,20 +159,24 @@ export function TrackingMap({
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
         initialRegion={overviewRegion}
+        mapPadding={SHEET_MAP_PADDING}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
         rotateEnabled={false}
         pitchEnabled={false}
+        scrollEnabled
+        zoomEnabled
+        onPanDrag={() => setFollowRider(false)}
       >
-        <Marker coordinate={origin} anchor={{ x: 0.5, y: 0.5 }}>
+        <Marker coordinate={origin} anchor={{ x: 0.5, y: 0.5 }} title="Kafe Eman" description={branchName}>
           <View style={[styles.pin, { backgroundColor: C.primaryContainer }]}>
             <Ionicons name="cafe" size={14} color="#fff" />
           </View>
           <View style={styles.pinStem} />
         </Marker>
 
-        <Marker coordinate={destination} anchor={{ x: 0.5, y: 1 }}>
+        <Marker coordinate={destination} anchor={{ x: 0.5, y: 1 }} title="Your location">
           <View style={[styles.pin, { backgroundColor: C.accent }]}>
             <Ionicons name="home" size={14} color={C.onTertiaryFixed} />
           </View>
@@ -148,12 +184,12 @@ export function TrackingMap({
         </Marker>
 
         {trackingStep >= 2 && (
-          <Marker coordinate={rider} anchor={{ x: 0.5, y: 0.5 }}>
+          <Marker coordinate={rider} anchor={{ x: 0.5, y: 0.5 }} title="Rider">
             <View style={styles.riderWrap}>
               <Animated.View
                 style={[
                   styles.riderPulse,
-                  { backgroundColor: `${C.accent}44`, transform: [{ scale: pulse }] },
+                  { backgroundColor: `${C.accent}55`, transform: [{ scale: pulse }] },
                 ]}
               />
               <View style={[styles.riderPin, { backgroundColor: '#1b5e20', borderColor: '#fff' }]}>
@@ -169,12 +205,19 @@ export function TrackingMap({
         {remainingRoute.length >= 2 && (
           <Polyline
             coordinates={remainingRoute}
-            strokeColor={`${C.primaryContainer}55`}
+            strokeColor={`${C.primaryContainer}66`}
             strokeWidth={4}
             lineDashPattern={[10, 8]}
           />
         )}
       </MapView>
+
+      {isLive && trackingStep >= 2 && trackingStep < 3 && (
+        <Pressable onPress={focusRider} style={[styles.recenterBtn, { backgroundColor: C.surfaceLowest }]}>
+          <Ionicons name="locate" size={20} color={C.primaryContainer} />
+          <Text style={[styles.recenterText, { color: C.primaryContainer }]}>Live</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -200,7 +243,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 8,
     borderRadius: 2,
-    backgroundColor: '#355927',
+    backgroundColor: LOGO_GREEN,
     marginTop: -1,
   },
   riderWrap: {
@@ -228,4 +271,22 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  recenterBtn: {
+    position: 'absolute',
+    right: 16,
+    bottom: 340,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 4,
+  },
+  recenterText: { fontFamily: FONTS.semiBold, fontSize: 12 },
 });

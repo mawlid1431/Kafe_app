@@ -14,7 +14,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#355927"
+      "backgroundColor": "#608070"
     },
     "ios": {
       "supportsTablet": true,
@@ -32,11 +32,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#355927",
+          "backgroundColor": "#608070",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 180,
           "ios": {
-            "backgroundColor": "#355927"
+            "backgroundColor": "#608070"
           }
         }
       ],
