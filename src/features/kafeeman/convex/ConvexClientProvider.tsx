@@ -3,6 +3,7 @@ import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { type ReactNode, useEffect, useMemo } from 'react';
 
 import { isClerkEnabled } from '../auth/clerkConfig';
+import { ConvexSafeProvider } from './ConvexSafeProvider';
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL?.trim() ?? '';
 
@@ -37,7 +38,11 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     return children;
   }
 
-  const tree = <ConvexProvider client={client}>{children}</ConvexProvider>;
+  const tree = (
+    <ConvexProvider client={client}>
+      <ConvexSafeProvider>{children}</ConvexSafeProvider>
+    </ConvexProvider>
+  );
 
   if (!isClerkEnabled) {
     return tree;

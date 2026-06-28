@@ -5,16 +5,18 @@ import { useEffect, useRef } from 'react';
 import { api } from '@/convex/_generated/api';
 import { isClerkEnabled } from '../auth/clerkConfig';
 import { isConvexEnabled } from './ConvexClientProvider';
+import { useConvexSafeMode } from './ConvexSafeProvider';
 
 /** Upserts the signed-in Clerk user into Convex `users` table. */
 export function useConvexUserSync() {
+  const safeMode = useConvexSafeMode();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const upsertFromAuth = useMutation(api.users.upsertFromAuth);
   const syncedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isConvexEnabled || !isClerkEnabled || !isSignedIn || !user) return;
+    if (!isConvexEnabled || safeMode || !isClerkEnabled || !isSignedIn || !user) return;
     if (syncedFor.current === user.id) return;
 
     const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? '';

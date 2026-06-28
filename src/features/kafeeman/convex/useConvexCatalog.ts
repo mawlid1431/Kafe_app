@@ -5,17 +5,23 @@ import { api } from '@/convex/_generated/api';
 import { CATEGORIES as FALLBACK_CATEGORIES, MENU as FALLBACK_MENU, PROMOS as FALLBACK_PROMOS, BRANCHES as FALLBACK_BRANCHES } from '../data';
 import type { MenuItem } from '../types';
 import { isConvexEnabled } from './ConvexClientProvider';
+import { useConvexSafeMode } from './ConvexSafeProvider';
+import { useConvexBackendReady } from './useConvexBackendStatus';
 import { toAppBranch, toMenuItem, toPromoBanner, type AppBranch } from './adapters';
 
-/** Live menu, branches, promos from Convex — falls back to local seed when offline. */
-export function useConvexCatalog(enabled = isConvexEnabled) {
-  const branchesRaw = useQuery(api.catalog.listBranches, enabled ? {} : 'skip');
-  const menuRaw = useQuery(api.catalog.listMenu, enabled ? {} : 'skip');
-  const categoriesRaw = useQuery(api.catalog.listCategories, enabled ? {} : 'skip');
-  const promosRaw = useQuery(api.catalog.listPromos, enabled ? {} : 'skip');
+/** Live menu, branches, promos from Convex — falls back to local seed when offline or backend not deployed. */
+export function useConvexCatalog() {
+  const safeMode = useConvexSafeMode();
+  const { ready: backendReady } = useConvexBackendReady();
+  const useLiveCatalog = isConvexEnabled && backendReady && !safeMode;
+
+  const branchesRaw = useQuery(api.catalog.listBranches, useLiveCatalog ? {} : 'skip');
+  const menuRaw = useQuery(api.catalog.listMenu, useLiveCatalog ? {} : 'skip');
+  const categoriesRaw = useQuery(api.catalog.listCategories, useLiveCatalog ? {} : 'skip');
+  const promosRaw = useQuery(api.catalog.listPromos, useLiveCatalog ? {} : 'skip');
 
   const branches = useMemo((): AppBranch[] => {
-    if (!enabled || branchesRaw === undefined) {
+    if (!useLiveCatalog || branchesRaw === undefined) {
       return FALLBACK_BRANCHES.map((b) => ({
         name: b.name,
         slug: b.name.toLowerCase().replace(/\s+/g, '-'),
@@ -27,24 +33,24 @@ export function useConvexCatalog(enabled = isConvexEnabled) {
       }));
     }
     return branchesRaw.map(toAppBranch);
-  }, [enabled, branchesRaw]);
+  }, [useLiveCatalog, branchesRaw]);
 
   const menu = useMemo((): MenuItem[] => {
-    if (!enabled || menuRaw === undefined) return FALLBACK_MENU;
+    if (!useLiveCatalog || menuRaw === undefined) return FALLBACK_MENU;
     return menuRaw.map((row, i) => toMenuItem(row, i + 1));
-  }, [enabled, menuRaw]);
+  }, [useLiveCatalog, menuRaw]);
 
   const categories = useMemo(() => {
-    if (!enabled || categoriesRaw === undefined) return [...FALLBACK_CATEGORIES];
+    if (!useLiveCatalog || categoriesRaw === undefined) return [...FALLBACK_CATEGORIES];
     return categoriesRaw;
-  }, [enabled, categoriesRaw]);
+  }, [useLiveCatalog, categoriesRaw]);
 
   const promos = useMemo(() => {
-    if (!enabled || promosRaw === undefined) return FALLBACK_PROMOS;
+    if (!useLiveCatalog || promosRaw === undefined) return FALLBACK_PROMOS;
     return promosRaw.map(toPromoBanner);
-  }, [enabled, promosRaw]);
+  }, [useLiveCatalog, promosRaw]);
 
-  const ready = !enabled || (branchesRaw !== undefined && menuRaw !== undefined);
+  const ready = !isConvexEnabled || !backendReady || (branchesRaw !== undefined && menuRaw !== undefined);
 
-  return { branches, menu, categories, promos, ready, isLive: enabled && ready };
+  return { branches, menu, categories, promos, ready, isLive: useLiveCatalog && ready };
 }

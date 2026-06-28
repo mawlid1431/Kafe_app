@@ -8,13 +8,25 @@ export const ping = query({
   returns: v.object({
     ok: v.literal(true),
     deployment: v.string(),
-    timestamp: v.number(),
+    /** Bump when new public APIs (catalog, orders) are deployed. */
+    version: v.number(),
+    /** True when branches table is readable (catalog is usable). */
+    catalogReady: v.boolean(),
   }),
-  handler: async () => {
+  handler: async (ctx) => {
+    let catalogReady = false;
+    try {
+      await ctx.db.query('branches').first();
+      catalogReady = true;
+    } catch {
+      catalogReady = false;
+    }
+
     return {
       ok: true as const,
       deployment: 'unique-seal-371',
-      timestamp: Date.now(),
+      version: 2,
+      catalogReady,
     };
   },
 });

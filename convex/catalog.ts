@@ -33,23 +33,42 @@ const promoPublic = v.object({
   minSpend: v.optional(v.number()),
 });
 
+function slugify(label: string): string {
+  return label.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+function toBranchPublic(b: {
+  slug?: string;
+  label: string;
+  address?: string;
+  hours?: string;
+  imageUrl?: string;
+  lat?: number;
+  lng?: number;
+  active?: boolean;
+  sortOrder?: number;
+}) {
+  return {
+    slug: b.slug?.trim() || slugify(b.label),
+    label: b.label.trim(),
+    address: b.address?.trim() ?? '',
+    hours: b.hours?.trim() ?? 'Open today',
+    imageUrl: b.imageUrl,
+    lat: typeof b.lat === 'number' && Number.isFinite(b.lat) ? b.lat : 0,
+    lng: typeof b.lng === 'number' && Number.isFinite(b.lng) ? b.lng : 0,
+  };
+}
+
 /** Public catalog — no auth; admin edits sync live to the mobile app. */
 export const listBranches = query({
   args: {},
   returns: v.array(branchPublic),
   handler: async (ctx) => {
-    const rows = await ctx.db.query('branches').withIndex('by_sort').collect();
+    const rows = await ctx.db.query('branches').collect();
     return rows
-      .filter((b) => b.active)
-      .map((b) => ({
-        slug: b.slug,
-        label: b.label,
-        address: b.address,
-        hours: b.hours,
-        imageUrl: b.imageUrl,
-        lat: b.lat,
-        lng: b.lng,
-      }));
+      .filter((b) => b.active !== false)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map(toBranchPublic);
   },
 });
 
@@ -59,23 +78,25 @@ export const listMenu = query({
   },
   returns: v.array(menuPublic),
   handler: async (ctx, args) => {
-    const rows = await ctx.db.query('menuItems').withIndex('by_sort').collect();
-    const active = rows.filter((i) => i.active);
+    const rows = await ctx.db.query('menuItems').collect();
+    const active = rows.filter((i) => i.active !== false);
     const filtered =
       args.category && args.category !== 'All'
         ? active.filter((i) => i.category === args.category)
         : active;
-    return filtered.map((i) => ({
-      legacyId: i.legacyId,
-      name: i.name,
-      description: i.description,
-      price: i.price,
-      category: i.category,
-      imageUrl: i.imageUrl,
-      rating: i.rating,
-      calories: i.calories,
-      badge: i.badge,
-    }));
+    return filtered
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map((i) => ({
+        legacyId: i.legacyId,
+        name: i.name,
+        description: i.description ?? '',
+        price: i.price,
+        category: i.category,
+        imageUrl: i.imageUrl ?? '',
+        rating: i.rating,
+        calories: i.calories,
+        badge: i.badge,
+      }));
   },
 });
 
@@ -84,7 +105,7 @@ export const listCategories = query({
   returns: v.array(v.string()),
   handler: async (ctx) => {
     const items = await ctx.db.query('menuItems').collect();
-    const cats = new Set(items.filter((i) => i.active).map((i) => i.category));
+    const cats = new Set(items.filter((i) => i.active !== false).map((i) => i.category));
     return ['All', ...[...cats].sort()];
   },
 });
@@ -93,9 +114,10 @@ export const listPromos = query({
   args: {},
   returns: v.array(promoPublic),
   handler: async (ctx) => {
-    const rows = await ctx.db.query('promos').withIndex('by_sort').collect();
+    const rows = await ctx.db.query('promos').collect();
     return rows
-      .filter((p) => p.active)
+      .filter((p) => p.active !== false)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .map((p) => ({
         title: p.title,
         subtitle: p.subtitle,

@@ -1,18 +1,11 @@
-import { useAuth } from '@clerk/expo';
 import { useMutation, useQuery } from 'convex/react';
 import { useMemo } from 'react';
 
 import { api } from '@/convex/_generated/api';
-import { isClerkEnabled } from '../auth/clerkConfig';
-import { isConvexEnabled } from './ConvexClientProvider';
 import { branchSlugForName, toOrderRecord, type AppBranch } from './adapters';
 import type { MenuItem, OrderRecord } from '../types';
 
-/** True when Clerk + Convex are configured and the user is signed in. */
-export function useLiveBackend(isLoggedIn: boolean): boolean {
-  const { isSignedIn } = useAuth();
-  return Boolean(isConvexEnabled && isClerkEnabled && isLoggedIn && isSignedIn);
-}
+export { useLiveBackend, useConvexBackendReady } from './useConvexBackendStatus';
 
 export function useConvexOrders(enabled: boolean, menu: MenuItem[]) {
   const raw = useQuery(api.orders.listMine, enabled ? {} : 'skip');
