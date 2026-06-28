@@ -54,7 +54,16 @@ import {
   CardPaymentScreen,
 } from './native/payments';
 import {
-  getTimeGreeting,
+  AccountMenu,
+  AppBottomNav,
+  AppPickupHeader,
+  LoyaltyHeroCard,
+  MenuListRow,
+  OrderNowFab,
+  SectionHeading,
+  StoreInfoBanner,
+} from './native/appShell';
+import {
   StitchEmptyState,
   StitchStoreBar,
   TabScreenHeader,
@@ -66,16 +75,13 @@ import {
   LiquidGlassBackground,
   PROFILE_AVATAR,
   STITCH_AUTH_HERO,
-  StitchBottomNav,
   StitchCategoryChip,
   StitchFeaturedCard,
   StitchFloatingCart,
-  StitchMenuCard,
   StitchOptionPill,
   StitchPillButton,
   StitchPromoBanner,
   StitchStickyFooter,
-  StitchTopBar,
 } from './native/stitchUi';
 import { OrderNoteField, PointsRedeemSection } from './native/cartExtras';
 import { AddressesScreen } from './native/addressesScreen';
@@ -83,12 +89,18 @@ import { HelpScreen } from './native/helpScreen';
 import { NotificationsScreen } from './native/notificationsScreen';
 import { OrderReceiptScreen } from './native/orderReceiptScreen';
 import { PickupOrderScreen } from './native/pickupOrderScreen';
-import { OrdersScreen } from './native/ordersScreen';
+import { OrdersScreen, type OrderFilterTab } from './native/ordersScreen';
 import { RewardsScreen } from './native/rewardsScreen';
 import { FavoritesScreen } from './native/favoritesScreen';
 import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
 import { AppImage, GradientButton } from './native/ui';
+import { AppleSignInButton } from './auth/AppleSignInButton';
+import { ClerkProfileSync } from './auth/ClerkProfileSync';
+import { isClerkEnabled } from './auth/clerkConfig';
+import { ConvexConnectionCheck } from './convex/useConvexConnection';
+import { ConvexUserSync } from './convex/useConvexUserSync';
+import { isConvexEnabled } from './convex/ConvexClientProvider';
 import { STITCH_SHADOW, useBrandTheme, type ThemeColors } from './theme';
 import type {
   AppNotification,
@@ -156,7 +168,7 @@ function KafeemanApp() {
   const [pointsHistory, setPointsHistory] = useState<PointsActivity[]>(POINTS_HISTORY_SEED);
   const [activeOrderId, setActiveOrderId] = useState<string | null>('KE-20250624-9102');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [orderTab, setOrderTab] = useState<'Active' | 'Past'>('Active');
+  const [orderTab, setOrderTab] = useState<OrderFilterTab>('All');
   const [payMethod, setPayMethod] = useState<PaymentMethodId>('tng');
   const [orderRef, setOrderRef] = useState(() => generateOrderRef());
   const [tngPhase, setTngPhase] = useState<TngPayPhase>('pin');
@@ -192,22 +204,21 @@ function KafeemanApp() {
   );
   const firstName = profile.name.split(' ')[0] ?? profile.name;
 
+  const handleClerkProfile = useCallback((next: UserProfile) => {
+    setProfile(next);
+  }, []);
+
+  const handleClerkSignedIn = useCallback(() => {
+    setIsLoggedIn(true);
+    setOnboardingDone(true);
+  }, []);
+
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartTotal = cart.reduce((a, c) => a + c.item.price * c.qty, 0);
   const discountAmount = calcPromoDiscount(cartTotal, appliedPromo);
   const orderTotalBeforePoints = orderTotal(cartTotal, orderType === 'delivery', discountAmount, 0);
   const effectivePointsRedeem = usePointsEnabled ? pointsToRedeem : 0;
   const totalDue = orderTotal(cartTotal, orderType === 'delivery', discountAmount, effectivePointsRedeem);
-  const filtered = useMemo(() => {
-    let items = category === 'All' ? MENU : MENU.filter((m) => m.category === category);
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      items = items.filter(
-        (m) => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q),
-      );
-    }
-    return items;
-  }, [category, searchQuery]);
   const menuFiltered = useMemo(() => {
     let items = category === 'All' ? MENU : MENU.filter((m) => m.category === category);
     if (menuSearch.trim()) {
@@ -226,17 +237,14 @@ function KafeemanApp() {
     );
   }, [searchQuery]);
   const favoriteItems = useMemo(() => MENU.filter((m) => favorites.includes(m.id)), [favorites]);
-  const lastPastOrder = useMemo(
-    () => orders.find((o) => o.status === 'delivered'),
-    [orders],
-  );
   const rewardTier = REWARD_TIERS.find((t) => points >= t.min && points <= t.max) ?? REWARD_TIERS[0];
   const pointsToGold =
     rewardTier.name === 'Gold'
       ? 0
       : Math.max(0, (REWARD_TIERS[REWARD_TIERS.indexOf(rewardTier) + 1]?.min ?? 1500) - points);
   const showNav = ['home', 'menu', 'cart', 'orders', 'profile'].includes(screen);
-  const showTopBar = screen === 'home' || screen === 'menu';
+  const showPickupHeader = screen === 'home' || screen === 'menu';
+  const showOrderNowFab = screen === 'home';
   const viewingOrder = useMemo(() => {
     const id = activeOrderId ?? orderRef;
     const found = orders.find((o) => o.id === id);
@@ -245,13 +253,13 @@ function KafeemanApp() {
     return { ...found, trackingStep: Math.max(found.trackingStep, trackingStep) };
   }, [orders, activeOrderId, orderRef, trackingStep]);
   const showLiquidBg =
-    ['home', 'menu', 'cart', 'orders', 'profile', 'rewards', 'favorites', 'notifications', 'help', 'addresses'].includes(screen) ||
+    ['rewards', 'favorites', 'notifications', 'help', 'addresses'].includes(screen) ||
     (screen === 'order-tracking' && viewingOrder?.orderType === 'pickup') ||
     screen === 'order-receipt';
   const unreadNotifications = notifications.filter((n) => !n.read).length;
   const showFloatingCart = cartCount > 0 && FLOATING_CART_SCREENS.includes(screen);
   const floatingCartBottom =
-    screen === 'product-detail' ? 96 : showNav ? 110 : insets.bottom + 24;
+    screen === 'product-detail' ? 96 : showNav ? 72 : insets.bottom + 24;
 
   const go = useCallback((s: Screen) => {
     const tabMap: Partial<Record<Screen, TabKey>> = {
@@ -772,12 +780,16 @@ function KafeemanApp() {
                       C={C}
                       variant="outline"
                     />
-                    <StitchPillButton
-                      label="Continue with Apple"
-                      onPress={() => setScreen('signup')}
+                    <AppleSignInButton
                       C={C}
-                      variant="apple"
-                      icon="logo-apple"
+                      onFallback={() => setScreen('signup')}
+                      onSuccess={() => {
+                        setIsLoggedIn(true);
+                        setOnboardingDone(true);
+                        showToast('Welcome to Kafe Eman!', 'success');
+                        setScreen('branch');
+                      }}
+                      onError={(message) => showToast(message, 'error')}
                     />
                   </View>
                   <Pressable
@@ -976,28 +988,33 @@ function KafeemanApp() {
 
       case 'home':
         return (
-          <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingTop: 8 }}>
+          <ScrollView
+            style={{ backgroundColor: C.surfaceLowest }}
+            contentContainerStyle={{ paddingBottom: showOrderNowFab ? 160 : 120, paddingTop: 16 }}
+          >
             <View style={styles.padH}>
-              <Text style={[styles.stitchGreeting, { color: C.primary }]}>
-                {getTimeGreeting()}, {firstName}! ☕
-              </Text>
-              <StitchStoreBar
+              <LoyaltyHeroCard
                 C={C}
-                branch={selectedBranch}
-                orderType={orderType}
-                onPress={() => setScreen('order-type')}
+                name={profile.name}
+                points={points}
+                subtitle={
+                  pointsToGold > 0
+                    ? `Unlock rewards — ${pointsToGold} pts to Gold`
+                    : 'Unlock rewards with your points'
+                }
+                onPress={() => go('rewards')}
               />
-              <View style={{ marginTop: 12 }}>
-              <GlassSearchBar
-                C={C}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search for your favorite brew..."
-                onClear={() => setSearchQuery('')}
-              />
+              <View style={{ marginBottom: 16 }}>
+                <GlassSearchBar
+                  C={C}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search for your favorite brew..."
+                  onClear={() => setSearchQuery('')}
+                />
               </View>
             </View>
-            <View style={[styles.padH, { marginTop: 24 }]}>
+            <View style={[styles.padH, { marginBottom: 20 }]}>
               <StitchPromoBanner
                 C={C}
                 title={PROMOS[promoIdx].title}
@@ -1024,84 +1041,47 @@ function KafeemanApp() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, gap: 10 }}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 10, marginBottom: 24 }}
             >
               {HOME_OFFERS.map((offer) => (
-                <GlassCard key={offer.id} level="sheet" style={styles.offerChip}>
-                  <Pressable onPress={() => {
+                <Pressable
+                  key={offer.id}
+                  onPress={() => {
                     applyPromoFromCode(offer.code);
                     go('cart');
-                  }}>
-                    <Text style={[styles.offerTag, { color: C.accent }]}>{offer.tag}</Text>
-                    <Text style={[styles.offerTitle, { color: C.text }]}>{offer.title}</Text>
-                  </Pressable>
-                </GlassCard>
+                  }}
+                  style={[styles.offerChipClean, { backgroundColor: C.surfaceLow, borderColor: C.outlineVariant }]}
+                >
+                  <Text style={[styles.offerTag, { color: C.primaryContainer }]}>{offer.tag}</Text>
+                  <Text style={[styles.offerTitle, { color: C.text }]}>{offer.title}</Text>
+                </Pressable>
               ))}
             </ScrollView>
-            <GlassCard level="sheet" style={{ marginHorizontal: 24, marginTop: 24 }}>
-              <Pressable onPress={() => go('rewards')} style={styles.rewardsCardInner}>
-                <Ionicons name="sparkles" size={22} color={C.accent} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={{ color: C.text, fontFamily: FONTS.bold }}>{points.toLocaleString()} Points</Text>
-                  <Text style={{ color: C.textMuted, fontSize: 12, fontFamily: FONTS.regular }}>
-                    {pointsToGold > 0
-                      ? `${pointsToGold} pts to Gold ${REWARD_TIERS[2].emoji}`
-                      : `Gold member ${REWARD_TIERS[2].emoji}`}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={C.textFaint} />
-              </Pressable>
-            </GlassCard>
-            {lastPastOrder && (
-              <GlassCard level="sheet" style={{ marginHorizontal: 24, marginTop: 16 }}>
-                <Pressable onPress={() => reorder(lastPastOrder)} style={styles.reorderCardInner}>
-                  <Ionicons name="refresh" size={20} color={C.primary} />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={{ color: C.text, fontFamily: FONTS.bold }}>Order again</Text>
-                    <Text style={{ color: C.textMuted, fontSize: 12 }}>
-                      {lastPastOrder.items[0]?.item.name ?? 'Your last order'}
-                    </Text>
-                  </View>
-                  <Text style={{ color: C.primary, fontFamily: FONTS.semiBold, fontSize: 13 }}>Reorder</Text>
-                </Pressable>
-              </GlassCard>
-            )}
             {searchQuery.trim() ? (
-              <View style={[styles.padH, { marginTop: 32 }]}>
-                <Text style={[styles.sectionTitle, { color: C.primary }]}>
-                  Search results ({searchResults.length})
-                </Text>
+              <View style={styles.padH}>
+                <SectionHeading C={C} title={`Search results (${searchResults.length})`} />
                 {searchResults.length === 0 ? (
-                  <Text style={[styles.bodyText, { marginTop: 12 }]}>No drinks match your search.</Text>
+                  <Text style={[styles.bodyText, { marginTop: 4 }]}>No drinks match your search.</Text>
                 ) : (
                   searchResults.slice(0, 6).map((item) => (
-                    <Pressable
+                    <MenuListRow
                       key={item.id}
+                      C={C}
+                      name={item.name}
+                      price={item.price}
+                      image={item.image}
+                      badge={item.badge}
                       onPress={() => openProductDetail(item, 'home')}
-                      style={[styles.searchRow, { borderBottomColor: C.glassBorder }]}
-                    >
-                      <AppImage uri={item.image} style={styles.listThumb} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ color: C.text, fontFamily: FONTS.bold }}>{item.name}</Text>
-                        <Text style={{ color: C.textMuted, fontSize: 12 }}>{item.category}</Text>
-                      </View>
-                      <Text style={{ color: C.primary, fontFamily: FONTS.bold }}>RM {item.price.toFixed(2)}</Text>
-                    </Pressable>
+                      onAdd={() => addToCart(item)}
+                    />
                   ))
                 )}
               </View>
             ) : null}
             {favoriteItems.length > 0 && !searchQuery.trim() && (
-              <>
-                <View style={[styles.padH, { marginTop: 32 }]}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={[styles.sectionTitle, { color: C.primary }]}>Your Favourites</Text>
-                    <Pressable onPress={() => go('favorites')}>
-                      <Text style={{ color: C.primary, fontFamily: FONTS.semiBold, fontSize: 14 }}>See all</Text>
-                    </Pressable>
-                  </View>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 8 }}>
+              <View style={styles.padH}>
+                <SectionHeading C={C} title="Your Favourites" actionLabel="View all" onAction={() => go('favorites')} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
                   {favoriteItems.slice(0, 6).map((item) => (
                     <StitchFeaturedCard
                       key={item.id}
@@ -1117,100 +1097,98 @@ function KafeemanApp() {
                     />
                   ))}
                 </ScrollView>
-              </>
+              </View>
             )}
             {!searchQuery.trim() && (
-              <>
-                <View style={[styles.padH, { marginTop: 32 }]}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={[styles.sectionTitle, { color: C.primary }]}>Featured Drinks</Text>
-                    <Pressable onPress={() => go('menu')}>
-                      <Text style={{ color: C.primary, fontFamily: FONTS.semiBold, fontSize: 14 }}>See all</Text>
-                    </Pressable>
-                  </View>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 8 }}>
-                  {MENU.slice(0, 6).map((item) => (
-                    <StitchFeaturedCard
-                      key={item.id}
-                      C={C}
-                      name={item.name}
-                      price={item.price}
-                      image={item.image}
-                      rating={item.rating}
-                      isFavorite={favorites.includes(item.id)}
-                      onToggleFavorite={() => toggleFavorite(item.id)}
-                      onPress={() => openProductDetail(item, 'home')}
-                      onAdd={() => addToCart(item)}
-                    />
-                  ))}
-                </ScrollView>
-              </>
+              <View style={[styles.padH, { marginTop: 24 }]}>
+                <SectionHeading C={C} title="Featured Drinks" actionLabel="View all" onAction={() => go('menu')} />
+                {MENU.slice(0, 4).map((item) => (
+                  <MenuListRow
+                    key={item.id}
+                    C={C}
+                    name={item.name}
+                    price={item.price}
+                    image={item.image}
+                    badge={item.badge}
+                    onPress={() => openProductDetail(item, 'home')}
+                    onAdd={() => addToCart(item)}
+                  />
+                ))}
+              </View>
             )}
           </ScrollView>
         );
 
       case 'menu':
         return (
-          <ScrollView
-            style={styles.flex}
-            contentContainerStyle={{ paddingBottom: 140 }}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.padH, { marginBottom: 12 }]}>
-              <GlassSearchBar
-                C={C}
-                value={menuSearch}
-                onChangeText={setMenuSearch}
-                placeholder="Search menu…"
-                onClear={() => setMenuSearch('')}
-              />
-            </View>
+          <View style={[styles.flex, { backgroundColor: C.surfaceLowest }]}>
             <ScrollView
-              horizontal
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={[styles.padH, styles.menuChipRow]}
+              style={styles.flex}
+              contentContainerStyle={{ paddingBottom: 140 }}
+              showsVerticalScrollIndicator={false}
+              stickyHeaderIndices={[1]}
             >
-              {CATEGORIES.map((c) => (
-                <StitchCategoryChip
-                  key={c}
+              <View style={styles.padH}>
+                <StoreInfoBanner
                   C={C}
-                  label={c}
-                  active={category === c}
-                  icon={c === 'Coffee' ? 'cafe' : undefined}
-                  onPress={() => setCategory(c)}
+                  branch={selectedBranch}
+                  orderType={orderType}
+                  onPress={() => setScreen('branch')}
                 />
-              ))}
-            </ScrollView>
-            <View style={[styles.menuGrid, styles.padH]}>
-              {menuFiltered.length === 0 ? (
-                <StitchEmptyState
+                <GlassSearchBar
                   C={C}
-                  icon="search-outline"
-                  title="No drinks found"
-                  message="Try another category or search term."
-                  actionLabel="Clear search"
-                  onAction={() => setMenuSearch('')}
+                  value={menuSearch}
+                  onChangeText={setMenuSearch}
+                  placeholder="Search menu…"
+                  onClear={() => setMenuSearch('')}
                 />
-              ) : (
-                menuFiltered.map((item) => (
-                  <StitchMenuCard
-                    key={item.id}
+              </View>
+              <View style={{ backgroundColor: C.surfaceLowest }}>
+                <ScrollView
+                  horizontal
+                  nestedScrollEnabled
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={[styles.padH, styles.menuChipRow]}
+                >
+                  {CATEGORIES.map((c) => (
+                    <StitchCategoryChip
+                      key={c}
+                      C={C}
+                      label={c}
+                      active={category === c}
+                      icon={c === 'Coffee' ? 'cafe' : undefined}
+                      onPress={() => setCategory(c)}
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.padH}>
+                {menuFiltered.length === 0 ? (
+                  <StitchEmptyState
                     C={C}
-                    width={menuCardWidth}
-                    name={item.name}
-                    price={item.price}
-                    image={item.image}
-                    isFavorite={favorites.includes(item.id)}
-                    onToggleFavorite={() => toggleFavorite(item.id)}
-                    onPress={() => openProductDetail(item, 'menu')}
-                    onAdd={() => addToCart(item)}
+                    icon="search-outline"
+                    title="No drinks found"
+                    message="Try another category or search term."
+                    actionLabel="Clear search"
+                    onAction={() => setMenuSearch('')}
                   />
-                ))
-              )}
-            </View>
-          </ScrollView>
+                ) : (
+                  menuFiltered.map((item) => (
+                    <MenuListRow
+                      key={item.id}
+                      C={C}
+                      name={item.name}
+                      price={item.price}
+                      image={item.image}
+                      badge={item.badge}
+                      onPress={() => openProductDetail(item, 'menu')}
+                      onAdd={() => addToCart(item)}
+                    />
+                  ))
+                )}
+              </View>
+            </ScrollView>
+          </View>
         );
 
       case 'product-detail':
@@ -1690,18 +1668,23 @@ function KafeemanApp() {
 
       case 'orders':
         return (
-          <OrdersScreen
-            C={C}
-            orders={orders}
-            orderTab={orderTab}
-            onTabChange={(t) => {
-              void hapticSelection();
-              setOrderTab(t);
-            }}
-            onTrack={trackOrder}
-            onReorder={reorder}
-            onBrowseMenu={() => go('menu')}
-          />
+          <View style={[styles.flex, { backgroundColor: C.surfaceLowest }]}>
+            <View style={[styles.ordersTitleWrap, { borderBottomColor: C.outlineVariant }]}>
+              <Text style={[styles.ordersTitle, { color: C.text }]}>Orders</Text>
+            </View>
+            <OrdersScreen
+              C={C}
+              orders={orders}
+              orderTab={orderTab}
+              onTabChange={(t) => {
+                void hapticSelection();
+                setOrderTab(t);
+              }}
+              onTrack={trackOrder}
+              onReorder={reorder}
+              onBrowseMenu={() => go('menu')}
+            />
+          </View>
         );
 
       case 'favorites':
@@ -1720,67 +1703,72 @@ function KafeemanApp() {
 
       case 'profile':
         return (
-          <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-            <View style={[styles.padH, styles.center, { paddingTop: 16 }]}>
+          <ScrollView
+            style={{ backgroundColor: C.surfaceLowest }}
+            contentContainerStyle={{ paddingBottom: 100, paddingTop: 20 }}
+          >
+            <View style={[styles.padH, styles.center]}>
               <View style={styles.avatarWrap}>
                 <AppImage uri={PROFILE_AVATAR} style={styles.profileAvatar} />
               </View>
               <Text style={styles.screenTitleSm}>{profile.name}</Text>
               <Text style={styles.bodyText}>{profile.email}</Text>
-              <GlassCard level="sheet" style={{ width: '100%', marginTop: 20 }}>
-                <Pressable onPress={() => go('rewards')} style={styles.loyaltyCardInner}>
-                  <Ionicons name="sparkles" size={22} color={C.accent} />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={{ color: C.text, fontFamily: FONTS.bold }}>
-                      {points.toLocaleString()} Points · {rewardTier.name} {rewardTier.emoji}
-                    </Text>
-                    <Text style={{ color: C.textMuted, fontSize: 12, fontFamily: FONTS.regular }}>
-                      {pointsToGold > 0 ? `${pointsToGold} pts to Gold` : 'Gold member benefits unlocked'}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={C.textFaint} />
-                </Pressable>
-              </GlassCard>
             </View>
-            {[
-              { icon: 'heart-outline' as const, label: 'My Favourites', action: () => go('favorites') },
-              { icon: 'gift-outline' as const, label: 'Rewards', action: () => go('rewards') },
-              { icon: 'receipt-outline' as const, label: 'Order History', action: () => go('orders') },
-              { icon: 'location-outline' as const, label: 'Branch', action: () => setScreen('branch') },
-              { icon: 'home-outline' as const, label: 'Delivery addresses', action: () => { setAddressReturn('profile'); setScreen('addresses'); } },
-              {
-                icon: 'help-circle-outline' as const,
-                label: 'Help',
-                action: () => setScreen('help'),
-              },
-              {
-                icon: 'log-out-outline' as const,
-                label: 'Log Out',
-                action: () => {
-                  Alert.alert('Log out?', 'You will need to sign in again to place orders.', [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Log Out',
-                      style: 'destructive',
-                      onPress: () => {
-                        void hapticWarning();
-                        setIsLoggedIn(false);
-                        setCart([]);
-                        setScreen('auth');
+            <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+              <AccountMenu
+                C={C}
+                sections={[
+                  {
+                    title: 'Account',
+                    rows: [
+                      { icon: 'person-outline', label: 'Personal Information', onPress: () => setScreen('profile-setup') },
+                      { icon: 'location-outline', label: 'My Addresses', onPress: () => { setAddressReturn('profile'); setScreen('addresses'); } },
+                      { icon: 'heart-outline', label: 'My Favourites', onPress: () => go('favorites') },
+                      { icon: 'gift-outline', label: 'Rewards', onPress: () => go('rewards') },
+                    ],
+                  },
+                  {
+                    title: 'Orders',
+                    rows: [
+                      { icon: 'receipt-outline', label: 'Order History', onPress: () => go('orders') },
+                      { icon: 'storefront-outline', label: 'Branch', onPress: () => setScreen('branch') },
+                    ],
+                  },
+                  {
+                    title: 'Support',
+                    rows: [
+                      { icon: 'help-circle-outline', label: 'Help Center', onPress: () => setScreen('help') },
+                      { icon: 'notifications-outline', label: 'Notifications', onPress: () => setScreen('notifications') },
+                    ],
+                  },
+                  {
+                    title: 'Account actions',
+                    rows: [
+                      {
+                        icon: 'log-out-outline',
+                        label: 'Log Out',
+                        destructive: true,
+                        onPress: () => {
+                          Alert.alert('Log out?', 'You will need to sign in again to place orders.', [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Log Out',
+                              style: 'destructive',
+                              onPress: () => {
+                                void hapticWarning();
+                                setIsLoggedIn(false);
+                                setCart([]);
+                                setScreen('auth');
+                              },
+                            },
+                          ]);
+                        },
                       },
-                    },
-                  ]);
-                },
-              },
-            ].map((item) => (
-              <GlassCard key={item.label} level="sheet" style={{ marginHorizontal: 20, marginBottom: 10 }}>
-                <Pressable onPress={item.action} style={styles.menuRowInner}>
-                  <Ionicons name={item.icon} size={22} color={C.primary} />
-                  <Text style={{ color: C.text, flex: 1, marginLeft: 12, fontWeight: '600' }}>{item.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={C.textFaint} />
-                </Pressable>
-              </GlassCard>
-            ))}
+                    ],
+                  },
+                ]}
+              />
+            </View>
           </ScrollView>
         );
 
@@ -1821,18 +1809,30 @@ function KafeemanApp() {
   };
 
   return (
-    <SafeAreaView style={[styles.flex, { backgroundColor: showLiquidBg ? 'transparent' : C.bg }]} edges={['top', 'left', 'right']}>
-      <StatusBar style="dark" />
-      <LiquidGlassBackground style={[styles.flex, !showLiquidBg && { backgroundColor: C.bg }]}>
-        {showTopBar && (
-          <StitchTopBar
+    <SafeAreaView style={[styles.flex, { backgroundColor: showLiquidBg ? 'transparent' : C.surfaceLowest }]} edges={showPickupHeader ? [] : ['top', 'left', 'right']}>
+      <StatusBar style={showPickupHeader ? 'light' : 'dark'} />
+      <LiquidGlassBackground style={[styles.flex, !showLiquidBg && { backgroundColor: C.surfaceLowest }]}>
+        {isClerkEnabled ? (
+          <ClerkProfileSync onProfile={handleClerkProfile} onSignedIn={handleClerkSignedIn} />
+        ) : null}
+        {isConvexEnabled ? (
+          <ConvexConnectionCheck onError={(message) => showToast(message, 'error')} />
+        ) : null}
+        {isClerkEnabled && isConvexEnabled ? <ConvexUserSync /> : null}
+        {showPickupHeader && (
+          <AppPickupHeader
             C={C}
-            onAvatarPress={() => go('profile')}
+            orderType={orderType}
+            branch={selectedBranch}
+            onPress={() => setScreen('order-type')}
             onNotifyPress={() => setScreen('notifications')}
             notifyCount={unreadNotifications}
           />
         )}
         <View style={styles.flex}>{renderScreen()}</View>
+        {showOrderNowFab && (
+          <OrderNowFab C={C} bottom={showNav ? 88 : insets.bottom + 24} onPress={() => go('menu')} />
+        )}
         {showFloatingCart && (
           <StitchFloatingCart
             C={C}
@@ -1846,7 +1846,7 @@ function KafeemanApp() {
           />
         )}
         {showNav && (
-          <StitchBottomNav
+          <AppBottomNav
             C={C}
             tab={tab}
             cartCount={cartCount}
@@ -1873,7 +1873,7 @@ function createStyles(C: ThemeColors) {
   return StyleSheet.create({
     flex: { flex: 1 },
     center: { alignItems: 'center', justifyContent: 'center' },
-    padH: { paddingHorizontal: 24 },
+    padH: { paddingHorizontal: 20 },
     onboardHeader: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 24, paddingTop: 8, paddingBottom: 4 },
     skipBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: C.surfaceContainer },
     skipBtnText: { color: C.textMuted, fontWeight: '600', fontFamily: FONTS.semiBold, fontSize: 14 },
@@ -2089,6 +2089,19 @@ function createStyles(C: ThemeColors) {
     promoDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 12 },
     promoDot: { width: 8, height: 8, borderRadius: 4 },
     offerChip: { minWidth: 110, marginRight: 10 },
+    offerChipClean: {
+      minWidth: 120,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+    },
+    ordersTitleWrap: {
+      paddingVertical: 16,
+      alignItems: 'center',
+      borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    ordersTitle: { fontFamily: FONTS.semiBold, fontSize: 17 },
     offerTag: { fontFamily: FONTS.bold, fontSize: 11, marginBottom: 4 },
     offerTitle: { fontFamily: FONTS.semiBold, fontSize: 13 },
     reorderCard: {

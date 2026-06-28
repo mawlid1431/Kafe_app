@@ -5,7 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@/features/*": ["./src/features/*"]
+      "@/features/*": ["./src/features/*"],
+      "@/convex/*": ["./convex/*"]
     }
   },
   "include": [

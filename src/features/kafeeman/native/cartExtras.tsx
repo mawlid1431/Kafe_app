@@ -151,7 +151,7 @@ export function PointsRedeemSection({
       )}
 
       <Text style={[styles.earnPreview, { color: C.accent }]}>
-        +{earnPreview} pts you'll earn on this order
+        +{earnPreview} pts you will earn on this order
       </Text>
     </GlassSurface>
   );

@@ -14,7 +14,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#f9faf2"
+      "backgroundColor": "#355927"
     },
     "ios": {
       "supportsTablet": true,
@@ -30,12 +30,26 @@
     },
     "plugins": [
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#355927",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 180,
+          "ios": {
+            "backgroundColor": "#355927"
+          }
+        }
+      ],
+      [
         "expo-router",
         {
           "root": "./app"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@clerk/expo",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

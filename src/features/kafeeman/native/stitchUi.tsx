@@ -568,14 +568,16 @@ export function StitchPillButton({
 
   const inner = (
     <>
-      {icon && <Ionicons name={icon} size={18} color={textColor} style={{ marginRight: 8 }} />}
-      <Text style={[styles.pillBtnText, { color: textColor }]}>{label}</Text>
+      {icon && <Ionicons name={icon} size={18} color={textColor} style={{ marginRight: 8 }} accessible={false} />}
+      <Text style={[styles.pillBtnText, { color: textColor }]} accessible={false}>{label}</Text>
     </>
   );
 
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [
         styles.pillBtn,
         styles.pillBtnFull,

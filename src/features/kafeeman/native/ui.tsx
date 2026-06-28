@@ -48,10 +48,12 @@ export function AppImage({
   uri,
   style,
   contentPosition,
+  accessibilityLabel = 'Image',
 }: {
   uri: string;
   style?: StyleProp<ImageStyle>;
   contentPosition?: { top?: string | number; left?: string | number } | 'center' | 'right' | 'left';
+  accessibilityLabel?: string;
 }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -84,6 +86,7 @@ export function AppImage({
         contentFit="cover"
         contentPosition={contentPosition ?? 'center'}
         transition={250}
+        accessibilityLabel={accessibilityLabel}
         onLoad={() => setLoading(false)}
         onError={() => {
           setLoading(false);
@@ -132,6 +135,8 @@ export function GradientButton({
     return (
       <Pressable
         onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
         style={({ pressed }) => [
           styles.btnWrap,
           styles.ghost,
@@ -155,6 +160,9 @@ export function GradientButton({
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         disabled ? { opacity: 0.5 } : undefined,
         styles.btnWrap,

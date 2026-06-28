@@ -29,8 +29,14 @@ export function ScreenHeader({
   return (
     <View style={styles.header}>
       {onBack ? (
-        <Pressable onPress={onBack} style={[styles.backBtn, { backgroundColor: C.glassStrong }]} hitSlop={8}>
-          <Ionicons name="chevron-back" size={20} color={C.text} />
+        <Pressable
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={[styles.backBtn, { backgroundColor: C.glassStrong }]}
+          hitSlop={8}
+        >
+          <Ionicons name="chevron-back" size={20} color={C.text} accessible={false} />
         </Pressable>
       ) : (
         <View style={styles.backSpacer} />
@@ -82,7 +88,11 @@ export function StitchStoreBar({
   const mode = orderType === 'delivery' ? 'Delivery' : 'Pickup';
 
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${branch}, ${mode}. Change store or order type`}
+    >
       <GlassCard level="sheet" style={styles.storeBar}>
         <View style={[styles.storeIcon, { backgroundColor: C.tertiaryFixed }]}>
           <Ionicons name={orderType === 'delivery' ? 'bicycle' : 'storefront'} size={18} color={C.primaryContainer} />

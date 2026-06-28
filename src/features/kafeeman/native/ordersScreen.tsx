@@ -2,144 +2,164 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { formatOrderDate, orderStatusLabel } from '../data';
+import { UnderlineTabBar } from './appShell';
 import { formatRM } from './payments';
-import { StitchEmptyState, TabScreenHeader } from './screenChrome';
-import { GlassCard } from './stitchUi';
+import { StitchEmptyState } from './screenChrome';
 import { AppImage } from './ui';
 import { FONTS } from './fonts';
 import type { ThemeColors } from '../theme';
 import type { OrderRecord } from '../types';
 
+export type OrderFilterTab = 'All' | 'Ongoing' | 'Completed' | 'Canceled';
+
 type Props = {
   C: ThemeColors;
   orders: OrderRecord[];
-  orderTab: 'Active' | 'Past';
-  onTabChange: (tab: 'Active' | 'Past') => void;
+  orderTab: OrderFilterTab;
+  onTabChange: (tab: OrderFilterTab) => void;
   onTrack: (order: OrderRecord) => void;
   onReorder: (order: OrderRecord) => void;
   onBrowseMenu?: () => void;
 };
 
-function orderSummary(order: OrderRecord): string {
-  const first = order.items[0];
-  if (!first) return 'Order';
-  const extra = order.items.length > 1 ? ` +${order.items.length - 1} more` : '';
-  return `${first.item.name} × ${first.qty}${extra}`;
+function filterOrders(orders: OrderRecord[], tab: OrderFilterTab): OrderRecord[] {
+  switch (tab) {
+    case 'Ongoing':
+      return orders.filter((o) => o.status === 'active');
+    case 'Completed':
+      return orders.filter((o) => o.status === 'delivered');
+    case 'Canceled':
+      return orders.filter((o) => o.status === 'cancelled');
+    default:
+      return orders;
+  }
+}
+
+function statusBadge(order: OrderRecord, C: ThemeColors) {
+  if (order.status === 'cancelled') {
+    return { label: 'Order Canceled', color: '#b42318', bg: '#fef3f2' };
+  }
+  if (order.status === 'delivered') {
+    return { label: 'Completed', color: '#027a48', bg: '#ecfdf3' };
+  }
+  return {
+    label: orderStatusLabel(order.trackingStep, order.orderType),
+    color: C.primaryContainer,
+    bg: C.secondaryContainer,
+  };
 }
 
 export function OrdersScreen({ C, orders, orderTab, onTabChange, onTrack, onReorder, onBrowseMenu }: Props) {
-  const active = orders.filter((o) => o.status === 'active');
-  const past = orders.filter((o) => o.status !== 'active');
-  const list = orderTab === 'Active' ? active : past;
+  const list = filterOrders(orders, orderTab);
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <TabScreenHeader C={C} title="My Orders" subtitle="Track active orders or reorder favourites" />
-      <View style={styles.tabRow}>
-        {(['Active', 'Past'] as const).map((t) => (
-          <Pressable
-            key={t}
-            onPress={() => onTabChange(t)}
-            style={[
-              styles.tabBtn,
-              { backgroundColor: orderTab === t ? C.primaryContainer : C.inputBg },
-            ]}
-          >
-            <Text
-              style={{
-                color: orderTab === t ? C.onPrimary : C.textMuted,
-                fontFamily: FONTS.bold,
-                fontSize: 14,
-              }}
-            >
-              {t}
-              {t === 'Active' && active.length > 0 ? ` (${active.length})` : ''}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {list.length === 0 ? (
-        <StitchEmptyState
-          C={C}
-          icon="receipt-outline"
-          title={orderTab === 'Active' ? 'No active orders' : 'No past orders yet'}
-          message={
-            orderTab === 'Active'
-              ? 'Place an order from the menu to see live tracking here.'
-              : 'Your completed orders will appear here.'
-          }
-          actionLabel="Browse menu"
-          onAction={onBrowseMenu}
-        />
-      ) : (
-        list.map((order) => {
-          const isActive = order.status === 'active';
-          const status = orderStatusLabel(order.trackingStep, order.orderType);
-          const tapHint = isActive
-            ? order.orderType === 'delivery'
-              ? 'Tap to track on map'
-              : 'Tap for pickup status'
-            : order.status === 'cancelled'
-              ? 'Tap for details'
-              : 'Tap for receipt';
-          return (
-            <Pressable key={order.id} onPress={() => onTrack(order)}>
-              <GlassCard level="sheet" style={{ marginBottom: 12 }}>
-              <View style={styles.orderTop}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.orderId, { color: C.textFaint }]}>{order.id}</Text>
-                  <Text style={[styles.orderName, { color: C.text }]}>{orderSummary(order)}</Text>
-                  <Text style={[styles.orderMeta, { color: C.textMuted }]}>
-                    {formatOrderDate(order.createdAt)} · {order.branch} ·{' '}
-                    {order.orderType === 'delivery' ? 'Delivery' : 'Pickup'}
-                  </Text>
-                </View>
-                {order.items[0] && (
-                  <AppImage uri={order.items[0].item.image} style={styles.thumb} />
-                )}
-              </View>
-              <View style={styles.orderFooter}>
-                <View>
-                  <Text style={[styles.status, { color: isActive ? C.accent : order.status === 'cancelled' ? C.error : '#22c55e' }]}>
-                    {order.status === 'cancelled' ? 'Cancelled' : status} · {tapHint}
-                  </Text>
-                  <Text style={[styles.total, { color: C.primary }]}>{formatRM(order.total)}</Text>
-                </View>
+    <View style={styles.root}>
+      <UnderlineTabBar
+        C={C}
+        tabs={['All', 'Ongoing', 'Completed', 'Canceled'] as const}
+        active={orderTab}
+        onChange={onTabChange}
+      />
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {list.length === 0 ? (
+          <StitchEmptyState
+            C={C}
+            icon="receipt-outline"
+            title={`No ${orderTab === 'All' ? '' : orderTab.toLowerCase()} orders`}
+            message={
+              orderTab === 'Ongoing'
+                ? 'Place an order from the menu to see live tracking here.'
+                : 'Your orders will appear here once you place one.'
+            }
+            actionLabel="Browse menu"
+            onAction={onBrowseMenu}
+          />
+        ) : (
+          <>
+            {list.map((order) => {
+              const badge = statusBadge(order, C);
+              const itemCount = order.items.reduce((sum, line) => sum + line.qty, 0);
+              const mode = order.orderType === 'delivery' ? 'Delivery' : 'Pickup';
+              return (
                 <Pressable
-                  onPress={() => onReorder(order)}
-                  style={[styles.reorderBtn, { borderColor: C.outlineVariant }]}
+                  key={order.id}
+                  onPress={() => onTrack(order)}
+                  style={[styles.orderRow, { borderBottomColor: C.outlineVariant }]}
                 >
-                  <Ionicons name="refresh" size={16} color={C.primary} />
-                  <Text style={[styles.reorderText, { color: C.primary }]}>Reorder</Text>
+                  {order.items[0] ? (
+                    <AppImage uri={order.items[0].item.image} style={styles.thumb} />
+                  ) : (
+                    <View style={[styles.thumb, { backgroundColor: C.surfaceContainer }]} />
+                  )}
+                  <View style={styles.orderBody}>
+                    <Text style={[styles.branch, { color: C.text }]} numberOfLines={1}>
+                      {order.branch}
+                    </Text>
+                    <View style={styles.metaRow}>
+                      <Ionicons
+                        name={order.orderType === 'delivery' ? 'bicycle-outline' : 'bag-outline'}
+                        size={13}
+                        color={C.textMuted}
+                      />
+                      <Text style={[styles.meta, { color: C.textMuted }]}>
+                        {mode} · {itemCount} item{itemCount === 1 ? '' : 's'}
+                      </Text>
+                    </View>
+                    <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+                      <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+                    </View>
+                    <Text style={[styles.date, { color: C.textFaint }]}>{formatOrderDate(order.createdAt)}</Text>
+                  </View>
+                  <View style={styles.orderAside}>
+                    <Text style={[styles.price, { color: C.primaryContainer }]}>{formatRM(order.total)}</Text>
+                    <Pressable onPress={() => onReorder(order)} style={styles.reorderLink}>
+                      <Text style={[styles.reorderText, { color: C.primaryContainer }]}>Reorder</Text>
+                      <Ionicons name="chevron-forward" size={14} color={C.primaryContainer} />
+                    </Pressable>
+                  </View>
                 </Pressable>
-              </View>
-              </GlassCard>
-            </Pressable>
-          );
-        })
-      )}
-    </ScrollView>
+              );
+            })}
+            <Text style={[styles.endLabel, { color: C.textFaint }]}>End of the list</Text>
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 120, paddingHorizontal: 24, paddingTop: 8 },
-  title: { fontFamily: FONTS.bold, fontSize: 28, marginBottom: 16 },
-  tabRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  tabBtn: { flex: 1, paddingVertical: 12, borderRadius: 999, alignItems: 'center' },
-  emptyCard: { padding: 32, borderRadius: 24, alignItems: 'center', gap: 8 },
-  emptyTitle: { fontFamily: FONTS.bold, fontSize: 16, marginTop: 8 },
-  emptySub: { fontFamily: FONTS.regular, fontSize: 13, textAlign: 'center' },
-  orderCard: { borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' },
-  orderTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  orderId: { fontFamily: FONTS.regular, fontSize: 11, marginBottom: 4 },
-  orderName: { fontFamily: FONTS.bold, fontSize: 16 },
-  orderMeta: { fontFamily: FONTS.regular, fontSize: 12, marginTop: 4 },
-  thumb: { width: 56, height: 56, borderRadius: 14 },
-  orderFooter: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
-  status: { fontFamily: FONTS.semiBold, fontSize: 12 },
-  total: { fontFamily: FONTS.bold, fontSize: 16, marginTop: 4 },
-  reorderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
+  root: { flex: 1 },
+  scroll: { paddingBottom: 120, paddingHorizontal: 20 },
+  orderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingVertical: 18,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  thumb: { width: 64, height: 64, borderRadius: 10 },
+  orderBody: { flex: 1, gap: 6 },
+  branch: { fontFamily: FONTS.bold, fontSize: 15 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  meta: { fontFamily: FONTS.regular, fontSize: 12 },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeText: { fontFamily: FONTS.semiBold, fontSize: 11 },
+  date: { fontFamily: FONTS.regular, fontSize: 11 },
+  orderAside: { alignItems: 'flex-end', gap: 10, paddingTop: 2 },
+  price: { fontFamily: FONTS.bold, fontSize: 15 },
+  reorderLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   reorderText: { fontFamily: FONTS.semiBold, fontSize: 13 },
+  endLabel: {
+    textAlign: 'center',
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    marginTop: 28,
+    marginBottom: 12,
+  },
 });
