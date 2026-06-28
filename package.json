@@ -11,8 +11,10 @@
   "main": "expo-router/entry",
   "scripts": {
     "preinstall": "only-allow bun",
-    "start": "expo start --lan",
-    "dev": "expo start --lan",
+    "start": "bun run dev",
+    "dev": "node scripts/dev.mjs",
+    "dev:app": "expo start --lan",
+    "dev:admin": "cd Admin && bun run dev",
     "dev:clear": "expo start --lan --clear",
     "dev:fix": "bun install && expo start --lan --clear",
     "start:tunnel": "expo start --tunnel",
@@ -22,7 +24,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "convex:deploy": "convex deploy",
+    "convex:seed": "convex run seed:runDev",
+    "admin:dev": "cd Admin && bun run dev",
+    "admin:build": "cd Admin && bun run build"
   },
   "dependencies": {
     "@clerk/expo": "^3.6.2",
