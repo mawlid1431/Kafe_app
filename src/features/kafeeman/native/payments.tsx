@@ -11,6 +11,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { pointsToRmDiscount } from '../lib/promos';
+import {
+  detectCardBrand,
+  formatCardDigits,
+  validateCardNumber,
+  type CardBrandInfo,
+} from '../lib/cardValidation';
 import { BRAND_ASSETS } from '../brand';
 import type { CartLine } from '../types';
 import type { ThemeColors } from '../theme';
@@ -382,6 +388,99 @@ function maskDots(groups = 3) {
   ));
 }
 
+function formatCardNumberInput(raw: string, brand: CardBrandInfo): string {
+  return formatCardDigits(raw, brand);
+}
+
+function formatCardExpiryInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 4);
+  if (digits.length === 0) return '';
+
+  let month = digits.slice(0, 2);
+  if (digits.length === 1) {
+    const first = Number(digits);
+    if (first > 1) month = `0${first}`;
+  }
+  if (month.length === 2) {
+    const monthNum = Number(month);
+    if (monthNum === 0) month = '01';
+    if (monthNum > 12) month = '12';
+  }
+
+  if (digits.length <= 2) return month;
+
+  const year = digits.slice(2, 4);
+  return `${month}/${year}`;
+}
+
+function isValidCardExpiry(expiry: string): boolean {
+  if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+  const [mmRaw, yyRaw] = expiry.split('/');
+  const month = Number(mmRaw);
+  const year = Number(yyRaw);
+  if (month < 1 || month > 12) return false;
+
+  const now = new Date();
+  const expEnd = new Date(2000 + year, month, 0, 23, 59, 59, 999);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  return expEnd >= monthStart;
+}
+
+function formatCardNameInput(raw: string): string {
+  return raw.replace(/[^a-zA-Z\s.'-]/g, '').slice(0, 40);
+}
+
+function formatCvvInput(raw: string, maxLen = 3): string {
+  return raw.replace(/\D/g, '').slice(0, maxLen);
+}
+
+function CardBrandBadge({ brand }: { brand: CardBrandInfo }) {
+  if (brand.brand === 'mastercard') {
+    return (
+      <View style={cardPayStyles.mcBadge}>
+        <View style={[cardPayStyles.mcCircle, { backgroundColor: '#eb001b' }]} />
+        <View style={[cardPayStyles.mcCircle, cardPayStyles.mcCircleRight, { backgroundColor: '#f79e1b' }]} />
+      </View>
+    );
+  }
+  if (brand.brand === 'visa') {
+    return <Text style={cardPayStyles.visa}>VISA</Text>;
+  }
+  return <Text style={cardPayStyles.cardBrandPlaceholder}>CARD</Text>;
+}
+
+function AcceptedCardBrands({ active }: { active: CardBrandInfo['brand'] }) {
+  return (
+    <View style={cardPayStyles.brandRow}>
+      <View
+        style={[
+          cardPayStyles.brandChip,
+          active === 'visa' && cardPayStyles.brandChipActive,
+        ]}
+      >
+        <Text style={[cardPayStyles.brandChipText, active === 'visa' && cardPayStyles.brandChipTextActive]}>
+          Visa
+        </Text>
+      </View>
+      <View
+        style={[
+          cardPayStyles.brandChip,
+          active === 'mastercard' && cardPayStyles.brandChipActive,
+        ]}
+      >
+        <Text
+          style={[
+            cardPayStyles.brandChipText,
+            active === 'mastercard' && cardPayStyles.brandChipTextActive,
+          ]}
+        >
+          Mastercard
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 type CardPaymentScreenProps = {
   C: ThemeColors;
   amount: number;
@@ -397,13 +496,25 @@ export function CardPaymentScreen({ C, amount, onPaymentComplete, onBack }: Card
   const [cvv, setCvv] = useState('');
 
   const digits = cardNumber.replace(/\D/g, '');
+  const cardBrand = detectCardBrand(digits);
+  const cardValidation = validateCardNumber(digits);
   const last4 = digits.slice(-4) || '4289';
   const showMasked = digits.length === 0;
+  const expiryValid = isValidCardExpiry(expiry);
+  const cvvValid = cvv.length === cardBrand.cvvLength;
   const canPay =
-    digits.length >= 15 &&
+    cardValidation.valid &&
     cardName.trim().length >= 2 &&
-    /^\d{2}\/\d{2}$/.test(expiry.trim()) &&
-    cvv.length >= 3;
+    expiryValid &&
+    cvvValid;
+
+  const handleCardNumberChange = (raw: string) => {
+    const nextBrand = detectCardBrand(raw.replace(/\D/g, ''));
+    setCardNumber(formatCardNumberInput(raw, nextBrand));
+  };
+  const handleCardNameChange = (raw: string) => setCardName(formatCardNameInput(raw));
+  const handleExpiryChange = (raw: string) => setExpiry(formatCardExpiryInput(raw));
+  const handleCvvChange = (raw: string) => setCvv(formatCvvInput(raw, cardBrand.cvvLength));
 
   const handlePay = () => {
     if (!canPay || phase !== 'form') return;
@@ -446,7 +557,7 @@ export function CardPaymentScreen({ C, amount, onPaymentComplete, onBack }: Card
             />
             <View style={cardPayStyles.cardTop}>
               <Ionicons name="wifi" size={28} color="rgba(255,255,255,0.9)" />
-              <Text style={cardPayStyles.visa}>VISA</Text>
+              <CardBrandBadge brand={cardBrand} />
             </View>
             <View>
               <Text style={cardPayStyles.cardLabel}>Card Number</Text>
@@ -465,11 +576,15 @@ export function CardPaymentScreen({ C, amount, onPaymentComplete, onBack }: Card
               <View style={cardPayStyles.cardBottom}>
                 <View>
                   <Text style={cardPayStyles.cardLabelSm}>Card Holder</Text>
-                  <Text style={cardPayStyles.cardValue}>{cardName || 'Your Name'}</Text>
+                  <Text style={cardPayStyles.cardValue} numberOfLines={1}>
+                    {(cardName.trim() || 'YOUR NAME').toUpperCase()}
+                  </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={cardPayStyles.cardLabelSm}>Expires</Text>
-                  <Text style={cardPayStyles.cardValue}>{expiry || 'MM/YY'}</Text>
+                  <Text style={cardPayStyles.cardValue}>
+                    {expiryValid ? expiry : expiry.length > 0 ? expiry : 'MM/YY'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -479,23 +594,57 @@ export function CardPaymentScreen({ C, amount, onPaymentComplete, onBack }: Card
             Amount due: <Text style={{ color: C.primary, fontFamily: FONTS.bold }}>{formatRM(amount)}</Text>
           </Text>
 
-          {[
-            { key: 'number', label: 'Card Number', value: cardNumber, setter: setCardNumber, placeholder: '1234 5678 9012 3456', keyboard: 'number-pad' as const },
-            { key: 'name', label: 'Name on Card', value: cardName, setter: setCardName, placeholder: 'Ahmad Eman', keyboard: 'default' as const },
-            { key: 'expiry', label: 'Expiry (MM/YY)', value: expiry, setter: setExpiry, placeholder: '09/27', keyboard: 'number-pad' as const },
-            { key: 'cvv', label: 'CVV', value: cvv, setter: setCvv, placeholder: '•••', keyboard: 'number-pad' as const, secure: true },
-          ].map((field) => (
-            <GlassInputField
-              key={field.key}
-              C={C}
-              label={field.label}
-              value={field.value}
-              onChangeText={field.setter}
-              placeholder={field.placeholder}
-              keyboardType={field.keyboard}
-              secureTextEntry={field.secure}
-            />
-          ))}
+          <GlassInputField
+            C={C}
+            label="Card Number"
+            value={cardNumber}
+            onChangeText={handleCardNumberChange}
+            placeholder="4242 4242 4242 4242"
+            keyboardType="number-pad"
+          />
+          <AcceptedCardBrands active={cardBrand.brand} />
+          {digits.length >= 2 && cardValidation.message ? (
+            <Text style={[cardPayStyles.fieldHint, { color: C.error }]}>{cardValidation.message}</Text>
+          ) : cardValidation.valid ? (
+            <Text style={[cardPayStyles.fieldHint, { color: C.success }]}>
+              {cardValidation.brand.label} card recognised
+            </Text>
+          ) : null}
+          <GlassInputField
+            C={C}
+            label="Name on Card"
+            value={cardName}
+            onChangeText={handleCardNameChange}
+            placeholder="Ahmad Eman"
+            autoCapitalize="words"
+          />
+          <GlassInputField
+            C={C}
+            label="Expiry (MM/YY)"
+            value={expiry}
+            onChangeText={handleExpiryChange}
+            placeholder="09/27"
+            keyboardType="number-pad"
+          />
+          {expiry.length > 0 && !expiryValid ? (
+            <Text style={[cardPayStyles.fieldHint, { color: C.error }]}>
+              Enter a valid expiry date (MM/YY, not in the past)
+            </Text>
+          ) : null}
+          <GlassInputField
+            C={C}
+            label={`CVV (${cardBrand.cvvLength} digits)`}
+            value={cvv}
+            onChangeText={handleCvvChange}
+            placeholder={cardBrand.cvvLength === 4 ? '••••' : '•••'}
+            keyboardType="number-pad"
+            secureTextEntry
+          />
+          {cvv.length > 0 && !cvvValid ? (
+            <Text style={[cardPayStyles.fieldHint, { color: C.error }]}>
+              {cardBrand.label ? `${cardBrand.label} CVV must be ${cardBrand.cvvLength} digits` : 'Enter a valid CVV'}
+            </Text>
+          ) : null}
 
           <View style={{ marginTop: 8 }}>
             <GradientButton label={`Pay ${formatRM(amount)}`} onPress={handlePay} C={C} disabled={!canPay} />
@@ -522,7 +671,7 @@ export function CardPaymentScreen({ C, amount, onPaymentComplete, onBack }: Card
               </View>
               <Text style={[cardPayStyles.statusTitle, { color: C.text }]}>Payment successful</Text>
               <Text style={[cardPayStyles.statusSub, { color: C.textMuted }]}>
-                {formatRM(amount)} charged to your card ending {last4}
+                {formatRM(amount)} charged to your {cardValidation.brand.label || 'card'} ending {last4}
               </Text>
             </>
           )}
@@ -548,6 +697,30 @@ const cardPayStyles = StyleSheet.create({
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   visa: { color: '#fff', fontFamily: FONTS.bold, fontSize: 22, letterSpacing: 3 },
+  cardBrandPlaceholder: {
+    color: 'rgba(255,255,255,0.75)',
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  mcBadge: { flexDirection: 'row', alignItems: 'center', width: 44, height: 28 },
+  mcCircle: { width: 28, height: 28, borderRadius: 14, opacity: 0.95 },
+  mcCircleRight: { marginLeft: -12 },
+  brandRow: { flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 12 },
+  brandChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(96,128,112,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.6)',
+  },
+  brandChipActive: {
+    borderColor: '#608070',
+    backgroundColor: 'rgba(96,128,112,0.12)',
+  },
+  brandChipText: { fontFamily: FONTS.medium, fontSize: 12, color: '#6b7a74' },
+  brandChipTextActive: { fontFamily: FONTS.semiBold, color: '#608070' },
   cardLabel: {
     color: 'rgba(255,255,255,0.7)',
     fontFamily: FONTS.semiBold,
@@ -572,6 +745,7 @@ const cardPayStyles = StyleSheet.create({
   },
   cardValue: { color: '#fff', fontFamily: FONTS.semiBold, fontSize: 15 },
   amountDue: { fontFamily: FONTS.regular, fontSize: 14, marginBottom: 16, textAlign: 'center' },
+  fieldHint: { fontFamily: FONTS.regular, fontSize: 12, marginTop: -8, marginBottom: 12, marginLeft: 4 },
   fieldLabel: { fontFamily: FONTS.semiBold, fontSize: 12, marginBottom: 6 },
   input: {
     borderWidth: 1,
