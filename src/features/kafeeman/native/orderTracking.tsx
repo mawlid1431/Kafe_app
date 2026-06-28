@@ -14,6 +14,9 @@ import { formatRM } from './payments';
 import { RiderChatSheet } from './riderChatSheet';
 import { StitchPillButton, GlassSurface } from './stitchUi';
 import { TrackingMap, type LiveTrackingState } from './trackingMap';
+import { LocationPermissionModal } from './LocationPermissionModal';
+import { useLiveLocation } from './useLiveLocation';
+import { getLocationPromptChoice } from '../lib/locationStorage';
 import { AppImage } from './ui';
 
 const RIDER_AVATAR =
@@ -76,6 +79,8 @@ export function DeliveryTrackingScreen({
   const [chatOpen, setChatOpen] = useState(false);
   const [liveTracking, setLiveTracking] = useState<LiveTrackingState | null>(null);
   const [liveClock, setLiveClock] = useState(() => new Date());
+  const [locationPromptOpen, setLocationPromptOpen] = useState(false);
+  const location = useLiveLocation(true);
   const trackingStep = order.trackingStep;
   const eta = etaLabel(trackingStep, liveTracking?.etaMinutes);
   const status = statusForDelivery(trackingStep);
@@ -83,6 +88,49 @@ export function DeliveryTrackingScreen({
   const riderAssigned = isActive && trackingStep >= 1;
   const riderOnRoute = isActive && trackingStep >= 2;
   const canCancel = isActive && trackingStep < 2;
+
+  useEffect(() => {
+    void (async () => {
+      if (location.permission !== 'undetermined') return;
+      const choice = await getLocationPromptChoice();
+      if (choice !== 'declined') setLocationPromptOpen(true);
+    })();
+  }, [location.permission]);
+
+  const handleAllowLocation = useCallback(async () => {
+    const ok = await location.requestPermission();
+    setLocationPromptOpen(false);
+    if (!ok) {
+      Alert.alert(
+        'Location off',
+        'Enable location in Settings to see your live GPS on the map.',
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => location.openSettings() },
+        ],
+      );
+    }
+  }, [location]);
+
+  const handleDeclineLocation = useCallback(async () => {
+    await location.declinePermission();
+    setLocationPromptOpen(false);
+  }, [location]);
+
+  const handleRequestLocation = useCallback(() => {
+    if (location.permission === 'denied') {
+      Alert.alert(
+        'Turn on location',
+        'Allow location access to center the map on your position.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Settings', onPress: () => location.openSettings() },
+        ],
+      );
+      return;
+    }
+    setLocationPromptOpen(true);
+  }, [location]);
 
   useEffect(() => {
     if (!isActive || !riderOnRoute) return;
@@ -182,7 +230,17 @@ export function DeliveryTrackingScreen({
         branchName={order.branch}
         trackingStep={trackingStep}
         isLive={isActive}
+        userLocation={location.userLocation}
+        onRequestLocation={handleRequestLocation}
         onLiveUpdate={handleLiveUpdate}
+      />
+
+      <LocationPermissionModal
+        visible={locationPromptOpen}
+        C={C}
+        loading={location.loading}
+        onAllow={() => void handleAllowLocation()}
+        onDecline={() => void handleDeclineLocation()}
       />
 
       <View style={[styles.mapHeader, { paddingTop: insets.top + 8 }]}>

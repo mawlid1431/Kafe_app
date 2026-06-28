@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 
 import {
@@ -94,6 +95,9 @@ import { OrdersScreen, type OrderFilterTab } from './native/ordersScreen';
 import { RewardsScreen } from './native/rewardsScreen';
 import { FavoritesScreen } from './native/favoritesScreen';
 import { DeliveryTrackingScreen } from './native/orderTracking';
+import { LocationPermissionModal } from './native/LocationPermissionModal';
+import { useLiveLocation } from './native/useLiveLocation';
+import { getLocationPromptChoice } from './lib/locationStorage';
 import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
 import { AppImage } from './native/ui';
@@ -207,6 +211,9 @@ function KafeemanApp() {
   screenRef.current = screen;
   ordersRef.current = orders;
   const otpRefs = useRef<(TextInput | null)[]>([]);
+  const appLocationPromptShown = useRef(false);
+  const [appLocationPromptOpen, setAppLocationPromptOpen] = useState(false);
+  const appLocation = useLiveLocation(false);
 
   const catalog = useConvexCatalog();
   const liveBackend = useLiveBackend(isLoggedIn);
@@ -687,6 +694,21 @@ function KafeemanApp() {
       }, 1400);
     }, 1800);
   };
+
+  useEffect(() => {
+    if (!hydrated || appLocationPromptShown.current) return;
+    if (screen === 'splash' || screen === 'order-tracking') return;
+
+    void (async () => {
+      const choice = await getLocationPromptChoice();
+      if (choice === 'declined') return;
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === Location.PermissionStatus.UNDETERMINED) {
+        appLocationPromptShown.current = true;
+        setAppLocationPromptOpen(true);
+      }
+    })();
+  }, [hydrated, screen]);
 
   useEffect(() => {
     if (promoList.length === 0) return;
@@ -2040,6 +2062,27 @@ function KafeemanApp() {
           <ConvexConnectionCheck onError={(message) => showToast(message, 'error')} />
         ) : null}
         {isClerkEnabled && isConvexEnabled ? <ConvexUserSync /> : null}
+        <LocationPermissionModal
+          visible={appLocationPromptOpen}
+          C={C}
+          loading={appLocation.loading}
+          onAllow={() => {
+            void appLocation.requestPermission().then((ok) => {
+              setAppLocationPromptOpen(false);
+              if (!ok) {
+                Alert.alert(
+                  'Location off',
+                  'You can enable location later in Settings for live GPS on the delivery map.',
+                  [{ text: 'OK' }],
+                );
+              }
+            });
+          }}
+          onDecline={() => {
+            void appLocation.declinePermission();
+            setAppLocationPromptOpen(false);
+          }}
+        />
         {showPickupHeader && (
           <AppPickupHeader
             C={C}
