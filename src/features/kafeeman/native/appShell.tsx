@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BRAND_ASSETS, LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from '../brand';
+import { shortBranchLabel } from '../data';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW, STITCH_SHADOW_FLOAT } from '../theme';
 import { FONTS } from './fonts';
@@ -30,7 +31,8 @@ export function AppPickupHeader({
 }) {
   const insets = useSafeAreaInsets();
   const mode = orderType === 'delivery' ? 'Delivery' : 'Pickup';
-  const eta = orderType === 'delivery' ? '30–45 min' : 'Today, ASAP';
+  const eta = orderType === 'delivery' ? '30–45 min' : 'ASAP';
+  const branchShort = shortBranchLabel(branch);
 
   return (
     <View style={[styles.pickupHeader, { backgroundColor: C.primaryContainer, paddingTop: insets.top + 12 }]}>
@@ -41,9 +43,14 @@ export function AppPickupHeader({
           </Text>
           <View style={styles.pickupHeaderBranchRow}>
             <Text style={styles.pickupHeaderBranch} numberOfLines={1}>
-              {branch}
+              {branchShort}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.85)" />
+            <Ionicons
+              name="chevron-forward"
+              size={14}
+              color="rgba(255,255,255,0.9)"
+              style={styles.pickupHeaderChevron}
+            />
           </View>
         </Pressable>
         <Pressable onPress={onNotifyPress} style={styles.pickupHeaderAction} hitSlop={6}>
@@ -203,7 +210,7 @@ export function LiveDeliveryBanner({
         <View style={{ flex: 1 }}>
           <Text style={styles.liveDeliveryTitle}>Live delivery map</Text>
           <Text style={styles.liveDeliverySub} numberOfLines={1}>
-            {orderId} · {branch}
+            {shortBranchLabel(branch)} · #{orderId.slice(-4)}
           </Text>
         </View>
       </View>
@@ -480,26 +487,32 @@ const styles = StyleSheet.create({
   },
   pickupHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
   },
-  pickupHeaderMain: { flex: 1 },
+  pickupHeaderMain: { flex: 1, minWidth: 0 },
   pickupHeaderMode: {
     color: '#fff',
     fontFamily: FONTS.semiBold,
     fontSize: 14,
+    lineHeight: 18,
   },
   pickupHeaderBranchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+    alignSelf: 'flex-start',
+    gap: 2,
+    marginTop: 3,
   },
   pickupHeaderBranch: {
     color: 'rgba(255,255,255,0.92)',
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: 13,
-    flex: 1,
+    lineHeight: 16,
+    flexShrink: 1,
+  },
+  pickupHeaderChevron: {
+    marginTop: 1,
   },
   pickupHeaderAction: {
     width: 34,
@@ -703,7 +716,7 @@ const styles = StyleSheet.create({
   },
   liveDeliveryTitle: { color: '#fff', fontFamily: FONTS.semiBold, fontSize: 14 },
   liveDeliverySub: { color: 'rgba(255,255,255,0.8)', fontFamily: FONTS.regular, fontSize: 11, marginTop: 1 },
-  liveDeliveryRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  liveDeliveryRight: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
   liveDeliveryEta: { color: '#fff', fontFamily: FONTS.semiBold, fontSize: 12 },
   accountMenu: { gap: 20 },
   accountSection: { gap: 8 },
