@@ -17,9 +17,8 @@ import type { ThemeColors } from '../theme';
 import { BRAND, STITCH_SHADOW } from '../theme';
 import { FONTS } from './fonts';
 import { Image } from 'expo-image';
-import { GradientButton } from './stitchUi';
+import { GradientButton, GlassCard, GlassInputField } from './stitchUi';
 import { AppImage } from './ui';
-import { GlassCard, GlassInputField } from './stitchUi';
 
 export const PAYMENT_TNG = "Touch 'n Go eWallet";
 export const DELIVERY_FEE = 3;
@@ -27,6 +26,7 @@ export const MOCK_WALLET_BALANCE = 248.5;
 
 export type PaymentMethodId = 'tng' | 'card' | 'banking';
 export type TngPayPhase = 'pin' | 'processing' | 'approved';
+export type CardPayPhase = 'form' | 'processing' | 'approved';
 
 export const PAYMENT_METHODS: {
   id: PaymentMethodId;
@@ -385,11 +385,12 @@ function maskDots(groups = 3) {
 type CardPaymentScreenProps = {
   C: ThemeColors;
   amount: number;
-  onPay: () => void;
+  onPaymentComplete: () => void;
   onBack: () => void;
 };
 
-export function CardPaymentScreen({ C, amount, onPay, onBack }: CardPaymentScreenProps) {
+export function CardPaymentScreen({ C, amount, onPaymentComplete, onBack }: CardPaymentScreenProps) {
+  const [phase, setPhase] = useState<CardPayPhase>('form');
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('Ahmad Eman');
   const [expiry, setExpiry] = useState('');
@@ -404,6 +405,22 @@ export function CardPaymentScreen({ C, amount, onPay, onBack }: CardPaymentScree
     /^\d{2}\/\d{2}$/.test(expiry.trim()) &&
     cvv.length >= 3;
 
+  const handlePay = () => {
+    if (!canPay || phase !== 'form') return;
+    setPhase('processing');
+    setTimeout(() => {
+      setPhase('approved');
+      setTimeout(() => {
+        onPaymentComplete();
+      }, 1500);
+    }, 1800);
+  };
+
+  const handleBack = () => {
+    if (phase !== 'form') return;
+    onBack();
+  };
+
   return (
     <ScrollView
       style={{ flex: 1 }}
@@ -412,79 +429,105 @@ export function CardPaymentScreen({ C, amount, onPay, onBack }: CardPaymentScree
       showsVerticalScrollIndicator={false}
     >
       <View style={cardPayStyles.header}>
-        <Pressable onPress={onBack} style={[cardPayStyles.backBtn, { backgroundColor: C.glass }]}>
+        <Pressable onPress={handleBack} style={[cardPayStyles.backBtn, { backgroundColor: C.glass }]}>
           <Ionicons name="chevron-back" size={20} color={C.text} />
         </Pressable>
         <Text style={[cardPayStyles.headerTitle, { color: C.primary }]}>Credit Card</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={[cardPayStyles.cardPreview, STITCH_SHADOW]}>
-        <AppImage uri={CREDIT_CARD_ART} style={StyleSheet.absoluteFillObject} />
-        <LinearGradient
-          colors={['rgba(39,19,16,0.55)', 'rgba(39,19,16,0.35)']}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={cardPayStyles.cardTop}>
-          <Ionicons name="wifi" size={28} color="rgba(255,255,255,0.9)" />
-          <Text style={cardPayStyles.visa}>VISA</Text>
-        </View>
-        <View>
-          <Text style={cardPayStyles.cardLabel}>Card Number</Text>
-          <View style={cardPayStyles.cardNumberRow}>
-            {showMasked ? (
-              <>
-                {maskDots()}
-                <Text style={cardPayStyles.cardLast4}>{last4}</Text>
-              </>
-            ) : (
-              <Text style={cardPayStyles.cardNumberText}>
-                {digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()}
-              </Text>
-            )}
-          </View>
-          <View style={cardPayStyles.cardBottom}>
+      {phase === 'form' ? (
+        <>
+          <View style={[cardPayStyles.cardPreview, STITCH_SHADOW]}>
+            <AppImage uri={CREDIT_CARD_ART} style={StyleSheet.absoluteFillObject} />
+            <LinearGradient
+              colors={['rgba(39,19,16,0.55)', 'rgba(39,19,16,0.35)']}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={cardPayStyles.cardTop}>
+              <Ionicons name="wifi" size={28} color="rgba(255,255,255,0.9)" />
+              <Text style={cardPayStyles.visa}>VISA</Text>
+            </View>
             <View>
-              <Text style={cardPayStyles.cardLabelSm}>Card Holder</Text>
-              <Text style={cardPayStyles.cardValue}>{cardName || 'Your Name'}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={cardPayStyles.cardLabelSm}>Expires</Text>
-              <Text style={cardPayStyles.cardValue}>{expiry || 'MM/YY'}</Text>
+              <Text style={cardPayStyles.cardLabel}>Card Number</Text>
+              <View style={cardPayStyles.cardNumberRow}>
+                {showMasked ? (
+                  <>
+                    {maskDots()}
+                    <Text style={cardPayStyles.cardLast4}>{last4}</Text>
+                  </>
+                ) : (
+                  <Text style={cardPayStyles.cardNumberText}>
+                    {digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()}
+                  </Text>
+                )}
+              </View>
+              <View style={cardPayStyles.cardBottom}>
+                <View>
+                  <Text style={cardPayStyles.cardLabelSm}>Card Holder</Text>
+                  <Text style={cardPayStyles.cardValue}>{cardName || 'Your Name'}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={cardPayStyles.cardLabelSm}>Expires</Text>
+                  <Text style={cardPayStyles.cardValue}>{expiry || 'MM/YY'}</Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
 
-      <Text style={[cardPayStyles.amountDue, { color: C.textMuted }]}>
-        Amount due: <Text style={{ color: C.primary, fontFamily: FONTS.bold }}>{formatRM(amount)}</Text>
-      </Text>
+          <Text style={[cardPayStyles.amountDue, { color: C.textMuted }]}>
+            Amount due: <Text style={{ color: C.primary, fontFamily: FONTS.bold }}>{formatRM(amount)}</Text>
+          </Text>
 
-      {[
-        { key: 'number', label: 'Card Number', value: cardNumber, setter: setCardNumber, placeholder: '1234 5678 9012 3456', keyboard: 'number-pad' as const },
-        { key: 'name', label: 'Name on Card', value: cardName, setter: setCardName, placeholder: 'Ahmad Eman', keyboard: 'default' as const },
-        { key: 'expiry', label: 'Expiry (MM/YY)', value: expiry, setter: setExpiry, placeholder: '09/27', keyboard: 'number-pad' as const },
-        { key: 'cvv', label: 'CVV', value: cvv, setter: setCvv, placeholder: '•••', keyboard: 'number-pad' as const, secure: true },
-      ].map((field) => (
-        <GlassInputField
-          key={field.key}
-          C={C}
-          label={field.label}
-          value={field.value}
-          onChangeText={field.setter}
-          placeholder={field.placeholder}
-          keyboardType={field.keyboard}
-          secureTextEntry={field.secure}
-        />
-      ))}
+          {[
+            { key: 'number', label: 'Card Number', value: cardNumber, setter: setCardNumber, placeholder: '1234 5678 9012 3456', keyboard: 'number-pad' as const },
+            { key: 'name', label: 'Name on Card', value: cardName, setter: setCardName, placeholder: 'Ahmad Eman', keyboard: 'default' as const },
+            { key: 'expiry', label: 'Expiry (MM/YY)', value: expiry, setter: setExpiry, placeholder: '09/27', keyboard: 'number-pad' as const },
+            { key: 'cvv', label: 'CVV', value: cvv, setter: setCvv, placeholder: '•••', keyboard: 'number-pad' as const, secure: true },
+          ].map((field) => (
+            <GlassInputField
+              key={field.key}
+              C={C}
+              label={field.label}
+              value={field.value}
+              onChangeText={field.setter}
+              placeholder={field.placeholder}
+              keyboardType={field.keyboard}
+              secureTextEntry={field.secure}
+            />
+          ))}
 
-      <View style={{ marginTop: 8 }}>
-        <GradientButton label={`Pay ${formatRM(amount)}`} onPress={onPay} C={C} disabled={!canPay} />
-      </View>
-      <View style={cardPayStyles.secureRow}>
-        <Ionicons name="lock-closed" size={14} color={C.textFaint} />
-        <Text style={[cardPayStyles.secureText, { color: C.textFaint }]}>Secured with 256-bit encryption</Text>
-      </View>
+          <View style={{ marginTop: 8 }}>
+            <GradientButton label={`Pay ${formatRM(amount)}`} onPress={handlePay} C={C} disabled={!canPay} />
+          </View>
+          <View style={cardPayStyles.secureRow}>
+            <Ionicons name="lock-closed" size={14} color={C.textFaint} />
+            <Text style={[cardPayStyles.secureText, { color: C.textFaint }]}>Secured with 256-bit encryption</Text>
+          </View>
+        </>
+      ) : (
+        <GlassCard level="sheet" style={cardPayStyles.statusCard}>
+          {phase === 'processing' ? (
+            <>
+              <ActivityIndicator size="large" color={C.primaryContainer} />
+              <Text style={[cardPayStyles.statusTitle, { color: C.text }]}>Processing payment…</Text>
+              <Text style={[cardPayStyles.statusSub, { color: C.textMuted }]}>
+                Please wait and do not close this screen.
+              </Text>
+            </>
+          ) : (
+            <>
+              <View style={[cardPayStyles.successCircle, { backgroundColor: C.primaryContainer }]}>
+                <Ionicons name="checkmark" size={36} color={C.onPrimary} />
+              </View>
+              <Text style={[cardPayStyles.statusTitle, { color: C.text }]}>Payment successful</Text>
+              <Text style={[cardPayStyles.statusSub, { color: C.textMuted }]}>
+                {formatRM(amount)} charged to your card ending {last4}
+              </Text>
+            </>
+          )}
+        </GlassCard>
+      )}
     </ScrollView>
   );
 }
@@ -540,6 +583,23 @@ const cardPayStyles = StyleSheet.create({
   },
   secureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
   secureText: { fontFamily: FONTS.regular, fontSize: 12 },
+  statusCard: {
+    marginTop: 24,
+    paddingVertical: 36,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 20,
+  },
+  statusTitle: { fontFamily: FONTS.bold, fontSize: 20, textAlign: 'center', marginTop: 8 },
+  statusSub: { fontFamily: FONTS.regular, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  successCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 const checkoutStyles = StyleSheet.create({

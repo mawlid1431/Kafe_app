@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BRAND_ASSETS, LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from '../brand';
+import { BRAND_ASSETS } from '../brand';
 import { shortBranchLabel } from '../data';
 import type { ThemeColors } from '../theme';
 import { STITCH_SHADOW, STITCH_SHADOW_FLOAT } from '../theme';

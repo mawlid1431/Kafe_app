@@ -1,11 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Image, type ImageStyle } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
-  Text,
   View,
   type StyleProp,
   type TextStyle,

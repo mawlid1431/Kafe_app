@@ -2,10 +2,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
-import { LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from '../brand';
+import { LOGO_GREEN, LOGO_GREEN_DARK } from '../brand';
 import { REWARD_CATALOG, REWARD_TIERS } from '../data';
 import { RewardGiftIcon } from './onboardingIcons';
-import { GlassCard, GlassSurface, StitchPillButton } from './stitchUi';
+import { GlassCard, GlassSurface } from './stitchUi';
 import { ScreenHeader } from './screenChrome';
 import { FONTS } from './fonts';
 import type { ThemeColors } from '../theme';

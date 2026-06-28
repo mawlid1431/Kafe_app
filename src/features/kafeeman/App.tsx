@@ -86,6 +86,7 @@ import {
   StitchPillButton,
   StitchPromoBanner,
   StitchStickyFooter,
+  GradientButton,
 } from './native/stitchUi';
 import { OrderNoteField, PointsRedeemSection } from './native/cartExtras';
 import { AddressesScreen } from './native/addressesScreen';
@@ -101,7 +102,6 @@ import { OnboardingSlideIconView } from './native/onboardingIcons';
 import { SplashScreen } from './native/splashScreen';
 import { AppImage } from './native/ui';
 import { floatingChromeBottom, scrollPaddingAboveChrome } from './native/layoutChrome';
-import { GradientButton } from './native/stitchUi';
 import { AppleSignInButton } from './auth/AppleSignInButton';
 import { ClerkProfileSync } from './auth/ClerkProfileSync';
 import { isClerkEnabled } from './auth/clerkConfig';
@@ -269,10 +269,6 @@ function KafeemanApp() {
     [orders],
   );
   const isDeliveryTracking = screen === 'order-tracking' && viewingOrder?.orderType === 'delivery';
-  const showLiquidBg =
-    ['rewards', 'favorites', 'notifications', 'help', 'addresses'].includes(screen) ||
-    (screen === 'order-tracking' && viewingOrder?.orderType === 'pickup') ||
-    screen === 'order-receipt';
   const unreadNotifications = notifications.filter((n) => !n.read).length;
   const showFloatingCart = cartCount > 0 && FLOATING_CART_SCREENS.includes(screen);
   const floatingCartBottom = showNav
@@ -595,7 +591,7 @@ function KafeemanApp() {
     setPaidAmount(totalDue);
     completeOrder(totalDue);
     setScreen('order-success');
-    queueAutoTracking(1500);
+    queueAutoTracking(2200);
   };
 
   const handleTngPinKey = (key: number | 'del') => {
@@ -614,9 +610,10 @@ function KafeemanApp() {
       setTimeout(() => {
         setTngPin([]);
         setTngPhase('pin');
+        setPaidAmount(totalDue);
         completeOrder(totalDue);
         setScreen('order-success');
-        queueAutoTracking(1200);
+        queueAutoTracking(2200);
       }, 1400);
     }, 1800);
   };
@@ -1644,15 +1641,19 @@ function KafeemanApp() {
             C={C}
             amount={totalDue}
             onBack={() => setScreen('checkout')}
-            onPay={() => {
+            onPaymentComplete={() => {
+              setPaidAmount(totalDue);
               completeOrder(totalDue);
               setScreen('order-success');
-              queueAutoTracking(1500);
+              queueAutoTracking(2200);
             }}
           />
         );
 
-      case 'order-success':
+      case 'order-success': {
+        const paidTotal = paidAmount || totalDue;
+        const paymentLabel =
+          payMethod === 'tng' ? PAYMENT_TNG : payMethod === 'card' ? 'Credit card' : 'Online banking';
         return (
           <ScrollView
             contentContainerStyle={[
@@ -1665,10 +1666,14 @@ function KafeemanApp() {
             <View style={[styles.successIcon, { backgroundColor: C.secondaryContainer }]}>
               <Ionicons name="checkmark-circle" size={64} color={C.success} />
             </View>
-            <Text style={[styles.screenTitle, { textAlign: 'center', marginTop: 16 }]}>Payment successful</Text>
-            <Text style={[styles.bodyText, { textAlign: 'center', marginTop: 8 }]}>
-              {formatRM(paidAmount || totalDue)} paid via{' '}
-              {payMethod === 'tng' ? PAYMENT_TNG : payMethod === 'card' ? 'Card' : 'FPX'}
+            <Text style={[styles.screenTitle, { textAlign: 'center', marginTop: 16 }]}>Congratulations!</Text>
+            <Text style={[styles.successHeadline, { color: C.primaryContainer }]}>Payment successful</Text>
+            <Text style={[styles.successThankYou, { color: C.text }]}>
+              Thank you for your order. We&apos;re preparing it with care — please be patient while our team gets
+              everything ready for you.
+            </Text>
+            <Text style={[styles.bodyText, { textAlign: 'center', marginTop: 10 }]}>
+              {formatRM(paidTotal)} paid via {paymentLabel}
             </Text>
             <GlassCard level="sheet" style={{ width: '100%', marginTop: 20 }}>
               <View style={styles.summaryRow}>
@@ -1680,20 +1685,26 @@ function KafeemanApp() {
                 <Text style={[styles.summaryValue, { color: C.text }]}>{selectedBranch}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Status</Text>
+                <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Payment</Text>
+                <Text style={[styles.summaryValue, { color: C.success }]}>Successful</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Order status</Text>
                 <Text style={[styles.summaryValue, { color: C.success }]}>Confirmed</Text>
               </View>
-              {pointsForSpend(paidAmount || totalDue) > 0 && (
+              {pointsForSpend(paidTotal) > 0 && (
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, { color: C.textMuted }]}>Points earned</Text>
                   <Text style={[styles.summaryValue, { color: C.primaryContainer }]}>
-                    +{pointsForSpend(paidAmount || totalDue)} pts
+                    +{pointsForSpend(paidTotal)} pts
                   </Text>
                 </View>
               )}
             </GlassCard>
             <Text style={[styles.bodyText, { textAlign: 'center', marginTop: 16 }]}>
-              Your coffee is being prepared. Track your order in real time.
+              {orderType === 'delivery'
+                ? 'Your rider will be assigned when your order is ready. Track delivery live below.'
+                : 'We’ll notify you when your order is ready for pickup at the branch.'}
             </Text>
             <View style={{ height: 24, width: '100%' }} />
             <StitchPillButton
@@ -1705,6 +1716,7 @@ function KafeemanApp() {
             <StitchPillButton label="Back to Home" onPress={() => go('home')} C={C} variant="outline" />
           </ScrollView>
         );
+      }
 
       case 'order-tracking':
         if (!viewingOrder) {
@@ -2559,6 +2571,20 @@ function createStyles(C: ThemeColors) {
       borderRadius: 44,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    successHeadline: {
+      fontFamily: FONTS.bold,
+      fontSize: 18,
+      textAlign: 'center',
+      marginTop: 6,
+    },
+    successThankYou: {
+      fontFamily: FONTS.regular,
+      fontSize: 15,
+      textAlign: 'center',
+      lineHeight: 22,
+      marginTop: 12,
+      paddingHorizontal: 8,
     },
   });
 }
