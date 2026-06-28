@@ -20,7 +20,14 @@ export default defineConfig(({ mode }) => {
       ),
     },
     server: {
-      host: '127.0.0.1',
+      host: 'localhost',
+      port: 5173,
+      strictPort: true,
+      open: false,
+      clearScreen: false,
+    },
+    preview: {
+      host: 'localhost',
       port: 5173,
       strictPort: true,
     },

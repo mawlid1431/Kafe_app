@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import { Lock, LogIn, User } from 'lucide-react';
 import { api } from '@convex/_generated/api';
-import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
+import { BRAND_LOGO_URL, BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import {
   clearAdminSession,
   getAdminSession,
@@ -11,12 +11,16 @@ import {
   setAdminSession,
 } from '@/admin/auth';
 import { AdminFormField } from '@/admin/components/AdminFormField';
+import { AdminIconInput, AdminPasswordToggle } from '@/admin/components/AdminIconInput';
 import { ConvexSetupNotice, hasConvex } from '@/providers/ConvexProvider';
 
 function AdminLoginForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useMutation(api.admins.login);
+  const formId = useId();
+  const usernameId = `${formId}-username`;
+  const passwordId = `${formId}-password`;
 
   const [localSession, setLocalSession] = useState(() => getAdminSession());
   const [username, setUsername] = useState('admin');
@@ -42,8 +46,9 @@ function AdminLoginForm() {
 
   if (localSession && validated === undefined) {
     return (
-      <div className="admin-login-bg grid min-h-screen place-items-center text-sm text-muted">
+      <div className="admin-login-bg admin-login-shell grid place-items-center">
         <div className="admin-skeleton h-4 w-32" />
+        <p className="mt-3 text-sm text-muted">Checking session…</p>
       </div>
     );
   }
@@ -55,20 +60,28 @@ function AdminLoginForm() {
   const from = (location.state as { from?: string } | null)?.from ?? '/';
 
   return (
-    <div className="admin-login-bg min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-lg items-center justify-center px-4 py-12">
-        <div className="admin-glass-card w-full animate-scale-in">
-          <div className="mb-8 text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl border border-outline-variant/40 bg-gradient-to-br from-primary-soft to-white text-primary shadow-float transition-transform duration-300 hover:scale-105">
-              <span className="font-display text-lg font-bold">KE</span>
+    <div className="admin-login-bg admin-login-shell">
+      <div className="admin-login-container">
+        <div className="admin-glass-card admin-login-card w-full animate-scale-in">
+          <header className="admin-login-header">
+            <div className="admin-login-logo-wrap">
+              <img
+                src={BRAND_LOGO_URL}
+                alt={`${BRAND_NAME} logo`}
+                className="admin-login-logo"
+                width={64}
+                height={64}
+                decoding="async"
+              />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-semibold text-coffee-dark">Welcome back</h1>
-            <p className="mt-1 text-sm text-muted">Sign in to manage {BRAND_NAME}</p>
-            <p className="mt-0.5 text-xs tracking-wide text-primary/80">{BRAND_TAGLINE}</p>
-          </div>
+            <h1 className="admin-login-title">Welcome back</h1>
+            <p className="admin-login-subtitle">Sign in to manage {BRAND_NAME}</p>
+            <p className="admin-login-tagline">{BRAND_TAGLINE}</p>
+          </header>
 
           <form
-            className="grid gap-5"
+            id={formId}
+            className="grid gap-4 sm:gap-5"
             onSubmit={async (e) => {
               e.preventDefault();
               setError(null);
@@ -93,51 +106,72 @@ function AdminLoginForm() {
               }
             }}
           >
-            <AdminFormField label="Username">
-              <div className="relative">
-                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                <input
-                  className="admin-input pl-10"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                />
-              </div>
+            <AdminFormField label="Username" htmlFor={usernameId}>
+              <AdminIconInput
+                id={usernameId}
+                name="username"
+                icon={<User className="h-[1.125rem] w-[1.125rem] shrink-0" strokeWidth={2} />}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="text"
+                placeholder="Enter admin username"
+                required
+              />
             </AdminFormField>
 
-            <AdminFormField label="Password">
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                <input
-                  className="admin-input pl-10 pr-12"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-coffee-title transition hover:bg-cream hover:text-primary"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+            <AdminFormField label="Password" htmlFor={passwordId}>
+              <AdminIconInput
+                id={passwordId}
+                name="password"
+                icon={<Lock className="h-[1.125rem] w-[1.125rem] shrink-0" strokeWidth={2} />}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                required
+                trailing={
+                  <AdminPasswordToggle
+                    visible={showPassword}
+                    onToggle={() => setShowPassword((v) => !v)}
+                    inputId={passwordId}
+                  />
+                }
+              />
             </AdminFormField>
 
-            {error && (
-              <div className="animate-fade-in rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error ? (
+              <div
+                className="animate-fade-in rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm leading-snug text-red-700 sm:px-4 sm:py-3"
+                role="alert"
+                aria-live="polite"
+              >
                 {error}
               </div>
-            )}
+            ) : null}
 
-            <button type="submit" className="admin-btn w-full py-3" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign in to Admin'}
+            <button type="submit" className="admin-btn admin-login-submit w-full" disabled={loading}>
+              <LogIn className="h-4 w-4 shrink-0" aria-hidden />
+              <span>{loading ? 'Signing in…' : 'Sign in to Admin'}</span>
             </button>
-            <p className="text-center text-xs text-muted">Default after seed: <span className="font-medium text-coffee-title">admin</span> / <span className="font-medium text-coffee-title">admin123</span></p>
+
+            <div className="admin-login-demo" aria-label="Demo login credentials">
+              <p className="admin-login-demo-label">Demo after seed</p>
+              <div className="admin-login-demo-values">
+                <span className="admin-login-demo-chip">
+                  <User className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                  admin
+                </span>
+                <span className="admin-login-demo-chip">
+                  <Lock className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                  admin123
+                </span>
+              </div>
+            </div>
           </form>
         </div>
       </div>
@@ -148,7 +182,7 @@ function AdminLoginForm() {
 export function AdminLoginPage() {
   if (!hasConvex()) {
     return (
-      <div className="admin-login-bg grid min-h-screen place-items-center p-8">
+      <div className="admin-login-bg admin-login-shell grid place-items-center p-4 sm:p-8">
         <ConvexSetupNotice context="Admin login" />
       </div>
     );

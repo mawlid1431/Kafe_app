@@ -11,6 +11,9 @@ const promoDoc = v.object({
   subtitle: v.string(),
   code: v.string(),
   imageUrl: v.optional(v.string()),
+  discountPercent: v.optional(v.number()),
+  fixedOff: v.optional(v.number()),
+  minSpend: v.optional(v.number()),
   active: v.boolean(),
   sortOrder: v.number(),
   createdAt: v.number(),
@@ -33,6 +36,9 @@ export const create = mutation({
     subtitle: v.string(),
     code: v.string(),
     imageUrl: v.optional(v.string()),
+    discountPercent: v.optional(v.number()),
+    fixedOff: v.optional(v.number()),
+    minSpend: v.optional(v.number()),
     active: v.boolean(),
   },
   returns: v.id('promos'),
@@ -52,6 +58,9 @@ export const create = mutation({
       subtitle: args.subtitle.trim(),
       code,
       imageUrl: args.imageUrl,
+      discountPercent: args.discountPercent,
+      fixedOff: args.fixedOff,
+      minSpend: args.minSpend,
       active: args.active,
       sortOrder: all.length + 1,
       createdAt: now,
@@ -68,6 +77,9 @@ export const update = mutation({
     subtitle: v.optional(v.string()),
     code: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    discountPercent: v.optional(v.number()),
+    fixedOff: v.optional(v.number()),
+    minSpend: v.optional(v.number()),
     active: v.optional(v.boolean()),
   },
   returns: v.null(),
@@ -81,6 +93,9 @@ export const update = mutation({
     if (args.subtitle !== undefined) patch.subtitle = args.subtitle.trim();
     if (args.code !== undefined) patch.code = args.code.trim().toUpperCase();
     if (args.imageUrl !== undefined) patch.imageUrl = args.imageUrl;
+    if (args.discountPercent !== undefined) patch.discountPercent = args.discountPercent;
+    if (args.fixedOff !== undefined) patch.fixedOff = args.fixedOff;
+    if (args.minSpend !== undefined) patch.minSpend = args.minSpend;
     if (args.active !== undefined) patch.active = args.active;
 
     await ctx.db.patch('promos', args.promoId, patch);

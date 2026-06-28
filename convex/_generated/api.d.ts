@@ -8,6 +8,11 @@
  * @module
  */
 
+import type * as catalog from "../catalog.js";
+import type * as orders from "../orders.js";
+import type * as promos from "../promos.js";
+import type * as lib_orderPricing from "../lib/orderPricing.js";
+import type * as lib_orderRules from "../lib/orderRules.js";
 import type * as adminDashboard from "../adminDashboard.js";
 import type * as admins from "../admins.js";
 import type * as branches from "../branches.js";
@@ -32,13 +37,18 @@ declare const fullApi: ApiFromModules<{
   adminDashboard: typeof adminDashboard;
   admins: typeof admins;
   branches: typeof branches;
+  catalog: typeof catalog;
   customersAdmin: typeof customersAdmin;
   health: typeof health;
   "lib/adminAuth": typeof lib_adminAuth;
   "lib/auth": typeof lib_auth;
+  "lib/orderPricing": typeof lib_orderPricing;
+  "lib/orderRules": typeof lib_orderRules;
   "lib/password": typeof lib_password;
   menuAdmin: typeof menuAdmin;
+  orders: typeof orders;
   ordersAdmin: typeof ordersAdmin;
+  promos: typeof promos;
   promosAdmin: typeof promosAdmin;
   seed: typeof seed;
   users: typeof users;

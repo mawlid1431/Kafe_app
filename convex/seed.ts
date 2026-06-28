@@ -111,9 +111,10 @@ async function runSeedHandler(ctx: MutationCtx) {
     }
 
     const promos = [
-      { title: 'Buy 1 Free 1', subtitle: 'Every Tuesday on all lattes', code: 'BOGO50', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=400&fit=crop&auto=format', active: true, sortOrder: 1 },
-      { title: 'Birthday Month', subtitle: 'Free drink on your birthday', code: 'WELCOME10', imageUrl: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=400&fit=crop&auto=format', active: true, sortOrder: 2 },
-      { title: 'Earn 2× Points', subtitle: 'This weekend only', code: 'KEAMAN15', imageUrl: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&h=400&fit=crop&auto=format', active: true, sortOrder: 3 },
+      { title: 'Buy 1 Free 1', subtitle: 'Every Tuesday on all lattes', code: 'BOGO50', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=400&fit=crop&auto=format', fixedOff: 5, minSpend: 18, active: true, sortOrder: 1 },
+      { title: 'Birthday Month', subtitle: 'Free drink on your birthday', code: 'WELCOME10', imageUrl: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=400&fit=crop&auto=format', discountPercent: 10, minSpend: 15, active: true, sortOrder: 2 },
+      { title: 'Earn 2× Points', subtitle: 'This weekend only', code: 'KEAMAN15', imageUrl: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&h=400&fit=crop&auto=format', discountPercent: 15, minSpend: 25, active: true, sortOrder: 3 },
+      { title: 'Free Delivery', subtitle: 'On orders RM 20+', code: 'FREESHIP', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=400&fit=crop&auto=format', fixedOff: 3, minSpend: 20, active: true, sortOrder: 4 },
     ] as const;
 
     for (const p of promos) {

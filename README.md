@@ -25,6 +25,7 @@ Native **iOS** coffee ordering app for **Kafe Eman** (Malaysia). Built with Expo
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
+- [Admin dashboard (web)](#admin-dashboard-web)
 - [Development workflow](#development-workflow)
 - [Build & deployment](#build--deployment)
 - [Design system](#design-system)
@@ -45,7 +46,8 @@ Kafe Eman is a premium mobile ordering experience for a Malaysian specialty coff
 | **Runtime** | Expo 54 · React Native 0.81 · React 19 |
 | **Package manager** | Bun (required) |
 | **Distribution** | Expo Go (dev) · EAS Build (TestFlight / App Store) |
-| **Data** | Client-side seed data (demo / MVP) |
+| **Data** | Convex backend + client seed data (demo / MVP) |
+| **Admin** | Separate web dashboard at `http://localhost:5173` |
 
 ---
 
@@ -364,6 +366,9 @@ Validates promo codes, enforces minimum spend, calculates percentage/fixed disco
 
 ```
 mobile/
+├── Admin/                        # Web admin dashboard (Vite + React)
+│   └── src/admin/                # Login, sidebar, management pages
+├── convex/                       # Convex backend (orders, menu, admins)
 ├── app/                          # Expo Router shell
 │   ├── _layout.tsx               # Fonts, splash, providers
 │   ├── index.tsx                 # → KafeemanApp entry
@@ -443,6 +448,52 @@ EXPO_USE_BUN=1
 
 Get `EAS_PROJECT_ID` from [expo.dev](https://expo.dev) after linking the project, or copy from `app.json` → `extra.eas.projectId`.
 
+For Convex + Clerk, also set `EXPO_PUBLIC_CONVEX_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`, and `CONVEX_DEPLOYMENT` (see `.env.example`).
+
+---
+
+## Admin dashboard (web)
+
+The **`Admin/`** folder is a **separate Vite + React web app** — not part of the mobile Expo app. Use it to manage branches, menu, orders, promos, customers, staff, and notifications.
+
+| Item | Detail |
+|------|--------|
+| **URL** | [http://localhost:5173/login](http://localhost:5173/login) |
+| **Stack** | Vite · React 19 · Tailwind · Convex |
+| **Login** | `admin` / `admin123` (after seed) |
+
+### First-time setup
+
+```bash
+bun install
+cd Admin && bun install && cd ..
+
+# Terminal 1 — Convex backend
+bun run convex:dev
+
+# Terminal 2 — seed demo data + default admin user
+bun run convex:seed
+
+# Terminal 3 — mobile + admin together
+bun run dev
+```
+
+Or run only the admin panel:
+
+```bash
+bun run admin
+```
+
+Or mobile app only:
+
+```bash
+bun run app
+```
+
+### Admin sidebar
+
+Dashboard · Branches · Menu · Orders (processing / track / history) · Promos · Rewards · Users · Notifications · Staff · Account
+
 ---
 
 ## Development workflow
@@ -467,14 +518,21 @@ flowchart LR
 
 | Command | Description |
 |---------|-------------|
-| `bun run dev` | Start Expo dev server (LAN) |
-| `bun run dev:clear` | Start with cleared Metro cache |
+| `bun run dev` | Start Expo (mobile QR) + Admin together |
+| `bun run app` | Expo mobile app only |
+| `bun run admin` | Admin web dashboard only |
+| `bun run admin:build` | Production build of Admin |
+| `bun run convex:dev` | Convex backend dev server |
+| `bun run convex:seed` | Seed branches, menu, promos, orders, admin user |
+| `bun run dev:clear` | Start app with cleared Metro cache |
 | `bun run start:tunnel` | Start with tunnel (remote device testing) |
 | `bun run ios` | Run on iOS simulator (macOS only) |
 | `bun run typecheck` | TypeScript check |
 | `bun run lint` | ESLint |
 | `bun run build:ios` | EAS preview build |
 | `bun run build:ios:prod` | EAS production build |
+
+> This project uses **Bun only** — not npm. Install deps with `bun install`.
 
 ### Code conventions
 

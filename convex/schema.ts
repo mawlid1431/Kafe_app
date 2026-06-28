@@ -95,6 +95,7 @@ export default defineSchema({
     discount: v.number(),
     deliveryFee: v.number(),
     total: v.number(),
+    promoCode: v.optional(v.string()),
     pointsEarned: v.optional(v.number()),
     pointsRedeemed: v.optional(v.number()),
     orderNote: v.optional(v.string()),
@@ -104,13 +105,17 @@ export default defineSchema({
     .index('by_order_number', ['orderNumber'])
     .index('by_status_created', ['status', 'createdAt'])
     .index('by_branch_created', ['branchSlug', 'createdAt'])
-    .index('by_created', ['createdAt']),
+    .index('by_created', ['createdAt'])
+    .index('by_user_created', ['userId', 'createdAt']),
 
   promos: defineTable({
     title: v.string(),
     subtitle: v.string(),
     code: v.string(),
     imageUrl: v.optional(v.string()),
+    discountPercent: v.optional(v.number()),
+    fixedOff: v.optional(v.number()),
+    minSpend: v.optional(v.number()),
     active: v.boolean(),
     sortOrder: v.number(),
     createdAt: v.number(),

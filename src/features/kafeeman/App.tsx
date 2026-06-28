@@ -17,16 +17,12 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
 import {
-  BRANCHES,
-  CATEGORIES,
   createSeedOrders,
   HOME_OFFERS,
-  MENU,
   ONBOARDING_SLIDES,
   ORDER_STEPS,
   NOTIFICATIONS_SEED,
   POINTS_HISTORY_SEED,
-  PROMOS,
   REWARD_TIERS,
 } from './data';
 import { LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from './brand';
@@ -108,6 +104,8 @@ import { isClerkEnabled } from './auth/clerkConfig';
 import { ConvexConnectionCheck } from './convex/useConvexConnection';
 import { ConvexUserSync } from './convex/useConvexUserSync';
 import { isConvexEnabled } from './convex/ConvexClientProvider';
+import { useConvexCatalog } from './convex/useConvexCatalog';
+import { resolveBranchSlug, useConvexOrders, useConvexUser, useLiveBackend } from './convex/useConvexBackend';
 import { STITCH_SHADOW, useBrandTheme, type ThemeColors } from './theme';
 import type {
   AppNotification,
@@ -183,7 +181,7 @@ function KafeemanApp() {
   const [trackingStep, setTrackingStep] = useState(0);
   const [orderType, setOrderType] = useState<'delivery' | 'pickup'>('delivery');
   const [orderTypeReturn, setOrderTypeReturn] = useState<Screen>('home');
-  const [selectedBranch, setSelectedBranch] = useState<string>(BRANCHES[2].name);
+  const [selectedBranch, setSelectedBranch] = useState<string>('Kuala Lumpur');
   const [sugar, setSugar] = useState('50%');
   const [ice, setIce] = useState('Full Ice');
   const [tngPin, setTngPin] = useState<string[]>([]);
@@ -210,6 +208,27 @@ function KafeemanApp() {
   ordersRef.current = orders;
   const otpRefs = useRef<(TextInput | null)[]>([]);
 
+  const catalog = useConvexCatalog();
+  const liveBackend = useLiveBackend(isLoggedIn);
+  const {
+    orders: liveOrders,
+    createOrder: createOrderRemote,
+    cancelOrder: cancelOrderRemote,
+  } = useConvexOrders(liveBackend, catalog.menu);
+  const convexUser = useConvexUser(liveBackend);
+
+  const menuItems = catalog.menu;
+  const branchList = catalog.branches;
+  const categoryList = catalog.categories;
+  const promoList = catalog.promos;
+
+  const displayOrders = liveBackend && liveOrders !== undefined ? liveOrders : orders;
+  const displayPoints = liveBackend && convexUser.points !== undefined ? convexUser.points : points;
+
+  useEffect(() => {
+    ordersRef.current = displayOrders;
+  }, [displayOrders]);
+
   const selectedAddress = useMemo(
     () => addresses.find((a) => a.id === selectedAddressId) ?? addresses[0],
     [addresses, selectedAddressId],
@@ -232,7 +251,7 @@ function KafeemanApp() {
   const effectivePointsRedeem = usePointsEnabled ? pointsToRedeem : 0;
   const totalDue = orderTotal(cartTotal, orderType === 'delivery', discountAmount, effectivePointsRedeem);
   const menuFiltered = useMemo(() => {
-    let items = category === 'All' ? MENU : MENU.filter((m) => m.category === category);
+    let items = category === 'All' ? menuItems : menuItems.filter((m) => m.category === category);
     if (menuSearch.trim()) {
       const q = menuSearch.trim().toLowerCase();
       items = items.filter(
@@ -240,33 +259,34 @@ function KafeemanApp() {
       );
     }
     return items;
-  }, [category, menuSearch]);
+  }, [category, menuSearch, menuItems]);
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
-    return MENU.filter(
+    return menuItems.filter(
       (m) => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q),
     );
-  }, [searchQuery]);
-  const favoriteItems = useMemo(() => MENU.filter((m) => favorites.includes(m.id)), [favorites]);
-  const rewardTier = REWARD_TIERS.find((t) => points >= t.min && points <= t.max) ?? REWARD_TIERS[0];
+  }, [searchQuery, menuItems]);
+  const favoriteItems = useMemo(() => menuItems.filter((m) => favorites.includes(m.id)), [favorites, menuItems]);
+  const rewardTier = REWARD_TIERS.find((t) => displayPoints >= t.min && displayPoints <= t.max) ?? REWARD_TIERS[0];
   const pointsToGold =
     rewardTier.name === 'Gold'
       ? 0
-      : Math.max(0, (REWARD_TIERS[REWARD_TIERS.indexOf(rewardTier) + 1]?.min ?? 1500) - points);
+      : Math.max(0, (REWARD_TIERS[REWARD_TIERS.indexOf(rewardTier) + 1]?.min ?? 1500) - displayPoints);
   const showNav = ['home', 'menu', 'cart', 'orders', 'profile', 'order-type'].includes(screen);
   const showPickupHeader = screen === 'home' || screen === 'menu';
   const showOrderNowFab = screen === 'home' && cartCount === 0;
   const viewingOrder = useMemo(() => {
     const id = activeOrderId ?? orderRef;
-    const found = orders.find((o) => o.id === id);
+    const found = displayOrders.find((o) => o.id === id);
     if (!found) return null;
     if (found.status !== 'active') return found;
+    if (liveBackend) return found;
     return { ...found, trackingStep: Math.max(found.trackingStep, trackingStep) };
-  }, [orders, activeOrderId, orderRef, trackingStep]);
+  }, [displayOrders, activeOrderId, orderRef, trackingStep, liveBackend]);
   const activeDeliveryOrder = useMemo(
-    () => orders.find((o) => o.status === 'active' && o.orderType === 'delivery') ?? null,
-    [orders],
+    () => displayOrders.find((o) => o.status === 'active' && o.orderType === 'delivery') ?? null,
+    [displayOrders],
   );
   const isDeliveryTracking = screen === 'order-tracking' && viewingOrder?.orderType === 'delivery';
   const unreadNotifications = notifications.filter((n) => !n.read).length;
@@ -336,7 +356,7 @@ function KafeemanApp() {
   };
 
   const toggleFavorite = useCallback((id: number) => {
-    const item = MENU.find((m) => m.id === id);
+    const item = menuItems.find((m) => m.id === id);
     setFavorites((prev) => {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
       const added = !prev.includes(id);
@@ -347,7 +367,7 @@ function KafeemanApp() {
       );
       return next;
     });
-  }, [showToast]);
+  }, [showToast, menuItems]);
 
   const applyPromoFromCode = useCallback(
     (code: string) => {
@@ -378,11 +398,69 @@ function KafeemanApp() {
 
   const completeOrder = useCallback(
     (paid: number) => {
+      const trimmedNote = orderNote.trim();
+      const finishCheckout = (confirmedOrderRef: string, total: number) => {
+        setActiveOrderId(confirmedOrderRef);
+        setOrderRef(confirmedOrderRef);
+        setTrackingStep(0);
+        setPaidAmount(total);
+        setCart([]);
+        setOrderNote('');
+        setUsePointsEnabled(false);
+        setPointsToRedeem(0);
+        setAppliedPromo(null);
+        setPromoCode('');
+        setPromoMessage('');
+        void hapticSuccess();
+        setNotifications((prev) => [
+          {
+            id: `n-order-${confirmedOrderRef}`,
+            title: 'Order confirmed',
+            body: `We're preparing ${confirmedOrderRef}. ${orderType === 'delivery' ? 'Track delivery live.' : 'Pick up at the branch.'}`,
+            time: 'Just now',
+            read: false,
+            type: 'order',
+            orderId: confirmedOrderRef,
+          },
+          ...prev,
+        ]);
+        showToast(`Order ${confirmedOrderRef} confirmed`, 'success', {
+          label: orderType === 'delivery' ? 'Track delivery' : 'View order',
+          onPress: () => setScreen('order-tracking'),
+        });
+      };
+
+      if (liveBackend) {
+        void createOrderRemote({
+          branchSlug: resolveBranchSlug(branchList, selectedBranch),
+          orderType,
+          payMethod,
+          items: cart.map((c) => ({
+            menuItemId: c.item.id,
+            name: c.item.name,
+            qty: c.qty,
+            sugar: c.sugar,
+            ice: c.ice,
+          })),
+          promoCode: appliedPromo?.code,
+          pointsToRedeem: effectivePointsRedeem > 0 ? effectivePointsRedeem : undefined,
+          orderNote: trimmedNote || undefined,
+        })
+          .then((result) => {
+            finishCheckout(result.orderNumber, result.total);
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : 'Could not place order';
+            void hapticWarning();
+            showToast(message, 'error');
+          });
+        return;
+      }
+
       const deliveryFee = orderType === 'delivery' ? DELIVERY_FEE : 0;
       const total = paid;
       const redeemed = effectivePointsRedeem;
       const earned = pointsForSpend(total);
-      const trimmedNote = orderNote.trim();
       const newOrder: OrderRecord = {
         id: orderRef,
         items: cart.map((c) => ({ ...c })),
@@ -415,39 +493,17 @@ function KafeemanApp() {
           ...prev,
         ]);
       }
-      setActiveOrderId(orderRef);
-      setTrackingStep(0);
-      setPaidAmount(total);
-      setCart([]);
-      setOrderNote('');
-      setUsePointsEnabled(false);
-      setPointsToRedeem(0);
-      setAppliedPromo(null);
-      setPromoCode('');
-      setPromoMessage('');
-      void hapticSuccess();
-      setNotifications((prev) => [
-        {
-          id: `n-order-${orderRef}`,
-          title: 'Order confirmed',
-          body: `We're preparing ${orderRef}. ${orderType === 'delivery' ? 'Track delivery live.' : 'Pick up at the branch.'}`,
-          time: 'Just now',
-          read: false,
-          type: 'order',
-          orderId: orderRef,
-        },
-        ...prev,
-      ]);
-      showToast(`Order ${orderRef} confirmed`, 'success', {
-        label: orderType === 'delivery' ? 'Track delivery' : 'View order',
-        onPress: () => setScreen('order-tracking'),
-      });
+      finishCheckout(orderRef, total);
     },
     [
+      appliedPromo?.code,
+      branchList,
       cart,
       cartTotal,
+      createOrderRemote,
       discountAmount,
       effectivePointsRedeem,
+      liveBackend,
       orderNote,
       orderRef,
       orderType,
@@ -487,8 +543,36 @@ function KafeemanApp() {
           text: 'Cancel order',
           style: 'destructive',
           onPress: () => {
-            const order = orders.find((o) => o.id === orderId);
+            const order = displayOrders.find((o) => o.id === orderId);
             if (!order) return;
+
+            const onCancelled = () => {
+              setNotifications((prev) => [
+                {
+                  id: `n-cancel-${Date.now()}`,
+                  title: 'Order cancelled',
+                  body: `Order ${orderId} was cancelled successfully.`,
+                  time: 'Just now',
+                  read: false,
+                  type: 'order',
+                  orderId,
+                },
+                ...prev,
+              ]);
+              void hapticWarning();
+              showToast('Order cancelled', 'info');
+              go('orders');
+            };
+
+            if (liveBackend) {
+              void cancelOrderRemote({ orderNumber: orderId })
+                .then(onCancelled)
+                .catch((err: unknown) => {
+                  showToast(err instanceof Error ? err.message : 'Could not cancel order', 'error');
+                });
+              return;
+            }
+
             setOrders((prev) =>
               prev.map((o) => (o.id === orderId ? { ...o, status: 'cancelled' as const } : o)),
             );
@@ -504,26 +588,12 @@ function KafeemanApp() {
                 ...prev,
               ]);
             }
-            setNotifications((prev) => [
-              {
-                id: `n-cancel-${Date.now()}`,
-                title: 'Order cancelled',
-                body: `Order ${orderId} was cancelled successfully.`,
-                time: 'Just now',
-                read: false,
-                type: 'order',
-                orderId,
-              },
-              ...prev,
-            ]);
-            void hapticWarning();
-            showToast('Order cancelled', 'info');
-            go('orders');
+            onCancelled();
           },
         },
       ]);
     },
-    [orders, showToast, go],
+    [cancelOrderRemote, displayOrders, go, liveBackend, showToast],
   );
 
   const navigateFromSplash = useCallback(() => {
@@ -619,9 +689,10 @@ function KafeemanApp() {
   };
 
   useEffect(() => {
-    const t = setInterval(() => setPromoIdx((i) => (i + 1) % PROMOS.length), 3800);
+    if (promoList.length === 0) return;
+    const t = setInterval(() => setPromoIdx((i) => (i + 1) % promoList.length), 3800);
     return () => clearInterval(t);
-  }, []);
+  }, [promoList.length]);
 
   useEffect(() => {
     void loadAppState().then((saved) => {
@@ -630,9 +701,11 @@ function KafeemanApp() {
       if (saved?.profile) setProfile(saved.profile);
       if (saved?.cart) setCart(saved.cart);
       if (saved?.favorites) setFavorites(saved.favorites);
-      if (saved?.orders) setOrders(saved.orders);
-      if (typeof saved?.points === 'number') setPoints(saved.points);
-      if (saved?.pointsHistory) setPointsHistory(saved.pointsHistory);
+      if (!isConvexEnabled) {
+        if (saved?.orders) setOrders(saved.orders);
+        if (typeof saved?.points === 'number') setPoints(saved.points);
+        if (saved?.pointsHistory) setPointsHistory(saved.pointsHistory);
+      }
       if (saved?.selectedBranch) setSelectedBranch(saved.selectedBranch);
       if (saved?.orderType) setOrderType(saved.orderType);
       if (saved?.addresses) setAddresses(saved.addresses);
@@ -652,9 +725,9 @@ function KafeemanApp() {
         profile,
         cart,
         favorites,
-        orders,
-        points,
-        pointsHistory,
+        orders: liveBackend ? [] : orders,
+        points: liveBackend ? 0 : points,
+        pointsHistory: liveBackend ? [] : pointsHistory,
         selectedBranch,
         orderType,
         addresses,
@@ -670,6 +743,7 @@ function KafeemanApp() {
     profile,
     cart,
     favorites,
+    liveBackend,
     orders,
     points,
     pointsHistory,
@@ -687,7 +761,7 @@ function KafeemanApp() {
   }, [hydrated, navigateFromSplash]);
 
   useEffect(() => {
-    if (screen !== 'order-tracking') return;
+    if (liveBackend || screen !== 'order-tracking') return;
     const orderId = activeOrderId ?? orderRef;
     const order = ordersRef.current.find((o) => o.id === orderId);
     if (!order || order.status !== 'active') return;
@@ -712,7 +786,14 @@ function KafeemanApp() {
       );
     }, delayMs);
     return () => clearTimeout(t);
-  }, [screen, trackingStep, activeOrderId, orderRef]);
+  }, [liveBackend, screen, trackingStep, activeOrderId, orderRef]);
+
+  useEffect(() => {
+    if (!liveBackend || screen !== 'order-tracking') return;
+    const orderId = activeOrderId ?? orderRef;
+    const order = displayOrders.find((o) => o.id === orderId);
+    if (order) setTrackingStep(order.trackingStep);
+  }, [liveBackend, screen, displayOrders, activeOrderId, orderRef]);
 
   useEffect(
     () => () => {
@@ -1018,7 +1099,7 @@ function KafeemanApp() {
               <Text style={styles.screenTitle}>Select Branch</Text>
               <Text style={[styles.bodyText, { textAlign: 'center' }]}>Choose your nearest Kafe Eman</Text>
             </View>
-            {BRANCHES.map((b) => {
+            {branchList.map((b) => {
               const selected = selectedBranch === b.name;
               return (
                 <Pressable
@@ -1105,7 +1186,7 @@ function KafeemanApp() {
               <LoyaltyHeroCard
                 C={C}
                 name={profile.name}
-                points={points}
+                points={displayPoints}
                 subtitle={
                   pointsToGold > 0
                     ? `Unlock rewards — ${pointsToGold} pts to Gold`
@@ -1141,17 +1222,17 @@ function KafeemanApp() {
             <View style={[styles.padH, { marginBottom: 20 }]}>
               <StitchPromoBanner
                 C={C}
-                title={PROMOS[promoIdx].title}
-                sub={PROMOS[promoIdx].sub}
-                image={PROMOS[promoIdx].img}
-                code={PROMOS[promoIdx].code}
+                title={promoList[promoIdx]?.title ?? ''}
+                sub={promoList[promoIdx]?.sub ?? ''}
+                image={promoList[promoIdx]?.img ?? ''}
+                code={promoList[promoIdx]?.code ?? ''}
                 onPress={() => {
-                  applyPromoFromCode(PROMOS[promoIdx].code);
+                  applyPromoFromCode(promoList[promoIdx]?.code ?? '');
                   go('cart');
                 }}
               />
               <View style={styles.promoDots}>
-                {PROMOS.map((p, i) => (
+                {promoList.map((p, i) => (
                   <View
                     key={p.id}
                     style={[
@@ -1226,7 +1307,7 @@ function KafeemanApp() {
             {!searchQuery.trim() && (
               <View style={[styles.padH, { marginTop: 24 }]}>
                 <SectionHeading C={C} title="Featured Drinks" actionLabel="View all" onAction={() => go('menu')} />
-                {MENU.slice(0, 4).map((item) => (
+                {menuItems.slice(0, 4).map((item) => (
                   <MenuListRow
                     key={item.id}
                     C={C}
@@ -1274,7 +1355,7 @@ function KafeemanApp() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={[styles.padH, styles.menuChipRow]}
                 >
-                  {CATEGORIES.map((c) => (
+                  {categoryList.map((c) => (
                     <StitchCategoryChip
                       key={c}
                       C={C}
@@ -1467,14 +1548,14 @@ function KafeemanApp() {
                   <OrderNoteField C={C} value={orderNote} onChangeText={setOrderNote} />
                   <PointsRedeemSection
                     C={C}
-                    balance={points}
+                    balance={displayPoints}
                     enabled={usePointsEnabled}
                     pointsToRedeem={pointsToRedeem}
                     orderTotalBeforePoints={orderTotalBeforePoints}
                     onToggle={(on) => {
                       setUsePointsEnabled(on);
                       if (on) {
-                        const max = maxRedeemablePoints(points, orderTotalBeforePoints);
+                        const max = maxRedeemablePoints(displayPoints, orderTotalBeforePoints);
                         const preset = ([100, 500, 1000] as const).find((p) => p <= max) ?? max;
                         setPointsToRedeem(
                           preset >= POINTS_PER_RM ? preset : max >= POINTS_PER_RM ? max : 0,
@@ -1776,7 +1857,7 @@ function KafeemanApp() {
             onBack={() => go('home')}
             onMarkAllRead={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
             onOpenOrder={(orderId) => {
-              const order = orders.find((o) => o.id === orderId);
+              const order = displayOrders.find((o) => o.id === orderId);
               if (order) trackOrder(order);
             }}
           />
@@ -1807,7 +1888,7 @@ function KafeemanApp() {
             </View>
             <OrdersScreen
               C={C}
-              orders={orders}
+              orders={displayOrders}
               orderTab={orderTab}
               onTabChange={(t) => {
                 void hapticSelection();
@@ -1824,7 +1905,7 @@ function KafeemanApp() {
         return (
           <FavoritesScreen
             C={C}
-            items={MENU}
+            items={menuItems}
             favorites={favorites}
             cardWidth={menuCardWidth}
             onBack={() => go('profile')}
@@ -1909,13 +1990,17 @@ function KafeemanApp() {
         return (
           <RewardsScreen
             C={C}
-            points={points}
+            points={displayPoints}
             history={pointsHistory}
             onBack={() => go('profile')}
             onRedeem={(rewardId, cost, title) => {
-              if (cost > 0 && points < cost) {
+              if (liveBackend) {
+                showToast('In-app reward redemption syncs soon — contact staff to redeem.', 'info');
+                return false;
+              }
+              if (cost > 0 && displayPoints < cost) {
                 void hapticWarning();
-                showToast(`Need ${cost - points} more points`, 'error');
+                showToast(`Need ${cost - displayPoints} more points`, 'error');
                 return false;
               }
               if (cost > 0) {

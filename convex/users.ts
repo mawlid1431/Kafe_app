@@ -3,23 +3,46 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { getCurrentUser, getCurrentUserOrNull } from './lib/auth';
 
+const userPublic = v.object({
+  _id: v.id('users'),
+  _creationTime: v.number(),
+  tokenIdentifier: v.string(),
+  name: v.string(),
+  email: v.string(),
+  pictureUrl: v.optional(v.string()),
+  branchSlug: v.optional(v.string()),
+  points: v.number(),
+  suspended: v.boolean(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+});
+
+function toUserPublic(user: {
+  _id: import('./_generated/dataModel').Id<'users'>;
+  _creationTime: number;
+  tokenIdentifier: string;
+  name: string;
+  email: string;
+  pictureUrl?: string;
+  branchSlug?: string;
+  points?: number;
+  suspended?: boolean;
+  createdAt: number;
+  updatedAt?: number;
+}) {
+  return {
+    ...user,
+    points: user.points ?? 0,
+    suspended: user.suspended ?? false,
+  };
+}
+
 export const me = query({
   args: {},
-  returns: v.union(
-    v.object({
-      _id: v.id('users'),
-      _creationTime: v.number(),
-      tokenIdentifier: v.string(),
-      name: v.string(),
-      email: v.string(),
-      pictureUrl: v.optional(v.string()),
-      createdAt: v.number(),
-      updatedAt: v.optional(v.number()),
-    }),
-    v.null(),
-  ),
+  returns: v.union(userPublic, v.null()),
   handler: async (ctx) => {
-    return await getCurrentUserOrNull(ctx);
+    const user = await getCurrentUserOrNull(ctx);
+    return user ? toUserPublic(user) : null;
   },
 });
 
@@ -58,6 +81,8 @@ export const upsertFromAuth = mutation({
       name: args.name,
       email: args.email,
       pictureUrl: args.pictureUrl,
+      points: 0,
+      suspended: false,
       createdAt: now,
     });
   },
@@ -65,17 +90,9 @@ export const upsertFromAuth = mutation({
 
 export const requireMe = query({
   args: {},
-  returns: v.object({
-    _id: v.id('users'),
-    _creationTime: v.number(),
-    tokenIdentifier: v.string(),
-    name: v.string(),
-    email: v.string(),
-    pictureUrl: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  returns: userPublic,
   handler: async (ctx) => {
-    return await getCurrentUser(ctx);
+    const user = await getCurrentUser(ctx);
+    return toUserPublic(user);
   },
 });

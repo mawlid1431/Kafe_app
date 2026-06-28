@@ -1,6 +1,7 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import { requireAdmin } from './lib/adminAuth';
+import { refundOrderPoints } from './lib/orderPricing';
 
 const adminTokenArg = { adminToken: v.string() };
 
@@ -77,6 +78,11 @@ export const updateStatus = mutation({
     if (args.trackingStep !== undefined) patch.trackingStep = args.trackingStep;
 
     await ctx.db.patch('orders', args.orderId, patch);
+
+    if (args.status === 'cancelled' && order.status !== 'cancelled') {
+      await refundOrderPoints(ctx, order);
+    }
+
     return null;
   },
 });
