@@ -186,6 +186,7 @@ function KafeemanApp() {
   const [promoIdx, setPromoIdx] = useState(0);
   const [trackingStep, setTrackingStep] = useState(0);
   const [orderType, setOrderType] = useState<'delivery' | 'pickup'>('delivery');
+  const [orderTypeReturn, setOrderTypeReturn] = useState<Screen>('home');
   const [selectedBranch, setSelectedBranch] = useState<string>(BRANCHES[2].name);
   const [sugar, setSugar] = useState('50%');
   const [ice, setIce] = useState('Full Ice');
@@ -252,7 +253,7 @@ function KafeemanApp() {
     rewardTier.name === 'Gold'
       ? 0
       : Math.max(0, (REWARD_TIERS[REWARD_TIERS.indexOf(rewardTier) + 1]?.min ?? 1500) - points);
-  const showNav = ['home', 'menu', 'cart', 'orders', 'profile'].includes(screen);
+  const showNav = ['home', 'menu', 'cart', 'orders', 'profile', 'order-type'].includes(screen);
   const showPickupHeader = screen === 'home' || screen === 'menu';
   const showOrderNowFab = screen === 'home';
   const viewingOrder = useMemo(() => {
@@ -286,6 +287,11 @@ function KafeemanApp() {
     };
     if (tabMap[s]) setTab(tabMap[s] as TabKey);
     setScreen(s);
+  }, []);
+
+  const openOrderType = useCallback((from: Screen) => {
+    setOrderTypeReturn(from);
+    setScreen('order-type');
   }, []);
 
   const openProductDetail = useCallback((item: MenuItem, from: Screen = screen) => {
@@ -985,7 +991,7 @@ function KafeemanApp() {
                     setSelectedBranch(b.name);
                     setOnboardingDone(true);
                     setIsLoggedIn(true);
-                    setScreen('order-type');
+                    openOrderType('branch');
                   }}
                   style={({ pressed }) => [{ marginBottom: 12, opacity: pressed ? 0.94 : 1 }]}
                 >
@@ -1012,9 +1018,17 @@ function KafeemanApp() {
 
       case 'order-type':
         return (
-          <View style={[styles.padH, styles.orderTypeScreen]}>
-            <Text style={[styles.screenTitle, { textAlign: 'center' }]}>How would you like it?</Text>
-            <Text style={[styles.bodyText, { textAlign: 'center', marginBottom: 8 }]}>You can change this anytime</Text>
+          <ScrollView
+            style={{ backgroundColor: 'transparent' }}
+            contentContainerStyle={[styles.padH, styles.orderTypeScreen]}
+            showsVerticalScrollIndicator={false}
+          >
+            <ScreenHeader
+              C={C}
+              title="How would you like it?"
+              subtitle="You can change this anytime"
+              onBack={() => setScreen(orderTypeReturn)}
+            />
             <View style={styles.orderTypeBranchRow}>
               <Ionicons name="location-outline" size={15} color={C.primaryContainer} />
               <Text style={[styles.orderTypeBranchText, { color: C.textMuted }]}>{selectedBranch}</Text>
@@ -1039,7 +1053,10 @@ function KafeemanApp() {
                 go('home');
               }}
             />
-          </View>
+            <Pressable onPress={() => go('home')} style={styles.orderTypeSkip}>
+              <Text style={[styles.orderTypeSkipText, { color: C.primaryContainer }]}>Continue to home</Text>
+            </Pressable>
+          </ScrollView>
         );
 
       case 'home':
@@ -1333,7 +1350,7 @@ function KafeemanApp() {
                   C={C}
                   branch={selectedBranch}
                   orderType={orderType}
-                  onPress={() => setScreen('order-type')}
+                  onPress={() => openOrderType('cart')}
                 />
               )}
             </View>
@@ -1901,7 +1918,7 @@ function KafeemanApp() {
             C={C}
             orderType={orderType}
             branch={selectedBranch}
-            onPress={() => setScreen('order-type')}
+            onPress={() => openOrderType(screen)}
             onNotifyPress={() => setScreen('notifications')}
             notifyCount={unreadNotifications}
           />
@@ -2119,15 +2136,18 @@ function createStyles(C: ThemeColors) {
     },
     branchEtaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
     branchEta: { fontFamily: FONTS.semiBold, fontSize: 12 },
-    orderTypeScreen: { flex: 1, justifyContent: 'center', paddingBottom: 24 },
+    orderTypeScreen: { flexGrow: 1, paddingTop: 8, paddingBottom: 120 },
     orderTypeBranchRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
-      marginBottom: 24,
+      marginBottom: 20,
+      marginTop: 4,
     },
     orderTypeBranchText: { fontFamily: FONTS.medium, fontSize: 14 },
+    orderTypeSkip: { alignItems: 'center', marginTop: 16, paddingVertical: 8 },
+    orderTypeSkipText: { fontFamily: FONTS.semiBold, fontSize: 14 },
     homeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 8 },
     row: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     avatarSmall: {
