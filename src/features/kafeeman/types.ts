@@ -22,6 +22,7 @@ export type Screen =
   | 'favorites'
   | 'notifications'
   | 'help'
+  | 'legal'
   | 'order-receipt'
   | 'addresses';
 

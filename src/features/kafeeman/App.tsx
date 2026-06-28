@@ -88,6 +88,9 @@ import {
 import { OrderNoteField, PointsRedeemSection } from './native/cartExtras';
 import { AddressesScreen } from './native/addressesScreen';
 import { HelpScreen } from './native/helpScreen';
+import { LegalDocumentScreen } from './native/legalDocumentScreen';
+import { LegalLinksFooter } from './native/legalLinksFooter';
+import type { LegalDocumentId } from './lib/legalDocuments';
 import { NotificationsScreen } from './native/notificationsScreen';
 import { OrderReceiptScreen } from './native/orderReceiptScreen';
 import { PickupOrderScreen } from './native/pickupOrderScreen';
@@ -166,6 +169,9 @@ function KafeemanApp() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalDocId, setLegalDocId] = useState<LegalDocumentId>('terms-of-use');
+  const legalReturnRef = useRef<Screen>('profile');
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
   const [promoMessage, setPromoMessage] = useState('');
@@ -306,6 +312,12 @@ function KafeemanApp() {
     hasNav: showNav,
     hasFloatingBar: showFloatingCart || showOrderNowFab,
   });
+
+  const openLegal = useCallback((id: LegalDocumentId, returnTo: Screen) => {
+    legalReturnRef.current = returnTo;
+    setLegalDocId(id);
+    setScreen('legal');
+  }, []);
 
   const go = useCallback((s: Screen) => {
     const tabMap: Partial<Record<Screen, TabKey>> = {
@@ -973,6 +985,10 @@ function KafeemanApp() {
                       Continue as Guest
                     </Text>
                   </Pressable>
+                  <LegalLinksFooter
+                    C={C}
+                    onOpenDocument={(id) => openLegal(id, 'auth')}
+                  />
                 </View>
               </GlassSurface>
               <View style={{ height: insets.bottom + 8 }} />
@@ -1024,7 +1040,25 @@ function KafeemanApp() {
               variant="outline"
             />
             <View style={{ height: 16 }} />
-            <StitchPillButton label="Continue" onPress={() => setScreen('otp')} C={C} />
+            <LegalLinksFooter
+              C={C}
+              variant="signup"
+              accepted={acceptedLegal}
+              onToggleAccept={() => setAcceptedLegal((v) => !v)}
+              onOpenDocument={(id) => openLegal(id, 'signup')}
+            />
+            <View style={{ height: 16 }} />
+            <StitchPillButton
+              label="Continue"
+              onPress={() => {
+                if (!acceptedLegal) {
+                  showToast('Please accept the Terms and Privacy Policy to continue', 'error');
+                  return;
+                }
+                setScreen('otp');
+              }}
+              C={C}
+            />
           </ScrollView>
         );
 
@@ -1888,6 +1922,15 @@ function KafeemanApp() {
       case 'help':
         return <HelpScreen C={C} onBack={() => go('profile')} />;
 
+      case 'legal':
+        return (
+          <LegalDocumentScreen
+            C={C}
+            documentId={legalDocId}
+            onBack={() => setScreen(legalReturnRef.current)}
+          />
+        );
+
       case 'addresses':
         return (
           <AddressesScreen
@@ -1975,6 +2018,14 @@ function KafeemanApp() {
                     rows: [
                       { icon: 'help-circle-outline', label: 'Help Center', onPress: () => setScreen('help') },
                       { icon: 'notifications-outline', label: 'Notifications', onPress: () => setScreen('notifications') },
+                    ],
+                  },
+                  {
+                    title: 'Legal',
+                    rows: [
+                      { icon: 'document-text-outline', label: 'Terms of Use', onPress: () => openLegal('terms-of-use', 'profile') },
+                      { icon: 'receipt-outline', label: 'Terms & Conditions', onPress: () => openLegal('terms-and-conditions', 'profile') },
+                      { icon: 'shield-checkmark-outline', label: 'Privacy Policy', onPress: () => openLegal('privacy-policy', 'profile') },
                     ],
                   },
                   {
