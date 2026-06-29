@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, fileURLToPath(new URL('..', import.meta.url)), '');
+  const projectRoot = fileURLToPath(new URL('..', import.meta.url));
   return {
     plugins: [react(), tailwindcss()],
     envDir: fileURLToPath(new URL('..', import.meta.url)),
@@ -25,6 +26,9 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       open: false,
       clearScreen: false,
+      fs: {
+        allow: [projectRoot],
+      },
     },
     preview: {
       host: 'localhost',
