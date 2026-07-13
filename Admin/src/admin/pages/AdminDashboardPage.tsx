@@ -65,14 +65,14 @@ export function AdminDashboardPage() {
         <div className="admin-card animate-page stagger-2">
           <h2 className="text-sm font-semibold text-coffee-dark">Orders trend · last {overview.periodDays} days</h2>
           <p className="mt-0.5 text-xs text-muted">Hover bars for daily counts</p>
-          <div className="mt-5 flex h-36 items-end gap-1.5">
+          <div className="mt-5 flex h-28 items-end gap-1 overflow-x-auto pb-1 sm:h-36 sm:gap-1.5 sm:overflow-visible">
             {overview.ordersTrend.map((day, i) => {
               const max = Math.max(...overview.ordersTrend.map((d) => d.orders), 1);
               const height = Math.max(10, (day.orders / max) * 100);
               return (
                 <div
                   key={day.timestamp}
-                  className="admin-chart-bar group relative flex flex-col items-center justify-end"
+                  className="admin-chart-bar group relative flex min-w-[1.25rem] flex-1 flex-col items-center justify-end sm:min-w-0"
                   style={{ height: `${height}%`, animationDelay: `${i * 0.03}s` }}
                   title={`${new Date(day.timestamp).toLocaleDateString()}: ${day.orders} orders`}
                 >

@@ -50,8 +50,8 @@ function prefixStream(stream, label) {
 }
 
 function runExpo() {
-  // Use project expo script — full interactive TTY, QR renders like `expo start`.
-  const child = spawn('bun', ['run', 'expo:dev'], {
+  // Direct script spawn — full interactive TTY, QR renders like `expo start`.
+  const child = spawn('bun', ['scripts/expo-start.mjs'], {
     cwd: root,
     stdio: 'inherit',
     shell: process.platform === 'win32',
@@ -59,6 +59,7 @@ function runExpo() {
       ...process.env,
       CI: 'false',
       EXPO_NO_TELEMETRY: '1',
+      EXPO_NO_CACHE: '1',
     },
   });
   child.on('exit', (code) => {

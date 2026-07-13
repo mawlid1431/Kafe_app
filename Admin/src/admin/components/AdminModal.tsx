@@ -75,7 +75,7 @@ export function AdminModal({
 
         <div className="space-y-4">{children}</div>
 
-        {footer ? <div className="mt-6 flex gap-2 border-t border-outline-variant/30 pt-4">{footer}</div> : null}
+        {footer ? <div className="admin-modal-footer">{footer}</div> : null}
       </div>
     </div>
   );

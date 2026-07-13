@@ -122,7 +122,7 @@
   .admin-card,
   .admin-card-interactive,
   .admin-card-metric {
-    @apply rounded-2xl border border-outline-variant/45 bg-white p-5;
+    @apply rounded-2xl border border-outline-variant/45 bg-white p-4 sm:p-5;
     box-shadow: var(--shadow-soft);
     transition:
       transform 0.25s var(--ease-spring),
@@ -162,7 +162,8 @@
 
   /* Buttons */
   .admin-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold;
+    touch-action: manipulation;
     background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: var(--color-on-primary);
     box-shadow: 0 2px 8px var(--color-primary-glow);
@@ -189,7 +190,8 @@
   }
 
   .admin-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-outline-variant/55 bg-white px-4 py-2.5 text-sm font-medium text-coffee-title;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-outline-variant/55 bg-white px-4 py-2.5 text-sm font-medium text-coffee-title;
+    touch-action: manipulation;
     transition:
       transform 0.2s var(--ease-spring),
       background-color 0.2s ease,
@@ -211,7 +213,8 @@
   }
 
   .admin-btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-outline-variant/55 bg-white px-4 py-2.5 text-sm font-medium;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-outline-variant/55 bg-white px-4 py-2.5 text-sm font-medium;
+    touch-action: manipulation;
     color: var(--color-error);
     transition:
       transform 0.2s var(--ease-spring),
@@ -341,10 +344,48 @@
     animation: scale-in 0.25s var(--ease-spring);
   }
 
+  /* Mobile list cards (alternative to tables on small screens) */
+  .admin-mobile-list {
+    @apply space-y-3 md:hidden;
+  }
+
+  .admin-mobile-card {
+    @apply rounded-2xl border border-outline-variant/45 bg-white p-4;
+    box-shadow: var(--shadow-soft);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .admin-mobile-card:active {
+    border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-outline-variant));
+  }
+
+  .admin-mobile-card-row {
+    @apply flex items-center justify-between gap-3;
+  }
+
+  .admin-mobile-card-meta {
+    @apply mt-3 flex flex-wrap items-center gap-2 border-t border-outline-variant/25 pt-3 text-sm;
+  }
+
+  .admin-mobile-card-actions {
+    @apply mt-3 flex gap-2 border-t border-outline-variant/25 pt-3;
+  }
+
+  .admin-mobile-card-actions > * {
+    @apply flex-1;
+  }
+
   /* Table */
   .admin-table-wrap {
-    @apply overflow-x-auto rounded-2xl border border-outline-variant/45 bg-white;
+    @apply hidden overflow-x-auto rounded-2xl border border-outline-variant/45 bg-white md:block;
     box-shadow: var(--shadow-soft);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table-wrap--always {
+    @apply block;
   }
 
   .admin-table {
@@ -374,16 +415,53 @@
 
   /* Modal */
   .admin-modal-backdrop {
-    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    @apply fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4;
     background: rgba(26, 33, 30, 0.45);
     backdrop-filter: blur(6px);
     animation: backdrop-in 0.25s var(--ease-out) both;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .admin-modal-panel {
-    @apply w-full max-h-[min(90vh,800px)] overflow-y-auto rounded-2xl border border-glass-border bg-white p-6;
+    @apply w-full max-h-[min(92dvh,800px)] overflow-y-auto rounded-t-2xl border border-glass-border bg-white p-4 sm:max-h-[min(90vh,800px)] sm:rounded-2xl sm:p-6;
     box-shadow: var(--shadow-modal);
     animation: scale-in 0.35s var(--ease-spring) both;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-modal-footer {
+    @apply mt-6 flex flex-col-reverse gap-2 border-t border-outline-variant/30 pt-4 sm:flex-row;
+  }
+
+  .admin-modal-footer > * {
+    @apply w-full sm:flex-1;
+  }
+
+  /* Horizontal scroll tabs (orders, categories) */
+  .admin-scroll-tabs {
+    @apply -mx-4 flex gap-1 overflow-x-auto border-b border-outline-variant/40 px-4 pb-px sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .admin-scroll-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-scroll-tabs > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* Page header action area */
+  .admin-page-actions {
+    @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-3;
+  }
+
+  .admin-page-actions .admin-btn,
+  .admin-page-actions .admin-btn-ghost {
+    @apply w-full sm:w-auto;
   }
 
   .admin-modal-panel-sm { max-width: 24rem; }

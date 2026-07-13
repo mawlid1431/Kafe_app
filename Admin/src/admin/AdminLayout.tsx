@@ -92,7 +92,7 @@ function AdminLayoutInner() {
               navigate('/login', { replace: true });
             }}
           />
-          <main className="p-4 sm:p-5 md:p-7">
+          <main className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-5 md:p-7">
             <AdminAuthProvider adminToken={localSession.token}>
               <div key={location.pathname} className="animate-page">
                 <Outlet />

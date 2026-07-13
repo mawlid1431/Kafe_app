@@ -15,7 +15,7 @@ export function AdminMobileNav({ open, onClose }: { open: boolean; onClose: () =
         onClick={onClose}
         aria-label="Close menu"
       />
-      <div className="absolute left-0 top-0 flex h-full w-[min(300px,85vw)] animate-scale-in flex-col border-r border-outline-variant/40 bg-surface shadow-modal">
+      <div className="absolute left-0 top-0 flex h-full w-[min(300px,88vw)] animate-scale-in flex-col border-r border-outline-variant/40 bg-surface shadow-modal" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-4">
           <div>
             <p className="font-semibold text-coffee-dark">{BRAND_NAME}</p>
@@ -42,7 +42,7 @@ export function AdminMobileNav({ open, onClose }: { open: boolean; onClose: () =
                         onClick={onClose}
                         className={({ isActive }) =>
                           cn(
-                            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                            'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
                             isActive ? 'bg-primary/12 text-primary shadow-[inset_0_0_0_1px_rgba(96,128,112,0.2)]' : 'text-coffee-title hover:bg-primary/8',
                           )
                         }

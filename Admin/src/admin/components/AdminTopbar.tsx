@@ -36,8 +36,8 @@ export function AdminTopbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-outline-variant/40 bg-surface/90 shadow-sm backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-between gap-3 px-5">
+    <header className="sticky top-0 z-40 border-b border-outline-variant/40 bg-surface/90 shadow-sm backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="flex h-14 items-center justify-between gap-2 px-3 sm:h-16 sm:gap-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
           {onOpenMobileNav ? (
             <button type="button" onClick={onOpenMobileNav} className="admin-btn-ghost h-11 w-11 p-0 md:hidden" aria-label="Open menu">

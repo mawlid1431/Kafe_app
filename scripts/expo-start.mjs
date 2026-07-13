@@ -62,6 +62,8 @@ const child = spawn('bunx', args, {
     ...process.env,
     CI: 'false',
     EXPO_NO_TELEMETRY: '1',
+    // Avoid Expo CLI fetch-cache race ("Body has already been read") during dependency checks.
+    EXPO_NO_CACHE: '1',
     RCT_METRO_PORT: METRO_PORT,
   },
 });

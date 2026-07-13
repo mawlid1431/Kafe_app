@@ -97,14 +97,14 @@ export function OrderCard({
         index > 0 && index <= 4 && `stagger-${index}`,
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-semibold text-coffee-dark">{order.orderNumber}</p>
             <StatusBadge status={order.status} />
           </div>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-            <MapPin className="h-3.5 w-3.5" />
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
             {order.branchLabel}
             <span>·</span>
             <span className="capitalize">{order.orderType}</span>
@@ -113,12 +113,14 @@ export function OrderCard({
           </p>
           <p className="mt-1 text-xs text-muted">{formatDate(order.createdAt)}</p>
         </div>
-        <div className="text-right">
+        <div className="flex items-center justify-between gap-3 sm:block sm:text-right">
           <p className="text-lg font-semibold text-coffee-dark">{formatPrice(order.total)}</p>
-          {order.pointsEarned ? (
-            <p className="mt-0.5 text-xs text-primary">+{order.pointsEarned} pts</p>
-          ) : null}
-          <p className="mt-1 text-xs font-medium text-coffee-title">{trackingLabel(order)}</p>
+          <div className="sm:mt-0.5">
+            {order.pointsEarned ? (
+              <p className="text-xs text-primary">+{order.pointsEarned} pts</p>
+            ) : null}
+            <p className="text-xs font-medium text-coffee-title">{trackingLabel(order)}</p>
+          </div>
         </div>
       </div>
 
@@ -144,10 +146,10 @@ export function OrderCard({
       {!compact && <TrackingTimeline order={order} />}
 
       {showAdvance && order.status === 'active' && adminToken && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <button
             type="button"
-            className="admin-btn"
+            className="admin-btn w-full sm:w-auto"
             onClick={() => advanceTracking({ adminToken, orderId: order._id as Id<'orders'> })}
           >
             Advance to next step
@@ -156,7 +158,7 @@ export function OrderCard({
           {order.trackingStep > 0 && (
             <button
               type="button"
-              className="admin-btn-ghost"
+              className="admin-btn-ghost w-full sm:w-auto"
               onClick={() =>
                 setTrackingStep({
                   adminToken,
@@ -170,7 +172,7 @@ export function OrderCard({
           )}
           <button
             type="button"
-            className="admin-btn-danger"
+            className="admin-btn-danger w-full sm:w-auto"
             onClick={() =>
               updateStatus({ adminToken, orderId: order._id as Id<'orders'>, status: 'cancelled' })
             }

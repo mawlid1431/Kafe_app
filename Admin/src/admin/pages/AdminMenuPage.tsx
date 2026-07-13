@@ -80,19 +80,61 @@ export function AdminMenuPage() {
         }
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="admin-scroll-tabs">
         {categoryOptions.map((cat) => (
           <button
             key={cat}
             type="button"
             onClick={() => setCategory(cat)}
-            className={cn('admin-tab', category === cat && 'admin-tab-active')}
+            className={cn('admin-tab whitespace-nowrap', category === cat && 'admin-tab-active')}
           >
             {cat}
           </button>
         ))}
       </div>
 
+      {/* Mobile card list */}
+      <div className="admin-mobile-list">
+        {items?.map((item) => (
+          <div key={item._id} className="admin-mobile-card">
+            <div className="admin-mobile-card-row">
+              <div className="flex min-w-0 items-center gap-3">
+                <img src={item.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover shadow-sm ring-1 ring-outline-variant/30" />
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-coffee-dark">{item.name}</p>
+                  <p className="text-sm text-muted">{item.category}</p>
+                </div>
+              </div>
+              <p className="shrink-0 font-semibold text-coffee-dark">{formatPrice(item.price)}</p>
+            </div>
+            <div className="admin-mobile-card-meta">
+              <span className={cn('admin-badge', item.active ? 'bg-primary/10 text-primary' : 'bg-cream text-muted')}>
+                {item.active ? 'Active' : 'Hidden'}
+              </span>
+              {item.badge ? <span className="admin-badge bg-primary/10 text-primary">{item.badge}</span> : null}
+            </div>
+            <div className="admin-mobile-card-actions">
+              <button type="button" className="admin-btn-ghost" onClick={() => openEdit(item)}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                className="admin-btn-ghost !text-error hover:!border-red-200 hover:!bg-red-50"
+                onClick={async () => {
+                  if (!adminToken || !confirm('Delete this menu item?')) return;
+                  await removeItem({ adminToken, menuItemId: item._id });
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
@@ -188,7 +230,7 @@ export function AdminMenuPage() {
           <AdminFormField label="Description">
             <textarea className="admin-input min-h-24" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
           </AdminFormField>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <AdminFormField label="Price (RM)">
               <input className="admin-input" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
             </AdminFormField>

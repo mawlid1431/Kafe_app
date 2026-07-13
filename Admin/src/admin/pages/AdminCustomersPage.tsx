@@ -25,6 +25,52 @@ export function AdminCustomersPage() {
         description="Everyone who signs in on the Kafe Eman mobile app — manage points and access."
       />
 
+      {/* Mobile card list */}
+      <div className="admin-mobile-list">
+        {customers?.map((user) => (
+          <div key={user._id} className="admin-mobile-card">
+            <div className="admin-mobile-card-row">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                  {user.name[0]?.toUpperCase() ?? '?'}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-coffee-dark">{user.name}</p>
+                  <p className="truncate text-xs text-muted">{user.email}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="admin-btn-ghost h-10 w-10 shrink-0 p-0"
+                onClick={() => {
+                  setEditingId(user._id);
+                  setPoints(String(user.points));
+                  setSuspended(user.suspended);
+                }}
+                aria-label={`Edit ${user.name}`}
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="admin-mobile-card-meta">
+              <span className="font-semibold text-primary">{user.points} pts</span>
+              <span className="text-muted">·</span>
+              <span className="text-muted">{formatDate(user.createdAt)}</span>
+              <span className={cn('admin-badge ml-auto', user.suspended ? 'bg-red-50 text-error' : 'bg-primary/10 text-primary')}>
+                {user.suspended ? 'Suspended' : 'Active'}
+              </span>
+            </div>
+          </div>
+        ))}
+        {customers?.length === 0 && (
+          <div className="admin-mobile-card flex flex-col items-center gap-3 py-10 text-center">
+            <Users className="h-10 w-10 text-muted/40" />
+            <p className="text-sm text-muted">No users yet — they appear when someone signs in on the app.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table */}
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>

@@ -41,6 +41,34 @@ export function AdminStaffPage() {
         }
       />
 
+      {/* Mobile card list */}
+      <div className="admin-mobile-list">
+        {staff?.map((member) => (
+          <div key={member._id} className="admin-mobile-card">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                {member.displayName[0]?.toUpperCase() ?? 'A'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-coffee-dark">{member.displayName}</p>
+                <p className="truncate text-xs text-muted">{member.email}</p>
+                <p className="mt-1 font-mono text-xs text-muted">@{member.username}</p>
+              </div>
+            </div>
+            <div className="admin-mobile-card-meta">
+              <span className={cn('admin-badge capitalize', member.role === 'superadmin' ? 'bg-primary/15 text-primary-dark' : 'bg-cream text-coffee-title')}>
+                <Shield className="mr-1 inline h-3 w-3" />
+                {member.role}
+              </span>
+              <span className={cn('admin-badge', member.active ? 'bg-primary/10 text-primary' : 'bg-cream text-muted')}>
+                {member.active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>

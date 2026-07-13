@@ -16,13 +16,13 @@ export function AdminOrdersLayout() {
         description="Manage every order from the mobile app — process in kitchen, track delivery, and review history."
       />
 
-      <div className="flex flex-wrap gap-1 border-b border-outline-variant/40">
+      <div className="admin-scroll-tabs">
         {ORDER_TABS.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              cn('admin-order-tab', isActive && 'admin-order-tab-active')
+              cn('admin-order-tab min-w-[7.5rem]', isActive && 'admin-order-tab-active')
             }
           >
             <span className="block">{tab.label}</span>
