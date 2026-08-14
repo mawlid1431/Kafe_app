@@ -15,11 +15,13 @@ function markVisible(node: Element): void {
  * owns the actual animation, which keeps this cheap and lets elements
  * animate once and stay put (matching the template's one-shot entrances).
  *
- * Because the un-revealed state is `opacity: 0`, this is written defensively:
- * anything already in view is revealed immediately, the pass re-runs on
- * load/resize/visibility changes, and a timeout backstop reveals everything
- * if the observer never delivers (a hidden or non-rendered document defers
- * IntersectionObserver callbacks, which would otherwise leave a blank page).
+ * Because the un-revealed state is `opacity: 0`, this is written defensively.
+ * Alongside the observer there is a scroll/resize-driven pass that reveals
+ * anything currently in view, so content can never be stranded invisible if
+ * the observer never delivers — a hidden or not-yet-rendered document defers
+ * IntersectionObserver callbacks. The fallback mirrors the observer's own
+ * rule rather than revealing everything, so the staggered scroll animations
+ * are preserved either way.
  */
 export function useReveal(): void {
   useEffect(() => {
@@ -65,16 +67,24 @@ export function useReveal(): void {
     const raf = window.requestAnimationFrame(revealInView);
     const settle = window.setTimeout(revealInView, 350);
 
-    // Last-resort backstop: never leave content stuck at opacity 0.
-    const backstop = window.setTimeout(() => {
-      nodes.forEach(markVisible);
-      observer.disconnect();
-    }, 2500);
+    // Scroll-driven safety net, rAF-throttled. Applies the same in-view rule
+    // as the observer, so it both preserves the staggered animations and
+    // guarantees nothing stays invisible if the observer never fires.
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(() => {
+        queued = false;
+        revealInView();
+      });
+    };
 
     const onVisibility = () => {
       if (!document.hidden) revealInView();
     };
 
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('load', revealInView);
     window.addEventListener('resize', revealInView);
     document.addEventListener('visibilitychange', onVisibility);
@@ -82,7 +92,7 @@ export function useReveal(): void {
     return () => {
       window.cancelAnimationFrame(raf);
       window.clearTimeout(settle);
-      window.clearTimeout(backstop);
+      window.removeEventListener('scroll', onScroll);
       window.removeEventListener('load', revealInView);
       window.removeEventListener('resize', revealInView);
       document.removeEventListener('visibilitychange', onVisibility);
