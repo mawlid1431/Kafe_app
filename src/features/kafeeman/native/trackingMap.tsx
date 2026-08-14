@@ -89,8 +89,8 @@ export function TrackingMap({
   onLiveUpdate?: (state: LiveTrackingState) => void;
 }) {
   const mapRef = useRef<MapView>(null);
-  const pulse = useRef(new Animated.Value(1)).current;
-  const userPulse = useRef(new Animated.Value(1)).current;
+  const [pulse] = useState(() => new Animated.Value(1));
+  const [userPulse] = useState(() => new Animated.Value(1));
   const riderRef = useRef<Coord>({ latitude: 0, longitude: 0 });
   const [liveOffset, setLiveOffset] = useState(0);
   const [followMode, setFollowMode] = useState<FollowMode>('overview');
@@ -112,7 +112,7 @@ export function TrackingMap({
     return () => {
       cancelled = true;
     };
-  }, [destination.latitude, destination.longitude, origin.latitude, origin.longitude]);
+  }, [destination, origin]);
 
   useEffect(() => {
     setLiveOffset(0);
@@ -129,12 +129,14 @@ export function TrackingMap({
   }, [isLive, trackingStep]);
 
   const routeProgress = Math.min(1, baseProgressForStep(trackingStep) + liveOffset);
-  const route = roadRoute.length >= 2 ? roadRoute : [origin, destination];
+  const route = useMemo(
+    () => (roadRoute.length >= 2 ? roadRoute : [origin, destination]),
+    [destination, origin, roadRoute],
+  );
   const rider = useMemo(
     () => coordAtRouteProgress(route, routeProgress),
     [route, routeProgress],
   );
-  riderRef.current = rider;
   const etaMinutes = etaMinutesForProgress(routeProgress, trackingStep);
 
   useEffect(() => {
@@ -151,7 +153,12 @@ export function TrackingMap({
     [destination, origin, rider],
   );
   const overviewRegionRef = useRef(overviewRegion);
-  overviewRegionRef.current = overviewRegion;
+
+  // Latest-value refs, read from map callbacks that run after commit.
+  useEffect(() => {
+    riderRef.current = rider;
+    overviewRegionRef.current = overviewRegion;
+  }, [overviewRegion, rider]);
 
   const focusRider = useCallback(() => {
     setFollowMode('rider');
@@ -205,7 +212,7 @@ export function TrackingMap({
   useEffect(() => {
     if (followMode !== 'user' || !userLocation) return;
     mapRef.current?.animateToRegion(regionAround(userLocation, 0.008), 400);
-  }, [followMode, userLocation?.latitude, userLocation?.longitude]);
+  }, [followMode, userLocation]);
 
   useEffect(() => {
     if (trackingStep < 2) return;

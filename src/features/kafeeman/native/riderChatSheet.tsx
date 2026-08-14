@@ -61,7 +61,7 @@ export function RiderChatSheet({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [typing, setTyping] = useState(false);
-  const slide = useRef(new Animated.Value(sheetHeight)).current;
+  const [slide] = useState(() => new Animated.Value(sheetHeight));
   const scrollRef = useRef<ScrollView>(null);
   const replyIdx = useRef(0);
 

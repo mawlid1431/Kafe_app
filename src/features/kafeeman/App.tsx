@@ -214,8 +214,6 @@ function KafeemanApp() {
   const trackingNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenRef = useRef<Screen>(screen);
   const ordersRef = useRef(orders);
-  screenRef.current = screen;
-  ordersRef.current = orders;
   const otpRefs = useRef<(TextInput | null)[]>([]);
   const appLocationPromptShown = useRef(false);
   const [appLocationPromptOpen, setAppLocationPromptOpen] = useState(false);
@@ -238,9 +236,14 @@ function KafeemanApp() {
   const displayOrders = liveBackend && liveOrders !== undefined ? liveOrders : orders;
   const displayPoints = liveBackend && convexUser.points !== undefined ? convexUser.points : points;
 
+  // Latest-value refs, read from async callbacks/timers that run after commit.
   useEffect(() => {
     ordersRef.current = displayOrders;
   }, [displayOrders]);
+
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
 
   const selectedAddress = useMemo(
     () => addresses.find((a) => a.id === selectedAddressId) ?? addresses[0],

@@ -46,8 +46,8 @@ const TONE_COLOR: Record<ToastTone, string> = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const [toast, setToast] = useState<ToastState | null>(null);
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(-12)).current;
+  const [opacity] = useState(() => new Animated.Value(0));
+  const [translateY] = useState(() => new Animated.Value(-12));
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hide = useCallback(() => {

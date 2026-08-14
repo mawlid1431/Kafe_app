@@ -38,7 +38,7 @@ export function useConvexUserSync() {
         syncedFor.current = null;
         console.error('[ConvexUserSync] upsertFromAuth failed:', err);
       });
-  }, [isSignedIn, upsertFromAuth, user]);
+  }, [isSignedIn, safeMode, upsertFromAuth, user]);
 }
 
 export function ConvexUserSync() {

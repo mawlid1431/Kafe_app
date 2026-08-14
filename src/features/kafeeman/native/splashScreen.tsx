@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,9 +16,9 @@ const LOADING_MESSAGE = 'Something amazing is brewing.\nJust a moment please.';
 
 export function SplashScreen({ C, onComplete }: Props) {
   const insets = useSafeAreaInsets();
-  const brandOpacity = useRef(new Animated.Value(1)).current;
-  const loadOpacity = useRef(new Animated.Value(0)).current;
-  const logoScale = useRef(new Animated.Value(0.92)).current;
+  const [brandOpacity] = useState(() => new Animated.Value(1));
+  const [loadOpacity] = useState(() => new Animated.Value(0));
+  const [logoScale] = useState(() => new Animated.Value(0.92));
 
   useEffect(() => {
     Animated.sequence([
