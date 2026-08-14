@@ -469,6 +469,8 @@ The root of the web app (`http://localhost:5173`) is a **public marketing landin
 | `/login` | Admin login | Public, but **not linked from anywhere** |
 | `/admin` | Admin dashboard | Session-guarded |
 | `/admin/orders`, `/admin/menu`, … | Admin sections | Session-guarded |
+| Unknown `/admin/*` | Admin 404 (inside the dashboard) | Session-guarded |
+| Any other unknown path | Public 404 | Public |
 
 > **Security note:** the landing page deliberately contains **no link to `/login` or `/admin`** — every link on it is an in-page anchor. Staff reach the dashboard by typing `http://localhost:5173/admin` directly, which redirects to `/login` when there is no valid session. This keeps the admin surface unadvertised to the public.
 
@@ -589,6 +591,8 @@ Two things worth knowing:
 
 - The public 404 links **only to public destinations** — it never advertises `/admin` or `/login`, matching the landing page.
 - The admin 404 sits **behind** the auth guard. An unauthenticated request to `/admin/anything` still redirects to `/login`, so the 404 cannot be used to probe which admin routes exist.
+
+**Mobile app 404.** `app/+not-found.tsx` was on a stale palette (dark brown `#0E0A07` with an orange link) predating the sage rebrand. It now matches the web 404 — same bouncing digits via React Native `Animated` (15px rise, 2s ease-in-out, 200ms stagger), the same cup motif for the middle zero, and `BRAND` tokens from `theme.ts` with Plus Jakarta Sans.
 
 ---
 
