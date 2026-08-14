@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ADMIN_NAV_SECTIONS, type AdminNavItem } from '@/admin/adminNav';
+import { ADMIN_BASE, ADMIN_NAV_SECTIONS, type AdminNavItem } from '@/admin/adminNav';
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -13,7 +13,7 @@ function SidebarNavLink({ item, collapsed }: { item: AdminNavItem; collapsed: bo
     <li>
       <NavLink
         to={item.to}
-        end={item.to === '/'}
+        end={item.to === ADMIN_BASE}
         title={collapsed ? item.label : undefined}
         className={({ isActive }) =>
           cn(

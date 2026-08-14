@@ -1,9 +1,10 @@
 import { useEffect, useId, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Lock, LogIn, User } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Lock, LogIn, User } from 'lucide-react';
 import { api } from '@convex/_generated/api';
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
+import { ADMIN_BASE } from '@/admin/adminNav';
 import {
   clearAdminSession,
   getAdminSession,
@@ -54,10 +55,11 @@ function AdminLoginForm() {
   }
 
   if (localSession && validated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ADMIN_BASE} replace />;
   }
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const requested = (location.state as { from?: string } | null)?.from;
+  const from = requested?.startsWith(ADMIN_BASE) ? requested : ADMIN_BASE;
 
   return (
     <div className="admin-login-bg admin-login-shell">
@@ -173,6 +175,16 @@ function AdminLoginForm() {
               </div>
             </div>
           </form>
+
+          <div className="mt-5 border-t border-outline-variant/30 pt-4 text-center">
+            <Link
+              to="/"
+              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium text-muted transition-colors hover:text-primary-dark"
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+              Back to {BRAND_NAME}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

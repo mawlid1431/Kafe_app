@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { ADMIN_NAV_SECTIONS } from '@/admin/adminNav';
+import { ADMIN_BASE, ADMIN_NAV_SECTIONS } from '@/admin/adminNav';
 import { BRAND_NAME } from '@/lib/brand';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ export function AdminMobileNav({ open, onClose }: { open: boolean; onClose: () =
                     <li key={item.to}>
                       <NavLink
                         to={item.to}
-                        end={item.to === '/'}
+                        end={item.to === ADMIN_BASE}
                         onClick={onClose}
                         className={({ isActive }) =>
                           cn(

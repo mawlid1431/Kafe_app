@@ -2,19 +2,20 @@ import { Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { ArrowUpRight, Store, UtensilsCrossed, ShoppingBag, Tag, Users, Gift, Bell } from 'lucide-react';
 import { api } from '@convex/_generated/api';
+import { adminPath } from '@/admin/adminNav';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { LiveBadge, PageHeader } from '@/admin/components/PageHeader';
 import { formatPrice } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
 const SECTIONS: Array<{ title: string; subtitle: string; to: string; icon: LucideIcon }> = [
-  { title: 'Orders', subtitle: 'Process, track delivery & view history', to: '/orders', icon: ShoppingBag },
-  { title: 'Menu', subtitle: 'Drinks, food & categories for the app', to: '/menu', icon: UtensilsCrossed },
-  { title: 'Branches', subtitle: 'Alor Setar, Penang & Kuala Lumpur', to: '/branches', icon: Store },
-  { title: 'Promos', subtitle: 'Banners and promo codes', to: '/promos', icon: Tag },
-  { title: 'Users', subtitle: 'App users & loyalty points', to: '/customers', icon: Users },
-  { title: 'Rewards', subtitle: 'Tiers and redemption catalog', to: '/rewards', icon: Gift },
-  { title: 'Notifications', subtitle: 'Push & in-app message templates', to: '/notifications', icon: Bell },
+  { title: 'Orders', subtitle: 'Process, track delivery & view history', to: adminPath('orders'), icon: ShoppingBag },
+  { title: 'Menu', subtitle: 'Drinks, food & categories for the app', to: adminPath('menu'), icon: UtensilsCrossed },
+  { title: 'Branches', subtitle: 'Alor Setar, Penang & Kuala Lumpur', to: adminPath('branches'), icon: Store },
+  { title: 'Promos', subtitle: 'Banners and promo codes', to: adminPath('promos'), icon: Tag },
+  { title: 'Users', subtitle: 'App users & loyalty points', to: adminPath('customers'), icon: Users },
+  { title: 'Rewards', subtitle: 'Tiers and redemption catalog', to: adminPath('rewards'), icon: Gift },
+  { title: 'Notifications', subtitle: 'Push & in-app message templates', to: adminPath('notifications'), icon: Bell },
 ];
 
 function MetricCard({ label, value, hint, delay }: { label: string; value: string; hint?: string; delay: string }) {

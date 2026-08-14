@@ -3,6 +3,7 @@ import { useMutation } from 'convex/react';
 import { Link } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
 import { api } from '@convex/_generated/api';
+import { adminPath } from '@/admin/adminNav';
 import { revokeAdminSession, type AdminSession } from '@/admin/auth';
 import { hasConvex } from '@/providers/ConvexProvider';
 
@@ -49,7 +50,7 @@ export function AdminTopbar({
 
         <div className="flex items-center gap-3">
           <Link
-            to="/account"
+            to={adminPath('account')}
             className="flex items-center gap-3 rounded-full border border-outline-variant/40 bg-white/80 px-3 py-1.5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-soft"
             title="My account"
           >

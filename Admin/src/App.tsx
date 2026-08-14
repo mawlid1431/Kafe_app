@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+const LandingPage = lazy(() => import('@/landing/LandingPage').then((m) => ({ default: m.LandingPage })));
 const AdminLayout = lazy(() => import('@/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })));
 const AdminLoginPage = lazy(() => import('@/admin/pages/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/admin/pages/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })));
@@ -32,6 +33,15 @@ function Lazy({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
+      {/* Public marketing site */}
+      <Route
+        path="/"
+        element={
+          <Lazy>
+            <LandingPage />
+          </Lazy>
+        }
+      />
       <Route
         path="/login"
         element={
@@ -40,7 +50,9 @@ export default function App() {
           </Lazy>
         }
       />
+      {/* Protected admin app — AdminLayout guards the session */}
       <Route
+        path="/admin"
         element={
           <Lazy>
             <AdminLayout />

@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { adminPath } from '@/admin/adminNav';
 import { PageHeader } from '@/admin/components/PageHeader';
 import { cn } from '@/lib/utils';
 
 const ORDER_TABS = [
-  { to: '/orders/processing', label: 'Processing', description: 'New & preparing' },
-  { to: '/orders/track', label: 'Track', description: 'Delivery & pickup' },
-  { to: '/orders/history', label: 'History', description: 'Completed' },
+  { to: adminPath('orders/processing'), label: 'Processing', description: 'New & preparing' },
+  { to: adminPath('orders/track'), label: 'Track', description: 'Delivery & pickup' },
+  { to: adminPath('orders/history'), label: 'History', description: 'Completed' },
 ] as const;
 
 export function AdminOrdersLayout() {
