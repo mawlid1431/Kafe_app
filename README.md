@@ -25,6 +25,7 @@ Native **iOS** coffee ordering app for **Kafe Eman** (Malaysia). Built with Expo
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
+- [Landing page (web)](#landing-page-web)
 - [Admin dashboard (web)](#admin-dashboard-web)
 - [Development workflow](#development-workflow)
 - [Build & deployment](#build--deployment)
@@ -47,7 +48,7 @@ Kafe Eman is a premium mobile ordering experience for a Malaysian specialty coff
 | **Package manager** | Bun (required) |
 | **Distribution** | Expo Go (dev) · EAS Build (TestFlight / App Store) |
 | **Data** | Convex backend + client seed data (demo / MVP) |
-| **Admin** | Separate web dashboard at `http://localhost:5173` |
+| **Web** | Public landing page at `http://localhost:5173` · admin dashboard at `http://localhost:5173/admin` |
 
 ---
 
@@ -366,8 +367,11 @@ Validates promo codes, enforces minimum spend, calculates percentage/fixed disco
 
 ```
 mobile/
-├── Admin/                        # Web admin dashboard (Vite + React)
-│   └── src/admin/                # Login, sidebar, management pages
+├── Admin/                        # Web app (Vite + React) — landing + admin
+│   └── src/
+│       ├── App.tsx               # Routes: / landing, /login, /admin/*
+│       ├── landing/              # Public marketing landing page
+│       └── admin/                # Login, sidebar, management pages
 ├── convex/                       # Convex backend (orders, menu, admins)
 ├── app/                          # Expo Router shell
 │   ├── _layout.tsx               # Fonts, splash, providers
@@ -452,15 +456,84 @@ For Convex + Clerk, also set `EXPO_PUBLIC_CONVEX_URL`, `EXPO_PUBLIC_CLERK_PUBLIS
 
 ---
 
+## Landing page (web)
+
+The root of the web app (`http://localhost:5173`) is a **public marketing landing page** that showcases the Kafe Eman mobile app. It shares the Vite bundle with the admin dashboard but is fully isolated: its own lazy-loaded chunk, and all styles scoped under `.lp-root` so admin CSS is untouched.
+
+### Web routes
+
+| Route | Page | Access |
+|-------|------|--------|
+| `/` | Public landing page | Public |
+| `/login` | Admin login | Public, but **not linked from anywhere** |
+| `/admin` | Admin dashboard | Session-guarded |
+| `/admin/orders`, `/admin/menu`, … | Admin sections | Session-guarded |
+
+> **Security note:** the landing page deliberately contains **no link to `/login` or `/admin`** — every link on it is an in-page anchor. Staff reach the dashboard by typing `http://localhost:5173/admin` directly, which redirects to `/login` when there is no valid session. This keeps the admin surface unadvertised to the public.
+
+### What's on the page
+
+Hero with an interactive device · stats strip · features · three-step "how it works" · app + dashboard platform showcase · rewards · why-us · testimonials · branches · download CTA · footer.
+
+### Structure
+
+```text
+Admin/src/landing/
+├── LandingPage.tsx      # Section composition + all page copy
+├── LandingNav.tsx       # Sticky nav, scroll-spy, mobile hamburger drawer
+├── landing.css          # Design tokens, keyframes, all .lp-* styles
+├── devices.tsx          # CSS phone & laptop frames, interactive screen switcher
+├── appScreens.tsx       # Real app screens rendered as live DOM
+├── Odometer.tsx         # Rolling-digit stat counters
+├── Reveal.tsx           # Scroll-reveal wrapper
+└── useReveal.ts         # IntersectionObserver + scroll fallback, sticky nav, carousel
+```
+
+### Design & motion
+
+Visual language ported from the reference Framer template: **Red Hat Display** display type (H1 60/800, H2 50/700, H3 40/700), **Manrope** body (16/28), **Outfit** for in-device UI, alternating white ↔ cream `#f2f4f1` sections at 142px vertical rhythm inside an 1185px shell, 100px pill buttons and 16px cards — recoloured to the Kafe Eman sage palette (`#608070`).
+
+Motion is CSS-driven, with JS only flipping a `data-lp-visible` attribute:
+
+- **Scroll reveals** — staggered rise / fade / zoom / slide / device-tilt entrances
+- **Odometer stats** — per-digit 0–9 reels that roll to their value
+- **Marquees** — dual-direction testimonial rows (pause on hover) and a wordmark divider
+- **Sticky steps** — step copy pins while its device scrolls past
+- **Devices** — float, lean toward the cursor on hover, and the hero phone cycles screens automatically until you pick one
+
+All motion collapses under `prefers-reduced-motion: reduce`.
+
+### Device mockups
+
+Phone and laptop frames are pure CSS, and the screens inside are **live DOM, not screenshots** — so they stay crisp at any zoom and never go stale. The screens mirror the real app (menu, checkout, live tracking, rewards, confirmation) and the admin dashboard, using the app's actual catalogue from `src/features/kafeeman/data.ts`: real items and RM prices (Signature Latte RM 14.90), real reward costs (300 / 500 / 800 pts), real tiers and branches.
+
+The hero device is interactive — labelled tabs under it switch screens, and doing so stops the auto-carousel.
+
+> **Placeholder copy:** the five testimonials and the reviewer names are illustrative and should be replaced with real customer quotes before going live. Every numeric stat is derived from the app's own catalogue.
+
+### Responsive behaviour
+
+| Width | Behaviour |
+|-------|-----------|
+| ≥ 901px | Full inline nav, two-column hero, side-by-side steps, laptop + phone cluster |
+| ≤ 900px | Nav collapses to a **hamburger** that drops a full-width menu panel; tapping a link, the backdrop, or `Esc` closes it |
+| ≤ 820px | Device cluster stacks vertically |
+| ≤ 640px | Section rhythm tightens to 76px / 20px gutters |
+| ≤ 480px | Devices cap at 76vw so nothing overflows |
+
+---
+
 ## Admin dashboard (web)
 
 The **`Admin/`** folder is a **separate Vite + React web app** — not part of the mobile Expo app. Use it to manage branches, menu, orders, promos, customers, staff, and notifications.
 
 | Item | Detail |
 |------|--------|
-| **URL** | [http://localhost:5173/login](http://localhost:5173/login) |
+| **URL** | [http://localhost:5173/admin](http://localhost:5173/admin) |
 | **Stack** | Vite · React 19 · Tailwind · Convex |
 | **Login** | `admin` / `admin123` (after seed) |
+
+Navigating to `/admin` without a session redirects to `/login`, and signing in returns you to the page you asked for. Admin route paths are built through `adminPath()` in `Admin/src/admin/adminNav.ts`, which is the single source of truth for the `/admin` prefix.
 
 ### First-time setup
 

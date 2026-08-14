@@ -343,7 +343,7 @@ export function LandingPage() {
             <Reveal kind="fade" delay={120}>
               <div className="lp-stats">
                 {STATS.map((s) => (
-                  <Odometer key={s.label} value={s.value} suffix={s.suffix} label={s.label} />
+                  <Odometer key={s.label} value={s.value} label={s.label} />
                 ))}
               </div>
             </Reveal>
