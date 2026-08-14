@@ -49,9 +49,12 @@ function prefixStream(stream, label) {
   });
 }
 
+/** Extra flags after the mode arg (e.g. `bun run dev --clear`) reach expo-start.mjs. */
+const expoPassthrough = process.argv.slice(3).filter((a) => a.startsWith('--'));
+
 function runExpo() {
   // Direct script spawn — full interactive TTY, QR renders like `expo start`.
-  const child = spawn('bun', ['scripts/expo-start.mjs'], {
+  const child = spawn('bun', ['scripts/expo-start.mjs', ...expoPassthrough], {
     cwd: root,
     stdio: 'inherit',
     shell: process.platform === 'win32',
