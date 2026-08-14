@@ -554,7 +554,7 @@ Admin titles are resolved from the nav config by `adminTitleForPath()` in `Admin
 
 ### Loading states
 
-There are two layers, both using the same **"spokes bounce"** ring — 24 rounded bars around a circle that light up and bounce (`scaleY: 1 → 1.8 → 1`) in sequence, with the brand mark in the centre:
+Deliberately quiet: the logo tile is held steady inside a single hairline sage arc that sweeps around it, with a slim indeterminate bar underneath. Two layers share the design:
 
 1. **Boot splash** — inlined directly in `index.html` (markup + CSS), so it paints on the first frame before the app bundle downloads. `main.tsx` fades and removes it once React paints.
 2. **In-app loading** — `LoadingScreen` / `BrandLoader` from `Admin/src/components/BrandLoader.tsx`, used for lazy-route Suspense fallbacks, the admin session check, and the login session check.
@@ -563,15 +563,32 @@ There are two layers, both using the same **"spokes bounce"** ring — 24 rounde
 import { BrandLoader, LoadingScreen } from '@/components/BrandLoader';
 
 <LoadingScreen title="Verifying your session" hint="Checking your admin credentials…" full />
-<BrandLoader size={116} spokes={24} />
+<BrandLoader size={96} />
 ```
 
-**Two deliberate differences from the reference Framer component:**
+**No fake percentage.** The reference Framer loading component runs a fixed 0→100% counter over four seconds; that is omitted deliberately, because the app cannot know real progress and a fixed ramp would hold the UI open longer than the work actually takes. The indeterminate arc and bar signal "working" without claiming a number.
 
-- It **loops continuously** instead of running a fixed 0→100% ramp over 4 seconds. A determinate percentage would be fabricated — the app cannot know real progress — and a fixed ramp would hold the UI open longer than the work actually takes.
-- The centre shows the **brand mark** rather than a percentage readout, for the same reason.
+The mark is `aria-hidden`; `LoadingScreen` carries a `role="status"` `aria-live="polite"` label. Under `prefers-reduced-motion: reduce` the animation stops but the arc and bar stay visible, so it still reads as a loading state.
 
-The ring is `aria-hidden`; the surrounding `LoadingScreen` carries a `role="status"` `aria-live="polite"` label. Everything collapses under `prefers-reduced-motion: reduce`, where the ring renders in a static lit state so it still reads as a loading indicator.
+> **Splash removal is belt-and-braces:** the splash is a full-screen `z-index: 9999` overlay, and `requestAnimationFrame` does not fire in a hidden/background tab. `main.tsx` therefore races a rAF (smooth path) against a `setTimeout` (guaranteed path), with an idempotent guard — otherwise a page opened in a background tab would stay covered until focused.
+
+### 404 pages
+
+Unknown routes render a branded 404 instead of silently redirecting home (which used to hide broken links and typos). Both pages share `BouncingDigits` from `Admin/src/components/NotFound.tsx`.
+
+| Route | Page | Behaviour |
+|-------|------|-----------|
+| Any unknown public path | `NotFoundPage` | Full-page 404 with links back into the landing page |
+| Unknown `/admin/*` path | `AdminNotFoundPage` | 404 **inside** the dashboard shell — sidebar, topbar and session stay intact |
+
+The animation is ported from the reference Framer Animated-404: the number is split per character and each one runs `y: 0 → -15px → 0` over **2s ease-in-out**, looping, staggered by `index * 0.2s`, so the digits ripple. Brand treatment on top: Red Hat Display at 800, a sage gradient text fill, and the middle zero replaced by a **coffee cup with rising steam**.
+
+Both pages show the path that failed to resolve, which makes mistyped links obvious.
+
+Two things worth knowing:
+
+- The public 404 links **only to public destinations** — it never advertises `/admin` or `/login`, matching the landing page.
+- The admin 404 sits **behind** the auth guard. An unauthenticated request to `/admin/anything` still redirects to `/login`, so the 404 cannot be used to probe which admin routes exist.
 
 ---
 
