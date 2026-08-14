@@ -446,29 +446,11 @@ export function LandingPage() {
               lead="Every order placed in the app lands instantly in the Kafe Eman admin dashboard — menu, branches, promos, rewards and live order queues, all in sync."
             />
 
-            <Reveal
-              kind="zoom"
-              delay={120}
-              style={{
-                position: 'relative',
-                marginTop: '4rem',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'flex-end',
-                gap: '0',
-              }}
-            >
+            <Reveal kind="zoom" delay={120} className="lp-cluster">
               <LaptopMockup>
                 <AdminDashboardScreen />
               </LaptopMockup>
-              <div
-                style={{
-                  marginLeft: '-4.5rem',
-                  marginBottom: '-1.5rem',
-                  zIndex: 2,
-                  flex: 'none',
-                }}
-              >
+              <div className="lp-cluster__phone">
                 <PhoneMockup width={190} float>
                   <RewardsScreen />
                 </PhoneMockup>
@@ -591,6 +573,9 @@ export function LandingPage() {
                 <div
                   key={String(reverse)}
                   className={`lp-marquee__track${reverse ? ' lp-marquee__track--reverse' : ''}`}
+                  /* The second row repeats the same quotes purely for visual
+                     density, so it is hidden from assistive tech. */
+                  aria-hidden={reverse || undefined}
                 >
                   {[0, 1].map((copy) => (
                     <div key={copy} style={{ display: 'flex', gap: '1.25rem' }} aria-hidden={copy === 1}>
