@@ -182,6 +182,12 @@
 .lp-section--white { background: var(--lp-white); }
 .lp-section--tight { padding-top: 0; }
 
+/* Keep anchored section headings clear of the fixed header. */
+.lp-section[id],
+.lp-hero[id] {
+  scroll-margin-top: 96px;
+}
+
 .lp-shell {
   position: relative;
   margin: 0 auto;
@@ -652,41 +658,91 @@
   .lp-nav__actions { margin-left: auto; }
 }
 
-/* Mobile drawer */
+/* ── Mobile drawer: drops down from under the hamburger ── */
+@keyframes lp-drawer-drop {
+  from { opacity: 0; transform: translate3d(0, -14px, 0) scale(0.97); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
 .lp-drawer {
   position: fixed;
   inset: 0;
   z-index: 70;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  background: rgba(26, 33, 30, 0.4);
-  backdrop-filter: blur(6px);
-  animation: lp-fade 0.28s var(--lp-ease-out) both;
+}
+
+.lp-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: rgba(26, 33, 30, 0.45);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+  animation: lp-fade 0.26s var(--lp-ease-out) both;
 }
 
 .lp-drawer__panel {
-  margin: 0.75rem;
-  padding: 1.25rem;
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  padding: 1rem 1.15rem 1.25rem;
+  border: 1px solid var(--lp-line);
   border-radius: 24px;
   background: var(--lp-white);
   box-shadow: var(--lp-shadow-lg);
-  animation: lp-rise 0.42s var(--lp-ease) both;
+  transform-origin: top center;
+  animation: lp-drawer-drop 0.34s var(--lp-ease) both;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lp-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--lp-line);
+}
+
+.lp-drawer__links {
+  display: block;
+  margin-top: 0.35rem;
 }
 
 .lp-drawer__link {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.95rem 0.5rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 0.35rem;
   border-bottom: 1px solid var(--lp-line);
   font-family: var(--lp-font-display);
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 700;
   color: var(--lp-ink);
   text-decoration: none;
+  transition: color 0.2s ease, padding-left 0.24s var(--lp-ease);
+}
+
+.lp-drawer__link svg { color: var(--lp-accent); }
+
+.lp-drawer__link:hover,
+.lp-drawer__link:active {
+  color: var(--lp-accent-dark);
+  padding-left: 0.7rem;
 }
 
 .lp-drawer__link:last-of-type { border-bottom: 0; }
+
+.lp-drawer__cta {
+  width: 100%;
+  margin-top: 1.1rem;
+}
 
 /* ============================================================
    Hero
@@ -909,6 +965,90 @@
 }
 
 .lp-phone--float { animation: lp-float 8s ease-in-out infinite; }
+
+/* Never let a device outgrow a narrow screen. */
+@media (max-width: 480px) {
+  .lp-phone {
+    width: min(var(--lp-phone-w, 300px), 76vw);
+  }
+}
+
+/* Pointer response: the device leans forward and lifts on hover. Suppressed
+   on touch, where hover states stick. */
+@media (hover: hover) and (pointer: fine) {
+  .lp-phone--interactive {
+    transition:
+      transform 0.5s var(--lp-ease),
+      box-shadow 0.5s var(--lp-ease-out);
+  }
+
+  .lp-phone--interactive:hover {
+    animation-play-state: paused;
+    transform: perspective(1400px) rotateX(4deg) rotateY(-5deg) translateY(-10px) scale(1.02);
+    box-shadow:
+      0 55px 110px -25px rgba(26, 33, 30, 0.5),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+      inset 0 0 0 3px rgba(0, 0, 0, 0.55);
+  }
+
+  .lp-laptop {
+    transition: transform 0.5s var(--lp-ease);
+  }
+
+  .lp-laptop:hover {
+    transform: translateY(-8px) scale(1.012);
+  }
+}
+
+/* Device stage: phone plus its screen-selector controls */
+.lp-device-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+}
+
+.lp-device-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  max-width: 22rem;
+}
+
+.lp-device-tab {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--lp-line);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  font-family: var(--lp-font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--lp-body);
+  cursor: pointer;
+  transition:
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    color 0.24s ease,
+    transform 0.24s var(--lp-ease),
+    box-shadow 0.24s var(--lp-ease-out);
+}
+
+.lp-device-tab:hover {
+  border-color: var(--lp-accent);
+  color: var(--lp-accent-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--lp-shadow-sm);
+}
+
+.lp-device-tab[data-lp-active='true'] {
+  background: var(--lp-accent);
+  border-color: var(--lp-accent);
+  color: var(--lp-white);
+  box-shadow: 0 6px 18px -6px var(--lp-accent-glow);
+}
 
 /* Side buttons */
 .lp-phone::before,

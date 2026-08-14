@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { useScrolled } from './useReveal';
 
+/**
+ * Public navigation only. The admin dashboard is deliberately NOT linked
+ * from anywhere on the landing page — staff reach it by navigating to
+ * /admin directly, which keeps the login surface unadvertised.
+ */
 const LINKS = [
   { href: '#features', label: 'Features' },
   { href: '#how', label: 'How it works' },
-  { href: '#platform', label: 'Platform' },
   { href: '#rewards', label: 'Rewards' },
   { href: '#reviews', label: 'Reviews' },
+  { href: '#branches', label: 'Branches' },
 ] as const;
 
 /** Highlights the nav item whose section is currently on screen. */
@@ -54,6 +58,7 @@ export function LandingNav() {
     };
   }, [open]);
 
+  // Escape closes the drawer.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -63,8 +68,19 @@ export function LandingNav() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // Close the drawer if the viewport grows back to desktop width.
+  useEffect(() => {
+    if (!open) return;
+    const mq = window.matchMedia('(min-width: 901px)');
+    const onChange = () => {
+      if (mq.matches) setOpen(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [open]);
+
   const brand = (
-    <a href="#top" className="lp-brand" aria-label={`${BRAND_NAME} home`}>
+    <a href="#top" className="lp-brand" aria-label={`${BRAND_NAME} home`} onClick={() => setOpen(false)}>
       <img src={BRAND_LOGO_URL} alt="" className="lp-brand__mark" width={40} height={40} />
       <span>
         <span className="lp-brand__name">{BRAND_NAME}</span>
@@ -93,36 +109,41 @@ export function LandingNav() {
           </div>
 
           <div className="lp-nav__actions">
-            <Link to="/login" className="lp-btn lp-btn--ghost lp-btn--sm lp-nav__cta">
-              Admin login
-            </Link>
-            <a href="#download" className="lp-btn lp-btn--primary lp-btn--sm">
+            <a href="#download" className="lp-btn lp-btn--primary lp-btn--sm lp-nav__cta">
               Get the app
               <ArrowRight size={16} strokeWidth={2.5} className="lp-btn__icon" />
             </a>
+
             <button
               type="button"
               className="lp-burger"
-              onClick={() => setOpen(true)}
-              aria-label="Open menu"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}
+              aria-controls="lp-mobile-menu"
             >
-              <Menu size={18} strokeWidth={2.4} />
+              {open ? <X size={18} strokeWidth={2.4} /> : <Menu size={18} strokeWidth={2.4} />}
             </button>
           </div>
         </nav>
       </header>
 
       {open ? (
-        <div className="lp-drawer" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="lp-drawer__panel">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="lp-drawer" id="lp-mobile-menu">
+          {/* Tapping anywhere outside the panel closes the menu. */}
+          <button
+            type="button"
+            className="lp-drawer__backdrop"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          />
+
+          <div className="lp-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+            <div className="lp-drawer__head">
               {brand}
-              <span style={{ flex: 1 }} />
               <button
                 type="button"
                 className="lp-burger"
-                style={{ display: 'inline-flex' }}
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
               >
@@ -130,7 +151,7 @@ export function LandingNav() {
               </button>
             </div>
 
-            <div style={{ marginTop: '1.25rem' }}>
+            <nav className="lp-drawer__links" aria-label="Mobile">
               {LINKS.map((link) => (
                 <a
                   key={link.href}
@@ -139,30 +160,16 @@ export function LandingNav() {
                   onClick={() => setOpen(false)}
                 >
                   {link.label}
-                  <ArrowRight size={17} strokeWidth={2.2} color="#608070" />
+                  <ArrowRight size={17} strokeWidth={2.2} />
                 </a>
               ))}
-            </div>
+            </nav>
 
-            <div style={{ display: 'grid', gap: '0.6rem', marginTop: '1.5rem' }}>
-              <a
-                href="#download"
-                className="lp-btn lp-btn--primary"
-                onClick={() => setOpen(false)}
-              >
-                Get the app
-              </a>
-              <Link to="/login" className="lp-btn lp-btn--ghost" onClick={() => setOpen(false)}>
-                Admin login
-              </Link>
-            </div>
+            <a href="#download" className="lp-btn lp-btn--primary lp-drawer__cta" onClick={() => setOpen(false)}>
+              Get the app
+              <ArrowRight size={17} strokeWidth={2.5} />
+            </a>
           </div>
-          <button
-            type="button"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            style={{ border: 0, background: 'transparent', cursor: 'default' }}
-          />
         </div>
       ) : null}
     </>

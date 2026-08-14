@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -8,7 +7,6 @@ import {
   Bell,
   Clock,
   Coffee,
-  CreditCard,
   Facebook,
   Gift,
   Instagram,
@@ -31,7 +29,7 @@ import { BRAND_LOGO_URL, BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { LandingNav } from './LandingNav';
 import { Odometer } from './Odometer';
 import { Reveal } from './Reveal';
-import { LaptopMockup, PhoneMockup, RotatingPhone } from './devices';
+import { InteractivePhone, LaptopMockup, PhoneMockup } from './devices';
 import {
   AdminDashboardScreen,
   CheckoutScreen,
@@ -51,10 +49,15 @@ const HERO_BULLETS = [
   'Earn points on every single cup',
 ];
 
+/**
+ * Figures taken straight from the app's own catalogue (src/features/kafeeman
+ * /data.ts) so nothing here overstates the product: 10 menu items across 7
+ * categories, 4 redeemable rewards, 3 branches, top drink rated 4.9.
+ */
 const STATS = [
-  { value: '48', suffix: 'k+', label: 'Cups served' },
-  { value: '4.9', label: 'App store rating' },
-  { value: '12', label: 'Menu favourites' },
+  { value: '10', label: 'Drinks & bites on the menu' },
+  { value: '7', label: 'Menu categories' },
+  { value: '4', label: 'Rewards to redeem' },
   { value: '3', label: 'Branches nationwide' },
 ];
 
@@ -266,7 +269,7 @@ export function LandingPage() {
                       ))}
                     </div>
                     <p className="lp-small" style={{ marginTop: 2 }}>
-                      4.9 from 2,400+ regulars
+                      4.7 average rating across the menu
                     </p>
                   </div>
                 </div>
@@ -299,13 +302,14 @@ export function LandingPage() {
                 </span>
               </div>
 
-              <RotatingPhone
+              <InteractivePhone
                 width={310}
                 screens={[
-                  { key: 'home', node: <HomeScreen /> },
-                  { key: 'checkout', node: <CheckoutScreen /> },
-                  { key: 'tracking', node: <TrackingScreen /> },
-                  { key: 'success', node: <SuccessScreen /> },
+                  { key: 'home', label: 'Menu', node: <HomeScreen /> },
+                  { key: 'checkout', label: 'Checkout', node: <CheckoutScreen /> },
+                  { key: 'tracking', label: 'Live tracking', node: <TrackingScreen /> },
+                  { key: 'rewards', label: 'Rewards', node: <RewardsScreen /> },
+                  { key: 'success', label: 'Confirmed', node: <SuccessScreen /> },
                 ]}
               />
             </Reveal>
@@ -390,7 +394,7 @@ export function LandingPage() {
                 <div key={s.step} className="lp-step">
                   <div className={`lp-split${i % 2 === 1 ? ' lp-split--reverse' : ''}`}>
                     <Reveal kind={i % 2 === 1 ? 'right' : 'left'}>
-                      <div className={i % 2 === 1 ? 'lp-step--sticky' : undefined}>
+                      <div className="lp-step--sticky">
                         <span className="lp-step__num">{s.step}</span>
                         <h3 className="lp-h3" style={{ marginTop: '0.9rem' }}>
                           {s.title}
@@ -616,7 +620,7 @@ export function LandingPage() {
         </section>
 
         {/* ── Branches ────────────────────────────────────────── */}
-        <section className="lp-section lp-section--white">
+        <section className="lp-section lp-section--white" id="branches">
           <div className="lp-shell">
             <SectionHead
               eyebrow="Find us"
@@ -686,14 +690,6 @@ export function LandingPage() {
                     <Play size={17} strokeWidth={2} fill="currentColor" />
                     Google Play
                   </a>
-                  <Link
-                    to="/login"
-                    className="lp-btn"
-                    style={{ border: '1px solid rgba(255,255,255,0.3)', color: '#fff' }}
-                  >
-                    <CreditCard size={17} strokeWidth={2.2} />
-                    Staff login
-                  </Link>
                 </div>
               </div>
             </Reveal>
@@ -749,7 +745,7 @@ export function LandingPage() {
               <p className="lp-footer__title">Company</p>
               <a href="#reviews" className="lp-footer__link">Reviews</a>
               <a href="#platform" className="lp-footer__link">Platform</a>
-              <Link to="/login" className="lp-footer__link">Admin login</Link>
+              <a href="#download" className="lp-footer__link">Download</a>
             </div>
           </div>
 

@@ -1,13 +1,15 @@
-import type { CSSProperties, ReactNode } from 'react';
-import { useRotatingIndex } from './useReveal';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 
 type PhoneProps = {
   children: ReactNode;
   /** Frame width in px; the aspect ratio is locked in CSS. */
   width?: number;
   float?: boolean;
+  /** Adds a subtle 3D tilt-toward-cursor response on pointer devices. */
+  interactive?: boolean;
   className?: string;
   style?: CSSProperties;
+  label?: string;
 };
 
 /**
@@ -15,13 +17,30 @@ type PhoneProps = {
  * a device like this; building the frame in CSS means the screens inside are
  * live DOM (crisp at any zoom) instead of flat screenshots.
  */
-export function PhoneMockup({ children, width = 300, float = false, className, style }: PhoneProps) {
+export function PhoneMockup({
+  children,
+  width = 300,
+  float = false,
+  interactive = true,
+  className,
+  style,
+  label = 'Kafe Eman mobile app screen',
+}: PhoneProps) {
+  const classes = [
+    'lp-phone',
+    float ? 'lp-phone--float' : '',
+    interactive ? 'lp-phone--interactive' : '',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
-      className={`lp-phone${float ? ' lp-phone--float' : ''}${className ? ` ${className}` : ''}`}
+      className={classes}
       style={{ ...style, ...({ '--lp-phone-w': `${width}px` } as CSSProperties) }}
       role="img"
-      aria-label="Kafe Eman mobile app screen"
+      aria-label={label}
     >
       <div className="lp-phone__screen">
         <span className="lp-phone__island" />
@@ -32,38 +51,78 @@ export function PhoneMockup({ children, width = 300, float = false, className, s
   );
 }
 
+export type PhoneScreen = { key: string; label: string; node: ReactNode };
+
 /**
- * Phone whose screens auto-advance, reproducing the template's rotating
- * device showcase. Screens cross-fade and lift, one at a time.
+ * Phone whose screens advance on their own — reproducing the template's
+ * rotating device showcase — but which the visitor can also drive directly
+ * via the labelled controls underneath. Interacting stops the carousel so it
+ * never yanks the screen away mid-read.
  */
-export function RotatingPhone({
+export function InteractivePhone({
   screens,
   width = 300,
   float = true,
   intervalMs = 3600,
 }: {
-  screens: Array<{ key: string; node: ReactNode }>;
+  screens: PhoneScreen[];
   width?: number;
   float?: boolean;
   intervalMs?: number;
 }) {
-  const current = useRotatingIndex(screens.length, intervalMs);
+  const [current, setCurrent] = useState(0);
+  const [auto, setAuto] = useState(true);
+
+  useEffect(() => {
+    if (!auto || screens.length <= 1) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      setCurrent((i) => (i + 1) % screens.length);
+    }, intervalMs);
+
+    return () => window.clearInterval(timer);
+  }, [auto, screens.length, intervalMs]);
+
+  const select = (index: number) => {
+    setCurrent(index);
+    setAuto(false);
+  };
 
   return (
-    <PhoneMockup width={width} float={float}>
-      <div className="lp-phone__stack">
+    <div className="lp-device-stage">
+      <PhoneMockup width={width} float={float} label={`Kafe Eman app — ${screens[current]?.label}`}>
+        <div className="lp-phone__stack">
+          {screens.map((screen, i) => (
+            <div
+              key={screen.key}
+              className="lp-phone__slide"
+              data-lp-current={String(i === current)}
+              aria-hidden={i !== current}
+            >
+              {screen.node}
+            </div>
+          ))}
+        </div>
+      </PhoneMockup>
+
+      <div className="lp-device-tabs" role="tablist" aria-label="App screens">
         {screens.map((screen, i) => (
-          <div
+          <button
             key={screen.key}
-            className="lp-phone__slide"
-            data-lp-current={String(i === current)}
-            aria-hidden={i !== current}
+            type="button"
+            role="tab"
+            className="lp-device-tab"
+            aria-selected={i === current}
+            data-lp-active={String(i === current)}
+            onClick={() => select(i)}
           >
-            {screen.node}
-          </div>
+            {screen.label}
+          </button>
         ))}
       </div>
-    </PhoneMockup>
+    </div>
   );
 }
 
