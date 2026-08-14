@@ -18,6 +18,8 @@ const AdminCustomersPage = lazy(() => import('@/admin/pages/AdminCustomersPage')
 const AdminNotificationsPage = lazy(() => import('@/admin/pages/AdminNotificationsPage').then((m) => ({ default: m.AdminNotificationsPage })));
 const AdminStaffPage = lazy(() => import('@/admin/pages/AdminStaffPage').then((m) => ({ default: m.AdminStaffPage })));
 const AdminAccountPage = lazy(() => import('@/admin/pages/AdminAccountPage').then((m) => ({ default: m.AdminAccountPage })));
+const AdminNotFoundPage = lazy(() => import('@/admin/pages/AdminNotFoundPage').then((m) => ({ default: m.AdminNotFoundPage })));
+const NotFoundPage = lazy(() => import('@/components/NotFound').then((m) => ({ default: m.NotFoundPage })));
 
 function Fallback() {
   return <LoadingScreen title="Loading…" />;
@@ -71,8 +73,12 @@ export default function App() {
         <Route path="notifications" element={<Lazy><AdminNotificationsPage /></Lazy>} />
         <Route path="staff" element={<Lazy><AdminStaffPage /></Lazy>} />
         <Route path="account" element={<Lazy><AdminAccountPage /></Lazy>} />
+        {/* Unknown /admin/* path — 404 inside the dashboard chrome. */}
+        <Route path="*" element={<Lazy><AdminNotFoundPage /></Lazy>} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Public 404. Previously this redirected to "/", which silently hid
+          broken links and mistyped URLs. */}
+      <Route path="*" element={<Lazy><NotFoundPage /></Lazy>} />
     </Routes>
   );
 }

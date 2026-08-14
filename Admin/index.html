@@ -52,90 +52,123 @@
 
       #ke-boot .ring {
         position: relative;
-        height: 148px;
-        width: 148px;
+        height: 104px;
+        width: 104px;
         display: grid;
         place-items: center;
       }
 
-      #ke-boot .arm {
+      #ke-boot .arc {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        height: 13px;
-        width: 6px;
-        margin: -6.5px 0 0 -3px;
-        transform: rotate(var(--a)) translateY(-65px);
-      }
-
-      #ke-boot .bar {
-        display: block;
+        inset: 0;
         height: 100%;
         width: 100%;
-        border-radius: 3px;
-        background: rgba(96, 128, 112, 0.22);
-        transform-origin: center;
-        animation: ke-boot-bounce 1.7s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
-        animation-delay: var(--d);
+        animation: ke-boot-spin 1.15s linear infinite;
       }
 
-      @keyframes ke-boot-bounce {
-        0%,
-        62%,
-        100% {
-          transform: scaleY(1);
-          background: rgba(96, 128, 112, 0.22);
-        }
-        9% {
-          transform: scaleY(1.8);
-          background: #608070;
-        }
-        34% {
-          transform: scaleY(1);
-          background: #608070;
+      #ke-boot .arc .track {
+        fill: none;
+        stroke: rgba(96, 128, 112, 0.16);
+        stroke-width: 2.5;
+      }
+
+      #ke-boot .arc .head {
+        fill: none;
+        stroke: #608070;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-dasharray: 62 220;
+      }
+
+      @keyframes ke-boot-spin {
+        to {
+          transform: rotate(360deg);
         }
       }
 
       #ke-boot .core {
-        height: 46%;
-        width: 46%;
+        height: 62%;
+        width: 62%;
         display: grid;
         place-items: center;
         overflow: hidden;
         border-radius: 26%;
-        border: 1px solid rgba(96, 128, 112, 0.2);
         background: #fff;
-        box-shadow: 0 8px 24px -10px rgba(77, 99, 89, 0.45);
+        box-shadow:
+          0 6px 18px -8px rgba(77, 99, 89, 0.45),
+          inset 0 0 0 1px rgba(96, 128, 112, 0.14);
       }
 
       #ke-boot .core img {
         height: 100%;
         width: 100%;
         object-fit: contain;
-        padding: 12%;
+        padding: 14%;
       }
 
       #ke-boot .label {
         font-family: 'Red Hat Display', 'Plus Jakarta Sans', system-ui, sans-serif;
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
         color: #1f2623;
         text-align: center;
+        margin: 0;
       }
 
       #ke-boot .tag {
-        margin-top: 4px;
-        font-size: 13px;
-        font-weight: 500;
-        color: #6b7a74;
+        margin: 5px 0 0;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #608070;
         text-align: center;
       }
 
+      #ke-boot .bar {
+        position: relative;
+        height: 3px;
+        width: 132px;
+        overflow: hidden;
+        border-radius: 100px;
+        background: rgba(96, 128, 112, 0.16);
+      }
+
+      #ke-boot .bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 42%;
+        border-radius: 100px;
+        background: linear-gradient(
+          90deg,
+          rgba(96, 128, 112, 0.25),
+          #608070,
+          rgba(96, 128, 112, 0.25)
+        );
+        animation: ke-boot-slide 1.45s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+
+      @keyframes ke-boot-slide {
+        0% {
+          left: -45%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
-        #ke-boot .bar {
+        #ke-boot .arc,
+        #ke-boot .bar::after {
           animation: none;
-          background: #608070;
-          opacity: 0.55;
+        }
+        #ke-boot .bar::after {
+          left: 0;
+          width: 100%;
+          opacity: 0.5;
         }
       }
     </style>
@@ -143,36 +176,17 @@
   <body>
     <div id="ke-boot">
       <div class="ring">
-        <span class="arm" style="--a: 0deg; --d: 0s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 15deg; --d: 0.071s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 30deg; --d: 0.142s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 45deg; --d: 0.213s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 60deg; --d: 0.283s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 75deg; --d: 0.354s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 90deg; --d: 0.425s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 105deg; --d: 0.496s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 120deg; --d: 0.567s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 135deg; --d: 0.638s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 150deg; --d: 0.708s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 165deg; --d: 0.779s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 180deg; --d: 0.85s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 195deg; --d: 0.921s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 210deg; --d: 0.992s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 225deg; --d: 1.063s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 240deg; --d: 1.133s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 255deg; --d: 1.204s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 270deg; --d: 1.275s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 285deg; --d: 1.346s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 300deg; --d: 1.417s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 315deg; --d: 1.488s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 330deg; --d: 1.558s"><span class="bar"></span></span>
-        <span class="arm" style="--a: 345deg; --d: 1.629s"><span class="bar"></span></span>
+        <svg class="arc" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="track" cx="50" cy="50" r="45" />
+          <circle class="head" cx="50" cy="50" r="45" />
+        </svg>
         <span class="core"><img src="/brand-logo.jpg" alt="" width="64" height="64" /></span>
       </div>
       <div>
         <p class="label">Kafe Eman</p>
         <p class="tag">Brew · Sip · Enjoy</p>
       </div>
+      <span class="bar"></span>
     </div>
 
     <div id="root"></div>
