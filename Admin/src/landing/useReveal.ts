@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 
+const REVEAL_SELECTOR = '[data-lp-reveal]';
+
+function markVisible(node: Element): void {
+  node.setAttribute('data-lp-visible', 'true');
+}
+
 /**
  * Scroll-reveal driver for the landing page.
  *
@@ -8,15 +14,21 @@ import { useEffect, useState } from 'react';
  * `data-lp-visible` on any `[data-lp-reveal]` node. The CSS in landing.css
  * owns the actual animation, which keeps this cheap and lets elements
  * animate once and stay put (matching the template's one-shot entrances).
+ *
+ * Because the un-revealed state is `opacity: 0`, this is written defensively:
+ * anything already in view is revealed immediately, the pass re-runs on
+ * load/resize/visibility changes, and a timeout backstop reveals everything
+ * if the observer never delivers (a hidden or non-rendered document defers
+ * IntersectionObserver callbacks, which would otherwise leave a blank page).
  */
 export function useReveal(): void {
   useEffect(() => {
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-lp-reveal]'));
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR));
     if (nodes.length === 0) return;
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (reduceMotion || !('IntersectionObserver' in window)) {
-      nodes.forEach((n) => n.setAttribute('data-lp-visible', 'true'));
+      nodes.forEach(markVisible);
       return;
     }
 
@@ -24,7 +36,7 @@ export function useReveal(): void {
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          entry.target.setAttribute('data-lp-visible', 'true');
+          markVisible(entry.target);
           observer.unobserve(entry.target);
         });
       },
@@ -32,16 +44,50 @@ export function useReveal(): void {
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
     );
 
-    nodes.forEach((n) => {
-      // Anything already above the fold on load should appear immediately.
-      if (n.getBoundingClientRect().top < window.innerHeight * 0.92) {
-        n.setAttribute('data-lp-visible', 'true');
-        return;
-      }
-      observer.observe(n);
-    });
+    // Reveals anything currently within (or above) the viewport without
+    // waiting on the observer, so the first screen is never blank.
+    const revealInView = () => {
+      const limit = window.innerHeight * 0.95;
+      nodes.forEach((node) => {
+        if (node.hasAttribute('data-lp-visible')) return;
+        if (node.getBoundingClientRect().top <= limit) {
+          markVisible(node);
+          observer.unobserve(node);
+        }
+      });
+    };
 
-    return () => observer.disconnect();
+    nodes.forEach((node) => observer.observe(node));
+
+    // Run once now, then again after layout settles (web fonts and the
+    // device mockups can shift positions on first paint).
+    revealInView();
+    const raf = window.requestAnimationFrame(revealInView);
+    const settle = window.setTimeout(revealInView, 350);
+
+    // Last-resort backstop: never leave content stuck at opacity 0.
+    const backstop = window.setTimeout(() => {
+      nodes.forEach(markVisible);
+      observer.disconnect();
+    }, 2500);
+
+    const onVisibility = () => {
+      if (!document.hidden) revealInView();
+    };
+
+    window.addEventListener('load', revealInView);
+    window.addEventListener('resize', revealInView);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(settle);
+      window.clearTimeout(backstop);
+      window.removeEventListener('load', revealInView);
+      window.removeEventListener('resize', revealInView);
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer.disconnect();
+    };
   }, []);
 }
 
