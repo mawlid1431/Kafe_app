@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -39,6 +38,7 @@ import {
   TrackingScreen,
 } from './appScreens';
 import { useReveal } from './useReveal';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import './landing.css';
 
 /* ── Content — all copy describes the real Kafe Eman product ────────── */
@@ -187,16 +187,7 @@ function SectionHead({
 
 export function LandingPage() {
   useReveal();
-
-  // The admin app is a single-page shell; make sure the public page always
-  // opens at the top and restore the document title on unmount.
-  useEffect(() => {
-    const previousTitle = document.title;
-    document.title = `${BRAND_NAME} — order ahead, track live, earn rewards`;
-    return () => {
-      document.title = previousTitle;
-    };
-  }, []);
+  useDocumentTitle(`${BRAND_NAME} — Order ahead, track live, earn rewards`);
 
   return (
     <div className="lp-root" id="top">

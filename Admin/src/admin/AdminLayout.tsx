@@ -3,10 +3,13 @@ import { useQuery } from 'convex/react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@convex/_generated/api';
 import { AdminAuthProvider } from '@/admin/AdminAuthContext';
+import { adminTitleForPath } from '@/admin/adminNav';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { AdminMobileNav } from '@/admin/components/AdminMobileNav';
 import { AdminSidebar } from '@/admin/components/AdminSidebar';
 import { AdminTopbar } from '@/admin/components/AdminTopbar';
 import { clearAdminSession, getAdminSession, normalizeAdminRole } from '@/admin/auth';
+import { LoadingScreen } from '@/components/BrandLoader';
 import { ConvexSetupNotice, hasConvex } from '@/providers/ConvexProvider';
 
 const SIDEBAR_KEY = 'kafeeman.admin.sidebarCollapsed';
@@ -25,6 +28,7 @@ function getInitialCollapsed(): boolean {
 function AdminLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
+  useDocumentTitle(adminTitleForPath(location.pathname));
   const [localSession, setLocalSession] = useState(() => getAdminSession());
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -59,9 +63,11 @@ function AdminLayoutInner() {
 
   if (validated === undefined) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-sm text-muted">
-        Verifying admin session…
-      </div>
+      <LoadingScreen
+        full
+        title="Verifying your session"
+        hint="Checking your admin credentials…"
+      />
     );
   }
 

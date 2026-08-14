@@ -1,0 +1,153 @@
+/* ============================================================
+   Kafe Eman brand loader — "loading spokes bounce".
+   Ported from the Framer Loading-icon module: a ring of rounded
+   bars that activate in sequence, each bouncing scaleY 1 → 1.8 → 1
+   on activation. Rebuilt in pure CSS (no Framer Motion) and made
+   to loop continuously rather than run a fixed 0–100% ramp, so it
+   never implies progress it cannot measure and never holds the UI
+   open longer than the work actually takes.
+   ============================================================ */
+
+.ke-loader {
+  --ke-loader-size: 200px;
+  --ke-spoke-w: 8px;
+  --ke-spoke-h: 18px;
+  --ke-spoke-inset: 12px;
+  --ke-spoke-idle: rgba(96, 128, 112, 0.22);
+  --ke-spoke-active: #608070;
+  --ke-cycle: 1.7s;
+
+  position: relative;
+  height: var(--ke-loader-size);
+  width: var(--ke-loader-size);
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+/* One spoke arm: holds the rotation + push out to the ring radius. */
+.ke-loader__arm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: var(--ke-spoke-h);
+  width: var(--ke-spoke-w);
+  margin-top: calc(var(--ke-spoke-h) / -2);
+  margin-left: calc(var(--ke-spoke-w) / -2);
+  transform: rotate(var(--ke-angle))
+    translateY(calc((var(--ke-loader-size) / -2) + var(--ke-spoke-inset) + (var(--ke-spoke-h) / 2)));
+}
+
+/* The bar itself — this is what bounces and lights up. */
+.ke-loader__bar {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: calc(var(--ke-spoke-w) / 2);
+  background-color: var(--ke-spoke-idle);
+  transform-origin: center;
+  animation: ke-spoke-bounce var(--ke-cycle) cubic-bezier(0.16, 1, 0.3, 1) infinite both;
+  animation-delay: var(--ke-delay);
+}
+
+@keyframes ke-spoke-bounce {
+  0%,
+  62%,
+  100% {
+    transform: scaleY(1);
+    background-color: var(--ke-spoke-idle);
+  }
+  9% {
+    transform: scaleY(1.8);
+    background-color: var(--ke-spoke-active);
+  }
+  34% {
+    transform: scaleY(1);
+    background-color: var(--ke-spoke-active);
+  }
+}
+
+/* Brand mark sitting in the middle of the ring, in place of the
+   Framer component's percentage readout. */
+.ke-loader__core {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 46%;
+  width: 46%;
+  overflow: hidden;
+  border-radius: 26%;
+  border: 1px solid rgba(96, 128, 112, 0.2);
+  background: #ffffff;
+  box-shadow: 0 8px 24px -10px rgba(77, 99, 89, 0.45);
+  animation: ke-core-pulse calc(var(--ke-cycle) * 2) ease-in-out infinite;
+}
+
+.ke-loader__core img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  padding: 12%;
+}
+
+@keyframes ke-core-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ── Screen-level loading states ───────────────────────────── */
+
+.ke-loading-screen {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1.5rem;
+  min-height: 60vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.ke-loading-screen--full {
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse 70% 55% at 20% 8%, rgba(96, 128, 112, 0.12), transparent 60%),
+    radial-gradient(ellipse 55% 50% at 88% 82%, rgba(96, 128, 112, 0.08), transparent 60%),
+    linear-gradient(180deg, #f0f3f1 0%, #f7f9f7 100%);
+}
+
+.ke-loading-screen__title {
+  font-family: 'Red Hat Display', 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2623;
+  letter-spacing: -0.01em;
+}
+
+.ke-loading-screen__hint {
+  margin-top: 0.35rem;
+  font-family: 'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7a74;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ke-loader__bar,
+  .ke-loader__core {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* Without motion, show the ring in its lit state so it still reads
+     as a loading indicator rather than a dim static circle. */
+  .ke-loader__bar {
+    background-color: var(--ke-spoke-active) !important;
+    opacity: 0.55;
+  }
+}

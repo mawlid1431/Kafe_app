@@ -56,3 +56,22 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   { title: 'Team', items: ADMIN_NAV_PEOPLE },
   { title: 'Account', items: ADMIN_NAV_ACCOUNT },
 ];
+
+const ALL_NAV_ITEMS: AdminNavItem[] = [
+  ...ADMIN_NAV_MAIN,
+  ...ADMIN_NAV_PEOPLE,
+  ...ADMIN_NAV_ACCOUNT,
+];
+
+/**
+ * Resolves a browser-tab title for an admin path, e.g.
+ * `/admin/orders/track` → "Orders · Kafe Eman Admin". Picks the
+ * longest matching nav path so nested routes resolve to their section.
+ */
+export function adminTitleForPath(pathname: string): string {
+  const match = ALL_NAV_ITEMS.filter(
+    (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
+  ).sort((a, b) => b.to.length - a.to.length)[0];
+
+  return match ? `${match.label} · Kafe Eman Admin` : 'Kafe Eman Admin';
+}

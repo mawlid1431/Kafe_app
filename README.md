@@ -26,6 +26,7 @@ Native **iOS** coffee ordering app for **Kafe Eman** (Malaysia). Built with Expo
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
 - [Landing page (web)](#landing-page-web)
+- [Branding, titles & loading states](#branding-titles--loading-states)
 - [Admin dashboard (web)](#admin-dashboard-web)
 - [Development workflow](#development-workflow)
 - [Build & deployment](#build--deployment)
@@ -520,6 +521,57 @@ The hero device is interactive — labelled tabs under it switch screens, and do
 | ≤ 820px | Device cluster stacks vertically |
 | ≤ 640px | Section rhythm tightens to 76px / 20px gutters |
 | ≤ 480px | Devices cap at 76vw so nothing overflows |
+
+---
+
+## Branding, titles & loading states
+
+### Favicons
+
+`Admin/public/` holds the web icons, served from the site root:
+
+| File | Used for |
+|------|----------|
+| `favicon.svg` | Browser tab icon — sage tile with the coffee-cup mark, scales crisply at every size |
+| `apple-touch-icon.png` | iOS home-screen icon (copy of `assets/brand/icon.png`) |
+| `brand-logo.jpg` | Logo shown inside the boot splash |
+
+`index.html` also sets `theme-color: #608070` and a page description for link previews.
+
+### Document titles
+
+The web app is a single page, so titles are set per route by `useDocumentTitle` (`Admin/src/lib/useDocumentTitle.ts`), which restores the previous title on unmount.
+
+| Route | Title |
+|-------|-------|
+| `/` | `Kafe Eman — Order ahead, track live, earn rewards` |
+| `/login` | `Sign in · Kafe Eman Admin` |
+| `/admin` | `Dashboard · Kafe Eman Admin` |
+| `/admin/orders/*` | `Orders · Kafe Eman Admin` |
+| `/admin/menu` | `Menu · Kafe Eman Admin` |
+
+Admin titles are resolved from the nav config by `adminTitleForPath()` in `Admin/src/admin/adminNav.ts`, matching the longest nav path so nested routes fall back to their section.
+
+### Loading states
+
+There are two layers, both using the same **"spokes bounce"** ring — 24 rounded bars around a circle that light up and bounce (`scaleY: 1 → 1.8 → 1`) in sequence, with the brand mark in the centre:
+
+1. **Boot splash** — inlined directly in `index.html` (markup + CSS), so it paints on the first frame before the app bundle downloads. `main.tsx` fades and removes it once React paints.
+2. **In-app loading** — `LoadingScreen` / `BrandLoader` from `Admin/src/components/BrandLoader.tsx`, used for lazy-route Suspense fallbacks, the admin session check, and the login session check.
+
+```tsx
+import { BrandLoader, LoadingScreen } from '@/components/BrandLoader';
+
+<LoadingScreen title="Verifying your session" hint="Checking your admin credentials…" full />
+<BrandLoader size={116} spokes={24} />
+```
+
+**Two deliberate differences from the reference Framer component:**
+
+- It **loops continuously** instead of running a fixed 0→100% ramp over 4 seconds. A determinate percentage would be fabricated — the app cannot know real progress — and a fixed ramp would hold the UI open longer than the work actually takes.
+- The centre shows the **brand mark** rather than a percentage readout, for the same reason.
+
+The ring is `aria-hidden`; the surrounding `LoadingScreen` carries a `role="status"` `aria-live="polite"` label. Everything collapses under `prefers-reduced-motion: reduce`, where the ring renders in a static lit state so it still reads as a loading indicator.
 
 ---
 

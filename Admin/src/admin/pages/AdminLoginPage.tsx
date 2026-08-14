@@ -5,6 +5,8 @@ import { ArrowLeft, Lock, LogIn, User } from 'lucide-react';
 import { api } from '@convex/_generated/api';
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { ADMIN_BASE } from '@/admin/adminNav';
+import { LoadingScreen } from '@/components/BrandLoader';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import {
   clearAdminSession,
   getAdminSession,
@@ -18,6 +20,7 @@ import { ConvexSetupNotice, hasConvex } from '@/providers/ConvexProvider';
 function AdminLoginForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  useDocumentTitle('Sign in · Kafe Eman Admin');
   const login = useMutation(api.admins.login);
   const formId = useId();
   const usernameId = `${formId}-username`;
@@ -47,9 +50,8 @@ function AdminLoginForm() {
 
   if (localSession && validated === undefined) {
     return (
-      <div className="admin-login-bg admin-login-shell grid place-items-center">
-        <div className="admin-skeleton h-4 w-32" />
-        <p className="mt-3 text-sm text-muted">Checking session…</p>
+      <div className="admin-login-bg admin-login-shell">
+        <LoadingScreen title="Checking your session" hint="One moment…" />
       </div>
     );
   }

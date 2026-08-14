@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { LoadingScreen } from '@/components/BrandLoader';
 
 const LandingPage = lazy(() => import('@/landing/LandingPage').then((m) => ({ default: m.LandingPage })));
 const AdminLayout = lazy(() => import('@/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })));
@@ -19,11 +20,7 @@ const AdminStaffPage = lazy(() => import('@/admin/pages/AdminStaffPage').then((m
 const AdminAccountPage = lazy(() => import('@/admin/pages/AdminAccountPage').then((m) => ({ default: m.AdminAccountPage })));
 
 function Fallback() {
-  return (
-    <div className="grid min-h-[40vh] place-items-center text-sm text-muted">
-      Loading…
-    </div>
-  );
+  return <LoadingScreen title="Loading…" />;
 }
 
 function Lazy({ children }: { children: React.ReactNode }) {

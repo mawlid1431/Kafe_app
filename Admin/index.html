@@ -3,15 +3,178 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Kafe Eman Admin</title>
+
+    <!-- Root is the public landing page, so the default title is the marketing one.
+         The admin app overrides it per route once React mounts. -->
+    <title>Kafe Eman — Order ahead, track live, earn rewards</title>
+    <meta
+      name="description"
+      content="Kafe Eman is a coffee ordering app for Alor Setar, Penang and Kuala Lumpur. Order ahead, skip the queue, track your rider live, and earn points on every cup."
+    />
+    <meta name="theme-color" content="#608070" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#608070" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Red+Hat+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Boot splash. Inlined so it paints on the first frame, before the app
+         bundle downloads. Mirrors the BrandLoader spokes-bounce ring, and is
+         removed by main.tsx as soon as React mounts. -->
+    <style>
+      #ke-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: 22px;
+        background:
+          radial-gradient(ellipse 70% 55% at 20% 8%, rgba(96, 128, 112, 0.12), transparent 60%),
+          radial-gradient(ellipse 55% 50% at 88% 82%, rgba(96, 128, 112, 0.08), transparent 60%),
+          linear-gradient(180deg, #f0f3f1 0%, #f7f9f7 100%);
+        font-family: 'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+      }
+
+      #ke-boot[data-done='true'] {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      #ke-boot .ring {
+        position: relative;
+        height: 148px;
+        width: 148px;
+        display: grid;
+        place-items: center;
+      }
+
+      #ke-boot .arm {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        height: 13px;
+        width: 6px;
+        margin: -6.5px 0 0 -3px;
+        transform: rotate(var(--a)) translateY(-65px);
+      }
+
+      #ke-boot .bar {
+        display: block;
+        height: 100%;
+        width: 100%;
+        border-radius: 3px;
+        background: rgba(96, 128, 112, 0.22);
+        transform-origin: center;
+        animation: ke-boot-bounce 1.7s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
+        animation-delay: var(--d);
+      }
+
+      @keyframes ke-boot-bounce {
+        0%,
+        62%,
+        100% {
+          transform: scaleY(1);
+          background: rgba(96, 128, 112, 0.22);
+        }
+        9% {
+          transform: scaleY(1.8);
+          background: #608070;
+        }
+        34% {
+          transform: scaleY(1);
+          background: #608070;
+        }
+      }
+
+      #ke-boot .core {
+        height: 46%;
+        width: 46%;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 26%;
+        border: 1px solid rgba(96, 128, 112, 0.2);
+        background: #fff;
+        box-shadow: 0 8px 24px -10px rgba(77, 99, 89, 0.45);
+      }
+
+      #ke-boot .core img {
+        height: 100%;
+        width: 100%;
+        object-fit: contain;
+        padding: 12%;
+      }
+
+      #ke-boot .label {
+        font-family: 'Red Hat Display', 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1f2623;
+        text-align: center;
+      }
+
+      #ke-boot .tag {
+        margin-top: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7a74;
+        text-align: center;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #ke-boot .bar {
+          animation: none;
+          background: #608070;
+          opacity: 0.55;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="ke-boot">
+      <div class="ring">
+        <span class="arm" style="--a: 0deg; --d: 0s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 15deg; --d: 0.071s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 30deg; --d: 0.142s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 45deg; --d: 0.213s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 60deg; --d: 0.283s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 75deg; --d: 0.354s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 90deg; --d: 0.425s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 105deg; --d: 0.496s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 120deg; --d: 0.567s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 135deg; --d: 0.638s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 150deg; --d: 0.708s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 165deg; --d: 0.779s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 180deg; --d: 0.85s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 195deg; --d: 0.921s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 210deg; --d: 0.992s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 225deg; --d: 1.063s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 240deg; --d: 1.133s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 255deg; --d: 1.204s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 270deg; --d: 1.275s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 285deg; --d: 1.346s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 300deg; --d: 1.417s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 315deg; --d: 1.488s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 330deg; --d: 1.558s"><span class="bar"></span></span>
+        <span class="arm" style="--a: 345deg; --d: 1.629s"><span class="bar"></span></span>
+        <span class="core"><img src="/brand-logo.jpg" alt="" width="64" height="64" /></span>
+      </div>
+      <div>
+        <p class="label">Kafe Eman</p>
+        <p class="tag">Brew · Sip · Enjoy</p>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
