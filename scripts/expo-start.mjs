@@ -16,8 +16,10 @@ const METRO_PORT = '8081';
 const clear = process.argv.includes('--clear');
 const tunnel = process.argv.includes('--tunnel');
 
+// Windows names Mobile Hotspot / ICS adapters "Local Area Connection* N" — those
+// are never reachable from the phone, and VPN adapters hijack the route.
 const SKIP_ADAPTER =
-  /virtual|hyper-v|vmware|vethernet|wsl|loopback|tailscale|bluetooth|hotspot|npcap|tunnel|clash|zerotier|hamachi/i;
+  /virtual|hyper-v|vmware|vethernet|wsl|loopback|tailscale|bluetooth|hotspot|npcap|tunnel|clash|zerotier|hamachi|local area connection\*|vpn|proton|wireguard|openvpn|nordlynx/i;
 
 function isPrivateIPv4(ip) {
   const parts = ip.split('.').map(Number);
@@ -31,6 +33,7 @@ function scoreAdapter(name, ip) {
   if (/wi-?fi|wlan|wireless/i.test(name)) score += 100;
   else if (/ethernet/i.test(name) && !/virtual/i.test(name)) score += 80;
   if (ip.startsWith('192.168.')) score += 50;
+  else if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) score += 45;
   else if (ip.startsWith('10.')) score += 40;
   // Windows mobile hotspot / ICS often blocks phone → PC Metro access.
   if (ip.startsWith('192.168.137.')) score -= 60;
