@@ -32,7 +32,9 @@ if (!sdk) {
 
 const adb = path.join(sdk, 'platform-tools', process.platform === 'win32' ? 'adb.exe' : 'adb');
 const env = androidEnv();
-const devicePath = '/sdcard/kafeeman-shot.png';
+// /data/local/tmp is always adb-writable; /sdcard is not on newer images where
+// scoped storage may not be mounted yet right after boot.
+const devicePath = '/data/local/tmp/kafeeman-shot.png';
 const outFile = path.join(outDir, `android-${name}.png`);
 
 fs.mkdirSync(outDir, { recursive: true });
