@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "platforms": [
-      "ios"
+      "ios",
+      "android"
     ],
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -28,6 +29,22 @@
         "NSLocationWhenInUseUsageDescription": "Kafe Eman uses your location to show your live GPS on the delivery map and draw the rider route on real roads."
       }
     },
+    "android": {
+      "package": "com.devmalitos.kafeeman",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#608070"
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
+      ]
+    },
     "plugins": [
       [
         "expo-splash-screen",
@@ -36,6 +53,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 180,
           "ios": {
+            "backgroundColor": "#608070"
+          },
+          "android": {
             "backgroundColor": "#608070"
           }
         }

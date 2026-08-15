@@ -1,5 +1,6 @@
 import { useSignInWithApple } from '@clerk/expo/apple';
 import { useCallback, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { isClerkEnabled } from './clerkConfig';
 import { hapticMedium, hapticSuccess } from '../lib/haptics';
@@ -50,6 +51,11 @@ function ClerkAppleSignInButton({ C, onSuccess, onError }: Omit<Props, 'onFallba
 }
 
 export function AppleSignInButton({ C, onSuccess, onError, onFallback }: Props) {
+  // Sign in with Apple is a native iOS capability — Clerk's flow has no Android
+  // implementation, and Google Play rejects a button that cannot complete.
+  // Android keeps Sign Up / Login / Continue as Guest.
+  if (Platform.OS !== 'ios') return null;
+
   if (!isClerkEnabled) {
     return (
       <StitchPillButton
