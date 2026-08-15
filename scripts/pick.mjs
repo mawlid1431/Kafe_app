@@ -17,7 +17,11 @@ import { fileURLToPath } from 'node:url';
 import { androidEnv, findAndroidSdk, listAvds } from './android-env.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const passthrough = process.argv.slice(2).filter((a) => a.startsWith('--'));
+/** --dry-run prints the command instead of running it (used by `bun run pick:test`). */
+const dryRun = process.argv.includes('--dry-run');
+const passthrough = process.argv
+  .slice(2)
+  .filter((a) => a.startsWith('--') && a !== '--dry-run');
 
 const TARGETS = [
   {
@@ -62,6 +66,12 @@ const TARGETS = [
 
 /** stdio:'inherit' keeps a real TTY so Metro renders its QR code. */
 function spawnInherit(cmd, args, { android = false } = {}) {
+  if (dryRun) {
+    console.log(`  would run: ${cmd} ${args.join(' ')}`);
+    console.log(`  android env: ${android ? 'yes (ANDROID_HOME injected)' : 'no'}`);
+    return undefined;
+  }
+
   const child = spawn(cmd, args, {
     cwd: root,
     stdio: 'inherit',
