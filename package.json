@@ -12,14 +12,12 @@
   "scripts": {
     "preinstall": "only-allow bun",
     "setup": "bun scripts/setup.mjs",
-
     "start": "bun run dev",
     "dev": "bun scripts/dev.mjs dev",
     "app": "bun scripts/dev.mjs app",
     "web": "bun scripts/dev.mjs web",
     "admin": "bun scripts/dev.mjs web",
     "api": "bun scripts/dev.mjs api",
-
     "dev:clear": "bun scripts/dev.mjs dev --clear",
     "app:clear": "bun scripts/expo-start.mjs --clear",
     "app:tunnel": "bun scripts/expo-start.mjs --tunnel --clear",
@@ -27,12 +25,10 @@
     "dev:firewall": "powershell -ExecutionPolicy Bypass -File scripts/allow-metro-firewall.ps1",
     "pick": "bun scripts/pick.mjs",
     "screenshot": "bun scripts/screenshot.mjs",
-
     "db:migrate": "cd backend && bun run prisma:migrate",
     "db:deploy": "cd backend && bun run prisma:deploy",
     "db:seed": "cd backend && bun run seed",
     "db:studio": "cd backend && bun run prisma:studio",
-
     "ios": "cd frontend/app && bun run ios",
     "android": "bun scripts/pick.mjs android",
     "android:emulator": "bun scripts/pick.mjs emulator",
@@ -42,11 +38,15 @@
     "build:ios": "cd frontend/app && bun run build:ios",
     "build:ios:prod": "cd frontend/app && bun run build:ios:prod",
     "web:build": "cd frontend/web && bun run build",
-
     "typecheck": "bun scripts/run-all.mjs typecheck",
     "lint": "cd frontend/app && bun run lint"
   },
   "devDependencies": {
     "only-allow": "^1.2.2"
-  }
+  },
+  "workspaces": [
+    "backend",
+    "frontend/app",
+    "frontend/web"
+  ]
 }

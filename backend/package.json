@@ -10,7 +10,6 @@
   },
   "type": "commonjs",
   "scripts": {
-    "preinstall": "only-allow bun",
     "dev": "bun --watch src/main.ts",
     "start": "bun src/main.ts",
     "build": "bunx tsc -p tsconfig.build.json",

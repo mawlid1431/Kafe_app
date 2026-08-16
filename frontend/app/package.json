@@ -10,7 +10,6 @@
   },
   "main": "expo-router/entry",
   "scripts": {
-    "preinstall": "only-allow bun",
     "dev": "bun ../../scripts/expo-start.mjs",
     "start": "bun ../../scripts/expo-start.mjs",
     "dev:clear": "bun ../../scripts/expo-start.mjs --clear",
