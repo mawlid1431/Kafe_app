@@ -2,6 +2,15 @@
 # This project uses Bun only (see package.json preinstall + only-allow).
 exact = false
 
+# Flat node_modules, not Bun's default isolated (pnpm-style) store.
+# React Native autolinking and the native build resolve each native module by
+# walking node_modules for a single physical copy. The isolated linker gives
+# every dependent its own symlink into node_modules/.bun/<pkg>@<ver>/, so expo,
+# expo-constants, expo-font, expo-linking and @expo/vector-icons each appear at
+# several paths — `expo-doctor` reports them as duplicates and a native build
+# can only contain one. Hoisted keeps a single copy per package.
+linker = "hoisted"
+
 [install.cache]
 # Faster repeat installs
 disable = false
