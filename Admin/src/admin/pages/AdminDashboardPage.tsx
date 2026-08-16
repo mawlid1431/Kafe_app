@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { useQuery } from 'convex/react';
 import { ArrowUpRight, Store, UtensilsCrossed, ShoppingBag, Tag, Users, Gift, Bell } from 'lucide-react';
-import { api } from '@convex/_generated/api';
 import { adminPath } from '@/admin/adminNav';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { LiveBadge, PageHeader } from '@/admin/components/PageHeader';
+import { POLL, useApiQuery } from '@/lib/useApiQuery';
+import type { DashboardOverview } from '@/lib/apiTypes';
 import { formatPrice } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
@@ -45,7 +45,10 @@ function SectionCard({ title, subtitle, to, icon: Icon, delay }: (typeof SECTION
 
 export function AdminDashboardPage() {
   const adminToken = useAdminToken();
-  const overview = useQuery(api.adminDashboard.overview, adminToken ? { adminToken } : 'skip');
+  const overview = useApiQuery<DashboardOverview>(
+    adminToken ? '/admin/dashboard/overview' : null,
+    { refetchInterval: POLL.dashboard },
+  );
 
   return (
     <div className="space-y-8">

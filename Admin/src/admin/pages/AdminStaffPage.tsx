@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
 import { Plus, Shield } from 'lucide-react';
-import { api } from '@convex/_generated/api';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { AdminFormField } from '@/admin/components/AdminFormField';
 import { AdminModal } from '@/admin/components/AdminModal';
 import { PageHeader } from '@/admin/components/PageHeader';
+import { useApiMutation, useApiQuery } from '@/lib/useApiQuery';
+import type { AdminAccount, StaffMember } from '@/lib/apiTypes';
 import { cn } from '@/lib/utils';
 
 export function AdminStaffPage() {
   const adminToken = useAdminToken();
-  const staff = useQuery(api.admins.listStaff, adminToken ? { adminToken } : 'skip');
-  const me = useQuery(api.admins.me, adminToken ? { adminToken } : 'skip');
-  const createStaff = useMutation(api.admins.createStaff);
+  const staff = useApiQuery<StaffMember[]>(adminToken ? '/admin/staff' : null);
+  const me = useApiQuery<AdminAccount>(adminToken ? '/admin/auth/me' : null);
+  const mutate = useApiMutation();
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -44,7 +44,7 @@ export function AdminStaffPage() {
       {/* Mobile card list */}
       <div className="admin-mobile-list">
         {staff?.map((member) => (
-          <div key={member._id} className="admin-mobile-card">
+          <div key={member.id} className="admin-mobile-card">
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
                 {member.displayName[0]?.toUpperCase() ?? 'A'}
@@ -81,7 +81,7 @@ export function AdminStaffPage() {
           </thead>
           <tbody>
             {staff?.map((member) => (
-              <tr key={member._id}>
+              <tr key={member.id}>
                 <td>
                   <div className="flex items-center gap-3">
                     <div className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
@@ -132,7 +132,7 @@ export function AdminStaffPage() {
             if (!adminToken) return;
             setError(null);
             try {
-              await createStaff({ adminToken, ...form });
+              await mutate('/admin/staff', { method: 'POST', body: form });
               setShowForm(false);
               setForm({ username: '', password: '', displayName: '', email: '', role: 'staff' });
             } catch (err) {

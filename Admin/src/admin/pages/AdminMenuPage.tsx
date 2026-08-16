@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { AdminFormField } from '@/admin/components/AdminFormField';
+import { AdminImageField } from '@/admin/components/AdminImageField';
 import { AdminModal } from '@/admin/components/AdminModal';
 import { PageHeader } from '@/admin/components/PageHeader';
+import { useApiMutation, useApiQuery } from '@/lib/useApiQuery';
+import type { MenuItem } from '@/lib/apiTypes';
 import { cn, formatPrice } from '@/lib/utils';
 
 type FormState = {
@@ -15,6 +15,7 @@ type FormState = {
   price: string;
   category: string;
   imageUrl: string;
+  imagePublicId: string;
   badge: string;
   active: boolean;
 };
@@ -25,46 +26,55 @@ const emptyForm = (): FormState => ({
   price: '',
   category: 'Coffee',
   imageUrl: '',
+  imagePublicId: '',
   badge: '',
   active: true,
 });
 
 export function AdminMenuPage() {
   const adminToken = useAdminToken();
-  const categories = useQuery(api.menuAdmin.categories, adminToken ? { adminToken } : 'skip');
+  const categories = useApiQuery<string[]>(adminToken ? '/admin/menu/categories' : null);
   const [category, setCategory] = useState('All');
-  const items = useQuery(
-    api.menuAdmin.listAll,
-    adminToken ? { adminToken, category: category === 'All' ? undefined : category } : 'skip',
+  const items = useApiQuery<MenuItem[]>(
+    adminToken
+      ? `/admin/menu${category === 'All' ? '' : `?category=${encodeURIComponent(category)}`}`
+      : null,
   );
-  const createItem = useMutation(api.menuAdmin.create);
-  const updateItem = useMutation(api.menuAdmin.update);
-  const removeItem = useMutation(api.menuAdmin.remove);
+  const mutate = useApiMutation();
 
   const [modal, setModal] = useState<'add' | 'edit' | null>(null);
-  const [editingId, setEditingId] = useState<Id<'menuItems'> | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [error, setError] = useState('');
 
   const categoryOptions = useMemo(() => categories ?? ['All'], [categories]);
 
   function openAdd() {
     setForm(emptyForm());
     setEditingId(null);
+    setError('');
     setModal('add');
   }
 
-  function openEdit(item: Doc<'menuItems'>) {
+  function openEdit(item: MenuItem) {
     setForm({
       name: item.name,
       description: item.description,
       price: String(item.price),
       category: item.category,
       imageUrl: item.imageUrl,
+      imagePublicId: item.imagePublicId ?? '',
       badge: item.badge ?? '',
       active: item.active,
     });
-    setEditingId(item._id);
+    setEditingId(item.id);
+    setError('');
     setModal('edit');
+  }
+
+  async function removeItem(id: string) {
+    if (!adminToken || !confirm('Delete this menu item?')) return;
+    await mutate(`/admin/menu/${id}`, { method: 'DELETE' });
   }
 
   return (
@@ -96,7 +106,7 @@ export function AdminMenuPage() {
       {/* Mobile card list */}
       <div className="admin-mobile-list">
         {items?.map((item) => (
-          <div key={item._id} className="admin-mobile-card">
+          <div key={item.id} className="admin-mobile-card">
             <div className="admin-mobile-card-row">
               <div className="flex min-w-0 items-center gap-3">
                 <img src={item.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover shadow-sm ring-1 ring-outline-variant/30" />
@@ -121,10 +131,7 @@ export function AdminMenuPage() {
               <button
                 type="button"
                 className="admin-btn-ghost !text-error hover:!border-red-200 hover:!bg-red-50"
-                onClick={async () => {
-                  if (!adminToken || !confirm('Delete this menu item?')) return;
-                  await removeItem({ adminToken, menuItemId: item._id });
-                }}
+                onClick={() => void removeItem(item.id)}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
@@ -148,7 +155,7 @@ export function AdminMenuPage() {
           </thead>
           <tbody>
             {items?.map((item) => (
-              <tr key={item._id}>
+              <tr key={item.id}>
                 <td>
                   <div className="flex items-center gap-3">
                     <img src={item.imageUrl} alt="" className="h-11 w-11 rounded-xl object-cover shadow-sm ring-1 ring-outline-variant/30" />
@@ -173,10 +180,7 @@ export function AdminMenuPage() {
                     <button
                       type="button"
                       className="admin-btn-ghost h-9 w-9 p-0 !text-error hover:!border-red-200 hover:!bg-red-50"
-                      onClick={async () => {
-                        if (!adminToken || !confirm('Delete this menu item?')) return;
-                        await removeItem({ adminToken, menuItemId: item._id });
-                      }}
+                      onClick={() => void removeItem(item.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -208,20 +212,32 @@ export function AdminMenuPage() {
             e.preventDefault();
             if (!adminToken) return;
             const price = Number.parseFloat(form.price);
-            if (Number.isNaN(price)) return;
+            if (Number.isNaN(price)) {
+              setError('Enter a valid price.');
+              return;
+            }
+
             const payload = {
-              adminToken,
               name: form.name,
               description: form.description,
               price,
               category: form.category,
               imageUrl: form.imageUrl,
+              imagePublicId: form.imagePublicId || undefined,
               badge: form.badge || undefined,
               active: form.active,
             };
-            if (modal === 'add') await createItem(payload);
-            else if (editingId) await updateItem({ ...payload, menuItemId: editingId });
-            setModal(null);
+
+            try {
+              if (modal === 'add') {
+                await mutate('/admin/menu', { method: 'POST', body: payload });
+              } else if (editingId) {
+                await mutate(`/admin/menu/${editingId}`, { method: 'PATCH', body: payload });
+              }
+              setModal(null);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Could not save the item.');
+            }
           }}
         >
           <AdminFormField label="Name">
@@ -238,9 +254,12 @@ export function AdminMenuPage() {
               <input className="admin-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
             </AdminFormField>
           </div>
-          <AdminFormField label="Image URL">
-            <input className="admin-input" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} required />
-          </AdminFormField>
+          <AdminImageField
+            folder="menu"
+            required
+            value={{ imageUrl: form.imageUrl, imagePublicId: form.imagePublicId }}
+            onChange={(next) => setForm({ ...form, ...next })}
+          />
           <AdminFormField label="Badge (optional)">
             <input className="admin-input" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} placeholder="e.g. Bestseller" />
           </AdminFormField>
@@ -248,6 +267,7 @@ export function AdminMenuPage() {
             <input type="checkbox" className="h-4 w-4 accent-primary" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
             <span className="font-medium text-coffee-dark">Show in mobile app</span>
           </label>
+          {error ? <p className="text-sm text-error">{error}</p> : null}
         </form>
       </AdminModal>
     </div>

@@ -1,28 +1,39 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
 import { MapPin, Pencil } from 'lucide-react';
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { AdminFormField } from '@/admin/components/AdminFormField';
 import { AdminModal } from '@/admin/components/AdminModal';
+import { AdminImageField } from '@/admin/components/AdminImageField';
 import { PageHeader } from '@/admin/components/PageHeader';
+import { useApiMutation, useApiQuery } from '@/lib/useApiQuery';
+import type { Branch } from '@/lib/apiTypes';
 import { cn } from '@/lib/utils';
 
 export function AdminBranchesPage() {
   const adminToken = useAdminToken();
-  const branches = useQuery(api.branches.listAll, adminToken ? { adminToken } : 'skip');
-  const updateBranch = useMutation(api.branches.update);
+  const branches = useApiQuery<Branch[]>(adminToken ? '/admin/branches' : null);
+  const mutate = useApiMutation();
 
-  const [editing, setEditing] = useState<Doc<'branches'> | null>(null);
-  const [form, setForm] = useState({ label: '', address: '', hours: '', active: true });
+  const [editing, setEditing] = useState<Branch | null>(null);
+  const [form, setForm] = useState({
+    label: '',
+    address: '',
+    hours: '',
+    imageUrl: '',
+    imagePublicId: '',
+    active: true,
+  });
+  const [error, setError] = useState('');
 
-  function openEdit(branch: Doc<'branches'>) {
+  function openEdit(branch: Branch) {
     setEditing(branch);
+    setError('');
     setForm({
       label: branch.label,
       address: branch.address,
       hours: branch.hours,
+      imageUrl: branch.imageUrl ?? '',
+      imagePublicId: branch.imagePublicId ?? '',
       active: branch.active,
     });
   }
@@ -37,7 +48,7 @@ export function AdminBranchesPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {branches?.map((branch, i) => (
           <div
-            key={branch._id}
+            key={branch.id}
             className={cn('admin-card group overflow-hidden p-0 animate-page', `stagger-${(i % 4) + 1}`)}
           >
             {branch.imageUrl ? (
@@ -92,15 +103,22 @@ export function AdminBranchesPage() {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!adminToken || !editing) return;
-            await updateBranch({
-              adminToken,
-              branchId: editing._id as Id<'branches'>,
-              label: form.label,
-              address: form.address,
-              hours: form.hours,
-              active: form.active,
-            });
-            setEditing(null);
+            try {
+              await mutate(`/admin/branches/${editing.id}`, {
+                method: 'PATCH',
+                body: {
+                  label: form.label,
+                  address: form.address,
+                  hours: form.hours,
+                  imageUrl: form.imageUrl || undefined,
+                  imagePublicId: form.imagePublicId || undefined,
+                  active: form.active,
+                },
+              });
+              setEditing(null);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Could not save the branch.');
+            }
           }}
         >
           <AdminFormField label="Branch name">
@@ -112,10 +130,16 @@ export function AdminBranchesPage() {
           <AdminFormField label="Opening hours">
             <input className="admin-input" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} required />
           </AdminFormField>
+          <AdminImageField
+            folder="branches"
+            value={{ imageUrl: form.imageUrl, imagePublicId: form.imagePublicId }}
+            onChange={(next) => setForm({ ...form, ...next })}
+          />
           <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/40 bg-cream/40 px-4 py-3 text-sm transition hover:border-primary/30">
             <input type="checkbox" className="h-4 w-4 accent-primary" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
             <span className="font-medium text-coffee-dark">Visible in app</span>
           </label>
+          {error ? <p className="text-sm text-error">{error}</p> : null}
         </form>
       </AdminModal>
     </div>

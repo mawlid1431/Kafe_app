@@ -12,12 +12,13 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        '@convex': fileURLToPath(new URL('../convex', import.meta.url)),
       },
     },
     define: {
-      'import.meta.env.VITE_CONVEX_URL': JSON.stringify(
-        env.EXPO_PUBLIC_CONVEX_URL || env.VITE_CONVEX_URL || '',
+      // The dashboard reads one variable; accept either name so the root
+      // .env.local can stay a single source of truth for both apps.
+      'import.meta.env.VITE_API_URL': JSON.stringify(
+        env.VITE_API_URL || env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api',
       ),
     },
     server: {

@@ -9,7 +9,7 @@ module.exports = defineConfig([
     ignores: [
       "dist/*",
       "Admin/**",
-      "convex/_generated/**",
+      "backend/dist/**",
       ".expo/**",
       "node_modules/**",
     ],

@@ -1,11 +1,10 @@
-import { useMutation } from 'convex/react';
 import { ChevronRight, MapPin, Package } from 'lucide-react';
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useAdminToken } from '@/admin/AdminAuthContext';
+import { useApiMutation } from '@/lib/useApiQuery';
+import type { Order } from '@/lib/apiTypes';
 import { cn, formatDate, formatPrice } from '@/lib/utils';
 
-export type OrderDoc = Doc<'orders'>;
+export type OrderDoc = Order;
 
 const DELIVERY_STEPS = ['Order placed', 'Preparing', 'On the way', 'Arrived'] as const;
 const PICKUP_STEPS = ['Order placed', 'Preparing', 'Ready for pickup'] as const;
@@ -86,9 +85,7 @@ export function OrderCard({
   index?: number;
 }) {
   const adminToken = useAdminToken();
-  const advanceTracking = useMutation(api.ordersAdmin.advanceTracking);
-  const updateStatus = useMutation(api.ordersAdmin.updateStatus);
-  const setTrackingStep = useMutation(api.ordersAdmin.setTrackingStep);
+  const mutate = useApiMutation();
 
   return (
     <div
@@ -150,7 +147,7 @@ export function OrderCard({
           <button
             type="button"
             className="admin-btn w-full sm:w-auto"
-            onClick={() => advanceTracking({ adminToken, orderId: order._id as Id<'orders'> })}
+            onClick={() => void mutate(`/admin/orders/${order.id}/advance`, { method: 'POST' })}
           >
             Advance to next step
             <ChevronRight className="h-4 w-4" />
@@ -160,10 +157,9 @@ export function OrderCard({
               type="button"
               className="admin-btn-ghost w-full sm:w-auto"
               onClick={() =>
-                setTrackingStep({
-                  adminToken,
-                  orderId: order._id as Id<'orders'>,
-                  trackingStep: order.trackingStep - 1,
+                void mutate(`/admin/orders/${order.id}/tracking`, {
+                  method: 'PATCH',
+                  body: { trackingStep: order.trackingStep - 1 },
                 })
               }
             >
@@ -174,7 +170,10 @@ export function OrderCard({
             type="button"
             className="admin-btn-danger w-full sm:w-auto"
             onClick={() =>
-              updateStatus({ adminToken, orderId: order._id as Id<'orders'>, status: 'cancelled' })
+              void mutate(`/admin/orders/${order.id}/status`, {
+                method: 'PATCH',
+                body: { status: 'cancelled' },
+              })
             }
           >
             Cancel order

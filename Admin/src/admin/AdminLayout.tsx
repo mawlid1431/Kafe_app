@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from 'convex/react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { api } from '@convex/_generated/api';
 import { AdminAuthProvider } from '@/admin/AdminAuthContext';
 import { adminTitleForPath } from '@/admin/adminNav';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
@@ -10,7 +8,9 @@ import { AdminSidebar } from '@/admin/components/AdminSidebar';
 import { AdminTopbar } from '@/admin/components/AdminTopbar';
 import { clearAdminSession, getAdminSession, normalizeAdminRole } from '@/admin/auth';
 import { LoadingScreen } from '@/components/BrandLoader';
-import { ConvexSetupNotice, hasConvex } from '@/providers/ConvexProvider';
+import { useApiQuery } from '@/lib/useApiQuery';
+import type { AdminAccount } from '@/lib/apiTypes';
+import { ApiSetupNotice, hasApi } from '@/providers/ApiProvider';
 
 const SIDEBAR_KEY = 'kafeeman.admin.sidebarCollapsed';
 
@@ -33,10 +33,8 @@ function AdminLayoutInner() {
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const validated = useQuery(
-    api.admins.validateSession,
-    localSession?.token ? { adminToken: localSession.token } : 'skip',
-  );
+  // Returns null on 401 — an expired or revoked session logs the dashboard out.
+  const validated = useApiQuery<AdminAccount>(localSession?.token ? '/admin/auth/me' : null);
 
   useEffect(() => {
     try {
@@ -112,10 +110,10 @@ function AdminLayoutInner() {
 }
 
 export function AdminLayout() {
-  if (!hasConvex()) {
+  if (!hasApi()) {
     return (
       <div className="grid min-h-screen place-items-center bg-surface p-8">
-        <ConvexSetupNotice context="The admin dashboard" />
+        <ApiSetupNotice context="The admin dashboard" />
       </div>
     );
   }

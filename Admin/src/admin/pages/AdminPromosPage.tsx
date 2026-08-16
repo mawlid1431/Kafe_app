@@ -1,38 +1,53 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
 import { Pencil, Plus, Tag, Trash2 } from 'lucide-react';
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { AdminFormField } from '@/admin/components/AdminFormField';
+import { AdminImageField } from '@/admin/components/AdminImageField';
 import { AdminModal } from '@/admin/components/AdminModal';
 import { PageHeader } from '@/admin/components/PageHeader';
+import { useApiMutation, useApiQuery } from '@/lib/useApiQuery';
+import type { Promo } from '@/lib/apiTypes';
 import { cn } from '@/lib/utils';
 
-type FormState = { title: string; subtitle: string; code: string; imageUrl: string; active: boolean };
+type FormState = {
+  title: string;
+  subtitle: string;
+  code: string;
+  imageUrl: string;
+  imagePublicId: string;
+  active: boolean;
+};
 
-const emptyForm = (): FormState => ({ title: '', subtitle: '', code: '', imageUrl: '', active: true });
+const emptyForm = (): FormState => ({
+  title: '',
+  subtitle: '',
+  code: '',
+  imageUrl: '',
+  imagePublicId: '',
+  active: true,
+});
 
 export function AdminPromosPage() {
   const adminToken = useAdminToken();
-  const promos = useQuery(api.promosAdmin.listAll, adminToken ? { adminToken } : 'skip');
-  const createPromo = useMutation(api.promosAdmin.create);
-  const updatePromo = useMutation(api.promosAdmin.update);
-  const removePromo = useMutation(api.promosAdmin.remove);
+  const promos = useApiQuery<Promo[]>(adminToken ? '/admin/promos' : null);
+  const mutate = useApiMutation();
 
   const [modal, setModal] = useState<'add' | 'edit' | null>(null);
-  const [editingId, setEditingId] = useState<Id<'promos'> | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [error, setError] = useState('');
 
-  function openEdit(promo: Doc<'promos'>) {
+  function openEdit(promo: Promo) {
     setForm({
       title: promo.title,
       subtitle: promo.subtitle,
       code: promo.code,
       imageUrl: promo.imageUrl ?? '',
+      imagePublicId: promo.imagePublicId ?? '',
       active: promo.active,
     });
-    setEditingId(promo._id);
+    setEditingId(promo.id);
+    setError('');
     setModal('edit');
   }
 
@@ -42,7 +57,7 @@ export function AdminPromosPage() {
         title="Promos"
         description="Home banners and checkout promo codes for the mobile app."
         action={
-          <button type="button" className="admin-btn" onClick={() => { setForm(emptyForm()); setModal('add'); }}>
+          <button type="button" className="admin-btn" onClick={() => { setForm(emptyForm()); setError(''); setModal('add'); }}>
             <Plus className="h-4 w-4" />
             Add promo
           </button>
@@ -51,7 +66,7 @@ export function AdminPromosPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {promos?.map((promo, i) => (
-          <div key={promo._id} className={cn('admin-card group overflow-hidden p-0 animate-page', `stagger-${(i % 3) + 1}`)}>
+          <div key={promo.id} className={cn('admin-card group overflow-hidden p-0 animate-page', `stagger-${(i % 3) + 1}`)}>
             {promo.imageUrl ? (
               <div className="relative overflow-hidden">
                 <img src={promo.imageUrl} alt="" className="h-36 w-full object-cover transition duration-500 group-hover:scale-105" />
@@ -87,7 +102,7 @@ export function AdminPromosPage() {
                   className="admin-btn-ghost h-9 w-9 p-0 !text-error"
                   onClick={async () => {
                     if (!adminToken || !confirm('Delete promo?')) return;
-                    await removePromo({ adminToken, promoId: promo._id });
+                    await mutate(`/admin/promos/${promo.id}`, { method: 'DELETE' });
                   }}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -117,10 +132,24 @@ export function AdminPromosPage() {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!adminToken) return;
-            const payload = { adminToken, ...form, imageUrl: form.imageUrl || undefined };
-            if (modal === 'add') await createPromo(payload);
-            else if (editingId) await updatePromo({ ...payload, promoId: editingId });
-            setModal(null);
+            const payload = {
+              title: form.title,
+              subtitle: form.subtitle,
+              code: form.code,
+              imageUrl: form.imageUrl || undefined,
+              imagePublicId: form.imagePublicId || undefined,
+              active: form.active,
+            };
+            try {
+              if (modal === 'add') {
+                await mutate('/admin/promos', { method: 'POST', body: payload });
+              } else if (editingId) {
+                await mutate(`/admin/promos/${editingId}`, { method: 'PATCH', body: payload });
+              }
+              setModal(null);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Could not save the promo.');
+            }
           }}
         >
           <AdminFormField label="Title">
@@ -132,13 +161,17 @@ export function AdminPromosPage() {
           <AdminFormField label="Promo code">
             <input className="admin-input font-mono uppercase" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
           </AdminFormField>
-          <AdminFormField label="Banner image URL">
-            <input className="admin-input" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
-          </AdminFormField>
+          <AdminImageField
+            label="Banner image"
+            folder="promos"
+            value={{ imageUrl: form.imageUrl, imagePublicId: form.imagePublicId }}
+            onChange={(next) => setForm({ ...form, ...next })}
+          />
           <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/40 bg-cream/40 px-4 py-3 text-sm">
             <input type="checkbox" className="h-4 w-4 accent-primary" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
             <span className="font-medium text-coffee-dark">Active in app</span>
           </label>
+          {error ? <p className="text-sm text-error">{error}</p> : null}
         </form>
       </AdminModal>
     </div>

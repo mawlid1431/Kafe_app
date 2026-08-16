@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
 import { Pencil, Users } from 'lucide-react';
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { AdminFormField } from '@/admin/components/AdminFormField';
 import { AdminModal } from '@/admin/components/AdminModal';
 import { PageHeader } from '@/admin/components/PageHeader';
+import { useApiMutation, useApiQuery } from '@/lib/useApiQuery';
+import type { Customer } from '@/lib/apiTypes';
 import { cn, formatDate } from '@/lib/utils';
 
 export function AdminCustomersPage() {
   const adminToken = useAdminToken();
-  const customers = useQuery(api.customersAdmin.listCustomers, adminToken ? { adminToken } : 'skip');
-  const updateCustomer = useMutation(api.customersAdmin.updateCustomer);
+  const customers = useApiQuery<Customer[]>(adminToken ? '/admin/customers' : null);
+  const mutate = useApiMutation();
 
-  const [editingId, setEditingId] = useState<Id<'users'> | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [points, setPoints] = useState('0');
   const [suspended, setSuspended] = useState(false);
 
@@ -28,7 +27,7 @@ export function AdminCustomersPage() {
       {/* Mobile card list */}
       <div className="admin-mobile-list">
         {customers?.map((user) => (
-          <div key={user._id} className="admin-mobile-card">
+          <div key={user.id} className="admin-mobile-card">
             <div className="admin-mobile-card-row">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
@@ -43,7 +42,7 @@ export function AdminCustomersPage() {
                 type="button"
                 className="admin-btn-ghost h-10 w-10 shrink-0 p-0"
                 onClick={() => {
-                  setEditingId(user._id);
+                  setEditingId(user.id);
                   setPoints(String(user.points));
                   setSuspended(user.suspended);
                 }}
@@ -84,7 +83,7 @@ export function AdminCustomersPage() {
           </thead>
           <tbody>
             {customers?.map((user) => (
-              <tr key={user._id}>
+              <tr key={user.id}>
                 <td>
                   <div className="flex items-center gap-3">
                     <div className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
@@ -111,7 +110,7 @@ export function AdminCustomersPage() {
                     type="button"
                     className="admin-btn-ghost h-9 w-9 p-0"
                     onClick={() => {
-                      setEditingId(user._id);
+                      setEditingId(user.id);
                       setPoints(String(user.points));
                       setSuspended(user.suspended);
                     }}
@@ -150,11 +149,9 @@ export function AdminCustomersPage() {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!adminToken || !editingId) return;
-            await updateCustomer({
-              adminToken,
-              userId: editingId,
-              points: Number.parseInt(points, 10) || 0,
-              suspended,
+            await mutate(`/admin/customers/${editingId}`, {
+              method: 'PATCH',
+              body: { points: Number.parseInt(points, 10) || 0, suspended },
             });
             setEditingId(null);
           }}

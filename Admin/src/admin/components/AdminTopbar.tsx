@@ -1,11 +1,8 @@
 import { useMemo, useState } from 'react';
-import { useMutation } from 'convex/react';
 import { Link } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
-import { api } from '@convex/_generated/api';
 import { adminPath } from '@/admin/adminNav';
 import { revokeAdminSession, type AdminSession } from '@/admin/auth';
-import { hasConvex } from '@/providers/ConvexProvider';
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).slice(0, 2);
@@ -21,7 +18,6 @@ export function AdminTopbar({
   onOpenMobileNav?: () => void;
   onLogout: () => void;
 }) {
-  const logoutMutation = useMutation(api.admins.logout);
   const [loggingOut, setLoggingOut] = useState(false);
   const avatarText = useMemo(() => initials(session.name), [session.name]);
 
@@ -29,7 +25,7 @@ export function AdminTopbar({
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      await revokeAdminSession(hasConvex() ? logoutMutation : undefined, session.token);
+      await revokeAdminSession(session.token);
       onLogout();
     } finally {
       setLoggingOut(false);

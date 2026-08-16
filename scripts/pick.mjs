@@ -5,7 +5,7 @@
  *   bun run pick            → interactive menu
  *   bun run pick android    → skip the menu (also: ios, emulator, both, admin)
  *
- * Every target runs the SAME code against the SAME Convex backend, so an admin
+ * Every target runs the SAME code against the SAME API, so an admin
  * dashboard change shows up live on iOS and Android alike. Only the shell the
  * bundle runs inside differs.
  */

@@ -1,5 +1,11 @@
 const STORAGE_KEY = 'kafeeman.admin.session';
 
+/**
+ * Read directly from the environment rather than importing apiClient — that
+ * module imports this one for the bearer token, and a cycle would break HMR.
+ */
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || '';
+
 export type AdminRole = 'superadmin' | 'staff';
 
 export function normalizeAdminRole(role: string): AdminRole {
@@ -58,16 +64,22 @@ export function clearAdminSession() {
   }
 }
 
-export async function revokeAdminSession(
-  logoutMutation?: (args: { adminToken: string }) => Promise<unknown>,
-  token?: string,
-) {
+/**
+ * Revokes the session server-side, then clears it locally.
+ *
+ * The local session is cleared even if the network call fails — a user who
+ * clicked "log out" must end up logged out of this browser regardless.
+ */
+export async function revokeAdminSession(token?: string) {
   const sessionToken = token ?? getAdminSession()?.token;
-  if (logoutMutation && sessionToken) {
+  if (sessionToken && API_URL) {
     try {
-      await logoutMutation({ adminToken: sessionToken });
+      await fetch(`${API_URL}/admin/auth/logout`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
     } catch {
-      // Local session still cleared.
+      // Local session still cleared below.
     }
   }
   clearAdminSession();

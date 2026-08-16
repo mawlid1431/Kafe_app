@@ -1,12 +1,12 @@
-import { useQuery } from 'convex/react';
-import { api } from '@convex/_generated/api';
 import { useAdminToken } from '@/admin/AdminAuthContext';
 import { PageHeader } from '@/admin/components/PageHeader';
+import { useApiQuery } from '@/lib/useApiQuery';
+import type { AdminAccount } from '@/lib/apiTypes';
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 
 export function AdminAccountPage() {
   const adminToken = useAdminToken();
-  const me = useQuery(api.admins.me, adminToken ? { adminToken } : 'skip');
+  const me = useApiQuery<AdminAccount>(adminToken ? '/admin/auth/me' : null);
 
   return (
     <div className="space-y-6">

@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import { AppConvexProvider } from './providers/ConvexProvider';
+import { AppApiProvider } from './providers/ApiProvider';
 import './index.css';
 
 /**
@@ -29,11 +29,11 @@ function dismissBootSplash(): void {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppConvexProvider>
+    <AppApiProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </AppConvexProvider>
+    </AppApiProvider>
   </StrictMode>,
 );
 

@@ -10,7 +10,7 @@ import 'react-native-reanimated';
 
 import { BRAND_ASSETS } from '@/features/kafeeman/brand';
 import { ClerkAuthProvider } from '@/features/kafeeman/auth/ClerkAuthProvider';
-import { ConvexClientProvider } from '@/features/kafeeman/convex/ConvexClientProvider';
+import { ApiProvider } from '@/features/kafeeman/api/ApiProvider';
 import { useKafeemanFonts } from '@/features/kafeeman/native/useKafeemanFonts';
 import { BRAND } from '@/features/kafeeman/theme';
 
@@ -38,7 +38,7 @@ export default function RootLayout() {
 
   return (
     <ClerkAuthProvider>
-      <ConvexClientProvider>
+      <ApiProvider>
         <SafeAreaProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <StatusBar style="dark" />
@@ -47,7 +47,7 @@ export default function RootLayout() {
             </Stack>
           </GestureHandlerRootView>
         </SafeAreaProvider>
-      </ConvexClientProvider>
+      </ApiProvider>
     </ClerkAuthProvider>
   );
 }

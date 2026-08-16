@@ -108,11 +108,11 @@ import { floatingChromeBottom, scrollPaddingAboveChrome } from './native/layoutC
 import { AppleSignInButton } from './auth/AppleSignInButton';
 import { ClerkProfileSync } from './auth/ClerkProfileSync';
 import { isClerkEnabled } from './auth/clerkConfig';
-import { ConvexConnectionCheck } from './convex/useConvexConnection';
-import { ConvexUserSync } from './convex/useConvexUserSync';
-import { isConvexEnabled } from './convex/ConvexClientProvider';
-import { useConvexCatalog } from './convex/useConvexCatalog';
-import { resolveBranchSlug, useConvexOrders, useConvexUser, useLiveBackend } from './convex/useConvexBackend';
+import { BackendConnectionCheck } from './api/useBackendConnection';
+import { UserSync } from './api/useUserSync';
+import { isApiEnabled } from './api/client';
+import { useCatalog } from './api/useCatalog';
+import { resolveBranchSlug, useCurrentUser, useLiveBackend, useOrders } from './api/useBackend';
 import { STITCH_SHADOW, useBrandTheme, type ThemeColors } from './theme';
 import type {
   AppNotification,
@@ -219,14 +219,14 @@ function KafeemanApp() {
   const [appLocationPromptOpen, setAppLocationPromptOpen] = useState(false);
   const appLocation = useLiveLocation(false);
 
-  const catalog = useConvexCatalog();
+  const catalog = useCatalog();
   const liveBackend = useLiveBackend(isLoggedIn);
   const {
     orders: liveOrders,
     createOrder: createOrderRemote,
     cancelOrder: cancelOrderRemote,
-  } = useConvexOrders(liveBackend, catalog.menu);
-  const convexUser = useConvexUser(liveBackend);
+  } = useOrders(liveBackend, catalog.menu);
+  const remoteUser = useCurrentUser(liveBackend);
 
   const menuItems = catalog.menu;
   const branchList = catalog.branches;
@@ -234,7 +234,7 @@ function KafeemanApp() {
   const promoList = catalog.promos;
 
   const displayOrders = liveBackend && liveOrders !== undefined ? liveOrders : orders;
-  const displayPoints = liveBackend && convexUser.points !== undefined ? convexUser.points : points;
+  const displayPoints = liveBackend && remoteUser.points !== undefined ? remoteUser.points : points;
 
   // Latest-value refs, read from async callbacks/timers that run after commit.
   useEffect(() => {
@@ -738,7 +738,7 @@ function KafeemanApp() {
       if (saved?.profile) setProfile(saved.profile);
       if (saved?.cart) setCart(saved.cart);
       if (saved?.favorites) setFavorites(saved.favorites);
-      if (!isConvexEnabled) {
+      if (!isApiEnabled) {
         if (saved?.orders) setOrders(saved.orders);
         if (typeof saved?.points === 'number') setPoints(saved.points);
         if (saved?.pointsHistory) setPointsHistory(saved.pointsHistory);
@@ -2112,10 +2112,10 @@ function KafeemanApp() {
         {isClerkEnabled ? (
           <ClerkProfileSync onProfile={handleClerkProfile} onSignedIn={handleClerkSignedIn} />
         ) : null}
-        {isConvexEnabled ? (
-          <ConvexConnectionCheck onError={(message) => showToast(message, 'error')} />
+        {isApiEnabled ? (
+          <BackendConnectionCheck onError={(message) => showToast(message, 'error')} />
         ) : null}
-        {isClerkEnabled && isConvexEnabled ? <ConvexUserSync /> : null}
+        {isClerkEnabled && isApiEnabled ? <UserSync /> : null}
         <LocationPermissionModal
           visible={appLocationPromptOpen}
           C={C}

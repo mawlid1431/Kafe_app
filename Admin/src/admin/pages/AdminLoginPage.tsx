@@ -1,8 +1,6 @@
 import { useEffect, useId, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, LogIn, User } from 'lucide-react';
-import { api } from '@convex/_generated/api';
 import { BRAND_LOGO_URL, BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { ADMIN_BASE } from '@/admin/adminNav';
 import { LoadingScreen } from '@/components/BrandLoader';
@@ -15,13 +13,15 @@ import {
 } from '@/admin/auth';
 import { AdminFormField } from '@/admin/components/AdminFormField';
 import { AdminIconInput, AdminPasswordToggle } from '@/admin/components/AdminIconInput';
-import { ConvexSetupNotice, hasConvex } from '@/providers/ConvexProvider';
+import { apiFetch } from '@/lib/apiClient';
+import { useApiQuery } from '@/lib/useApiQuery';
+import type { AdminAccount, LoginResponse } from '@/lib/apiTypes';
+import { ApiSetupNotice, hasApi } from '@/providers/ApiProvider';
 
 function AdminLoginForm() {
   const navigate = useNavigate();
   const location = useLocation();
   useDocumentTitle('Sign in · Kafe Eman Admin');
-  const login = useMutation(api.admins.login);
   const formId = useId();
   const usernameId = `${formId}-username`;
   const passwordId = `${formId}-password`;
@@ -33,10 +33,7 @@ function AdminLoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const validated = useQuery(
-    api.admins.validateSession,
-    localSession?.token ? { adminToken: localSession.token } : 'skip',
-  );
+  const validated = useApiQuery<AdminAccount>(localSession?.token ? '/admin/auth/me' : null);
 
   useEffect(() => {
     setLocalSession(getAdminSession());
@@ -91,7 +88,11 @@ function AdminLoginForm() {
               setError(null);
               setLoading(true);
               try {
-                const result = await login({ username, password });
+                const result = await apiFetch<LoginResponse>('/admin/auth/login', {
+                  method: 'POST',
+                  body: { username, password },
+                  auth: false,
+                });
                 const session = {
                   token: result.token,
                   name: result.admin.displayName,
@@ -194,10 +195,10 @@ function AdminLoginForm() {
 }
 
 export function AdminLoginPage() {
-  if (!hasConvex()) {
+  if (!hasApi()) {
     return (
       <div className="admin-login-bg admin-login-shell grid place-items-center p-4 sm:p-8">
-        <ConvexSetupNotice context="Admin login" />
+        <ApiSetupNotice context="Admin login" />
       </div>
     );
   }
