@@ -15,6 +15,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const METRO_PORT = '8081';
 const clear = process.argv.includes('--clear');
 const tunnel = process.argv.includes('--tunnel');
+const offline = process.argv.includes('--offline');
 
 // Windows names Mobile Hotspot / ICS adapters "Local Area Connection* N" — those
 // are never reachable from the phone, and VPN adapters hijack the route.
@@ -124,7 +125,9 @@ function freePort(port) {
 freePort(METRO_PORT);
 
 const args = ['expo', 'start', '--port', METRO_PORT];
-if (tunnel) {
+if (offline) {
+  args.push('--offline');
+} else if (tunnel) {
   args.push('--tunnel');
 } else {
   args.push('--lan');
@@ -155,11 +158,16 @@ if (!tunnel && lan.ip) {
   childEnv.REACT_NATIVE_PACKAGER_HOSTNAME = lan.ip;
 }
 
-const child = spawn('bunx', args, {
-  cwd: root,
-  stdio: 'inherit',
-  shell: process.platform === 'win32',
-  env: childEnv,
-});
+function startExpo(startArgs) {
+  return new Promise((resolve) => {
+    const child = spawn('bunx', startArgs, {
+      cwd: root,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+      env: childEnv,
+    });
+    child.on('exit', (code) => resolve(code ?? 0));
+  });
+}
 
-child.on('exit', (code) => process.exit(code ?? 0));
+process.exit(await startExpo(args));
