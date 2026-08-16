@@ -8,10 +8,14 @@
  */
 import { spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { APP_DIR, loadRootEnv } from './paths.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Expo only reads .env files next to its own package.json. The repo keeps a
+// single .env.local at the root, so load it here before Metro inlines any
+// EXPO_PUBLIC_* value into the bundle.
+loadRootEnv();
+
+const root = APP_DIR;
 const METRO_PORT = '8081';
 const clear = process.argv.includes('--clear');
 const tunnel = process.argv.includes('--tunnel');

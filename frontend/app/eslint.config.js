@@ -5,12 +5,13 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   {
-    // Build output, generated code, and the Admin app (linted by its own tooling).
+    // Build output and generated native projects. The web app and the API
+    // are separate projects with their own tooling.
     ignores: [
       "dist/*",
-      "Admin/**",
-      "backend/dist/**",
       ".expo/**",
+      "android/**",
+      "ios/**",
       "node_modules/**",
     ],
   },

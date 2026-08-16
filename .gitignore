@@ -19,6 +19,9 @@ dist/
 web-build/
 expo-env.d.ts
 
+# NestJS build output
+backend/dist/
+
 # env & secrets (never commit)
 .env
 .env.*
@@ -56,6 +59,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# generated native folders (Expo prebuild output)
+frontend/app/ios/
+frontend/app/android/

@@ -4,11 +4,12 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, fileURLToPath(new URL('..', import.meta.url)), '');
-  const projectRoot = fileURLToPath(new URL('..', import.meta.url));
+  // The repo keeps one .env.local at its root, two levels up from here.
+  const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
+  const env = loadEnv(mode, repoRoot, '');
   return {
     plugins: [react(), tailwindcss()],
-    envDir: fileURLToPath(new URL('..', import.meta.url)),
+    envDir: repoRoot,
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -28,7 +29,7 @@ export default defineConfig(({ mode }) => {
       open: false,
       clearScreen: false,
       fs: {
-        allow: [projectRoot],
+        allow: [repoRoot],
       },
     },
     preview: {

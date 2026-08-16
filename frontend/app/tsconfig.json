@@ -4,8 +4,12 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@/features/*": ["./src/features/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@/features/*": [
+        "./src/features/*"
+      ]
     }
   },
   "include": [
@@ -18,7 +22,7 @@
     "node_modules",
     "dist",
     ".expo",
-    "Admin",
-    "backend"
+    "android",
+    "ios"
   ]
 }

@@ -2,39 +2,31 @@
 /**
  * Kafe Eman dev launcher (Bun only).
  *
- *   bun run dev    → API + mobile (Expo QR) + admin dashboard
- *   bun run app    → mobile only (same as expo start — QR in terminal)
- *   bun run admin  → admin only
+ *   bun run dev    → API + Expo QR + web (landing + admin)
+ *   bun run app    → Expo only (same terminal output as `expo start`)
+ *   bun run web    → landing + admin dashboard only
  *   bun run api    → NestJS backend only
  *
  * The API starts first: both the app and the dashboard read from it, and it is
  * ready in about a second, long before Metro finishes bundling.
  */
 import { spawn } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { API_DIR, API_URL, REPO_ROOT, WEB_DIR, WEB_URL, loadRootEnv } from './paths.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const adminDir = path.join(root, 'Admin');
-const apiDir = path.join(root, 'backend');
+loadRootEnv();
 
-const ADMIN_HOST = 'localhost';
-const ADMIN_PORT = 5173;
-const ADMIN_URL = `http://${ADMIN_HOST}:${ADMIN_PORT}/login`;
-const API_URL = 'http://localhost:4000/api';
-
-/** Wait for Metro + QR before starting admin (Clerk plugins + bundler can take 20–40s). */
-const ADMIN_START_DELAY_MS = 30_000;
+/** Metro needs ~30s before the QR is usable; start the web app after that. */
+const WEB_START_DELAY_MS = 30_000;
 
 const modeArg = process.argv[2]?.toLowerCase();
-const mode =
-  modeArg === 'app' || modeArg === 'admin' || modeArg === 'api' || modeArg === 'dev'
-    ? modeArg
-    : 'dev';
+const KNOWN = new Set(['app', 'web', 'admin', 'api', 'dev']);
+const raw = KNOWN.has(modeArg) ? modeArg : 'dev';
+const mode = raw === 'admin' ? 'web' : raw;
+
 const runApp = mode === 'dev' || mode === 'app';
-const runAdmin = mode === 'dev' || mode === 'admin';
+const runWeb = mode === 'dev' || mode === 'web';
 const runApi = mode === 'dev' || mode === 'api';
-const runBoth = runApp && runAdmin;
+const runBoth = runApp && runWeb;
 
 /** @type {import('node:child_process').ChildProcess[]} */
 const children = [];
@@ -64,75 +56,40 @@ const expoPassthrough = process.argv.slice(3).filter((a) => a.startsWith('--'));
 function runExpo() {
   // Direct script spawn — full interactive TTY, QR renders like `expo start`.
   const child = spawn('bun', ['scripts/expo-start.mjs', ...expoPassthrough], {
-    cwd: root,
+    cwd: REPO_ROOT,
     stdio: 'inherit',
     shell: process.platform === 'win32',
-    env: {
-      ...process.env,
-      EXPO_NO_TELEMETRY: '1',
-    },
+    env: { ...process.env, EXPO_NO_TELEMETRY: '1' },
   });
   child.on('exit', (code) => {
-    if (code !== 0 && code !== null) {
-      console.error(`\n  [app] exited with code ${code}\n`);
-    }
+    if (code !== 0 && code !== null) console.error(`\n  [app] exited with code ${code}\n`);
   });
   children.push(child);
   return child;
 }
 
-function runAdminServer({ piped }) {
+function runNamed(name, cwd, { piped }) {
   const child = spawn('bun', ['run', 'dev'], {
-    cwd: adminDir,
+    cwd,
     stdio: piped ? ['ignore', 'pipe', 'pipe'] : 'inherit',
     shell: process.platform === 'win32',
-    env: {
-      ...process.env,
-      CI: 'false',
-      BROWSER: 'none',
-    },
+    env: { ...process.env, CI: 'false', BROWSER: 'none' },
   });
 
   if (piped && child.stdout && child.stderr) {
-    prefixStream(child.stdout, 'admin');
-    prefixStream(child.stderr, 'admin');
+    prefixStream(child.stdout, name);
+    prefixStream(child.stderr, name);
   }
 
   child.on('exit', (code) => {
-    if (code !== 0 && code !== null) {
-      console.error(`\n  [admin] exited with code ${code}\n`);
-    }
-  });
-  children.push(child);
-  return child;
-}
-
-function runApiServer({ piped }) {
-  const child = spawn('bun', ['run', 'dev'], {
-    cwd: apiDir,
-    stdio: piped ? ['ignore', 'pipe', 'pipe'] : 'inherit',
-    shell: process.platform === 'win32',
-    env: { ...process.env },
-  });
-
-  if (piped && child.stdout && child.stderr) {
-    prefixStream(child.stdout, 'api');
-    prefixStream(child.stderr, 'api');
-  }
-
-  child.on('exit', (code) => {
-    if (code !== 0 && code !== null) {
-      console.error(`\n  [api] exited with code ${code}\n`);
-    }
+    if (code !== 0 && code !== null) console.error(`\n  [${name}] exited with code ${code}\n`);
   });
   children.push(child);
   return child;
 }
 
 function shutdown() {
-  for (const child of children) {
-    child.kill('SIGTERM');
-  }
+  for (const child of children) child.kill('SIGTERM');
   process.exit(0);
 }
 
@@ -143,24 +100,25 @@ if (runBoth) {
   console.log('');
   console.log(`  API    → ${API_URL}`);
   console.log('  Mobile → QR code below (wait ~30s for Metro to finish starting)');
-  console.log(`  Admin  → ${ADMIN_URL} (starts after mobile is ready)\n`);
-  runApiServer({ piped: true });
+  console.log(`  Web    → ${WEB_URL} (starts after mobile is ready)\n`);
+  runNamed('api', API_DIR, { piped: true });
   runExpo();
   setTimeout(() => {
-    console.log(`\n  ── Admin → ${ADMIN_URL}  (login: admin / admin123) ──\n`);
-    runAdminServer({ piped: true });
-  }, ADMIN_START_DELAY_MS);
+    console.log(`\n  ── Web → ${WEB_URL}  (login: admin / admin123) ──\n`);
+    runNamed('web', WEB_DIR, { piped: true });
+  }, WEB_START_DELAY_MS);
 } else if (runApp) {
-  // No banner — keep terminal identical to running `expo start` directly.
+  // No banner — keep the terminal identical to running `expo start` directly.
   runExpo();
-} else if (runAdmin) {
+} else if (runWeb) {
   console.log('');
-  console.log(`  Admin → ${ADMIN_URL}`);
-  console.log('  Login → admin / admin123 (after bun run db:seed)');
+  console.log(`  Landing → http://localhost:5173/`);
+  console.log(`  Admin   → ${WEB_URL}`);
+  console.log('  Login   → admin / admin123 (after bun run db:seed)');
   console.log(`  Needs the API running: bun run api → ${API_URL}\n`);
-  runAdminServer({ piped: false });
+  runNamed('web', WEB_DIR, { piped: false });
 } else if (runApi) {
   console.log('');
   console.log(`  API → ${API_URL}\n`);
-  runApiServer({ piped: false });
+  runNamed('api', API_DIR, { piped: false });
 }

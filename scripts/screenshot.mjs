@@ -10,13 +10,17 @@
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { androidEnv, findAndroidSdk } from './android-env.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = path.join(root, 'docs', 'screenshots');
+import path from 'node:path';
+
+import { APP_DIR, REPO_ROOT, loadRootEnv } from './paths.mjs';
+
+loadRootEnv();
+
+const root = APP_DIR;
+const outDir = path.join(REPO_ROOT, 'docs', 'screenshots');
 
 const name = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!name) {
@@ -56,4 +60,4 @@ if (pull.status !== 0) {
 spawnSync(adb, ['shell', 'rm', devicePath], { env });
 
 const { size } = fs.statSync(outFile);
-console.log(`${path.relative(root, outFile)}  (${Math.round(size / 1024)} KB)`);
+console.log(`${path.relative(REPO_ROOT, outFile)}  (${Math.round(size / 1024)} KB)`);

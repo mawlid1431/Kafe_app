@@ -1,5 +1,5 @@
 {
-  "name": "kafe-eman-admin",
+  "name": "kafe-eman-web",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -28,5 +28,6 @@
     "tailwindcss": "^4.1.8",
     "typescript": "~5.9.3",
     "vite": "^6.3.5"
-  }
+  },
+  "description": "Kafe Eman web: public landing page (/) and admin dashboard (/admin)."
 }

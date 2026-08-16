@@ -10,13 +10,15 @@
  * bundle runs inside differs.
  */
 import { spawn } from 'node:child_process';
-import path from 'node:path';
 import readline from 'node:readline/promises';
-import { fileURLToPath } from 'node:url';
 
 import { androidEnv, findAndroidSdk, listAvds } from './android-env.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { APP_DIR, loadRootEnv } from './paths.mjs';
+
+loadRootEnv();
+
+const root = APP_DIR;
 /** --dry-run prints the command instead of running it (used by `bun run pick:test`). */
 const dryRun = process.argv.includes('--dry-run');
 const passthrough = process.argv
