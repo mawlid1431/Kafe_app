@@ -3,7 +3,8 @@
 $ruleName = 'Expo Metro 8081'
 $existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
 if ($existing) {
-  Write-Host "Firewall rule already exists: $ruleName"
+  Set-NetFirewallRule -DisplayName $ruleName -Profile Private,Domain,Public
+  Write-Host "Updated firewall rule: $ruleName (Private + Domain + Public)"
   exit 0
 }
 New-NetFirewallRule -DisplayName $ruleName `
@@ -11,5 +12,5 @@ New-NetFirewallRule -DisplayName $ruleName `
   -Action Allow `
   -Protocol TCP `
   -LocalPort 8081 `
-  -Profile Private,Domain
-Write-Host "Added firewall rule: $ruleName (Private + Domain networks)"
+  -Profile Private,Domain,Public
+Write-Host "Added firewall rule: $ruleName (Private + Domain + Public)"

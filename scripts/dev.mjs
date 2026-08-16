@@ -60,9 +60,7 @@ function runExpo() {
     shell: process.platform === 'win32',
     env: {
       ...process.env,
-      CI: 'false',
       EXPO_NO_TELEMETRY: '1',
-      EXPO_NO_CACHE: '1',
     },
   });
   child.on('exit', (code) => {

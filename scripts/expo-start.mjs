@@ -16,6 +16,7 @@ const METRO_PORT = '8081';
 const clear = process.argv.includes('--clear');
 const tunnel = process.argv.includes('--tunnel');
 const offline = process.argv.includes('--offline');
+const web = process.argv.includes('--web');
 
 // Windows names Mobile Hotspot / ICS adapters "Local Area Connection* N" — those
 // are never reachable from the phone, and VPN adapters hijack the route.
@@ -38,6 +39,8 @@ function scoreAdapter(name, ip) {
   else if (ip.startsWith('10.')) score += 40;
   // Windows mobile hotspot / ICS often blocks phone → PC Metro access.
   if (ip.startsWith('192.168.137.')) score -= 60;
+  // iPhone Personal Hotspot. Expo Go on that phone often times out reaching the PC.
+  if (ip.startsWith('172.20.10.')) score -= 20;
   if (ip.startsWith('169.254.')) score -= 100;
   return score;
 }
@@ -135,24 +138,37 @@ if (offline) {
 if (clear) {
   args.push('--clear');
 }
+if (web) {
+  args.push('--web');
+}
 
 const lan = tunnel ? { ip: undefined, source: 'tunnel' } : detectLanHost();
 if (!tunnel && lan.ip) {
   console.log('');
   console.log(`  Mobile → exp://${lan.ip}:${METRO_PORT}  (${lan.source})`);
-  console.log('  Scan the QR below with Expo Go — phone must be on the same Wi‑Fi.\n');
+  if (lan.ip.startsWith('172.20.10.')) {
+    console.warn('  This looks like iPhone hotspot. Expo Go on that phone often times out.');
+    console.warn('  Put the PC and phone on the same home Wi‑Fi, or run: bun run start:tunnel');
+    console.warn('  Also run as Administrator: bun run dev:firewall\n');
+  } else {
+    console.log('  Scan the QR below with Expo Go — phone must be on the same Wi‑Fi.\n');
+  }
 } else if (!tunnel) {
   console.warn('\n  Warning: could not detect a LAN IP. Set REACT_NATIVE_PACKAGER_HOSTNAME in .env.local\n');
 }
 
 const childEnv = {
   ...process.env,
-  CI: 'false',
   EXPO_NO_TELEMETRY: '1',
-  // Avoid Expo CLI fetch-cache race ("Body has already been read") during dependency checks.
-  EXPO_NO_CACHE: '1',
   RCT_METRO_PORT: METRO_PORT,
+  // Skip Expo API version-check. On Windows it often crashes with
+  // "Body has already been read" and Metro never stays up for Expo Go.
+  EXPO_NO_DEPENDENCY_VALIDATION: '1',
 };
+// Cursor/agent shells set CI=1. Expo then hides the QR and treats the session as
+// headless, which makes Expo Go sit on "loading" then error.
+delete childEnv.CI;
+delete childEnv.CONTINUOUS_INTEGRATION;
 
 if (!tunnel && lan.ip) {
   childEnv.REACT_NATIVE_PACKAGER_HOSTNAME = lan.ip;
