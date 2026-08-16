@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Link, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,7 +11,9 @@ import { FONTS } from '@/features/kafeeman/native/fonts';
  * digits ripple.
  */
 function BouncingChar({ index, children }: { index: number; children: React.ReactNode }) {
-  const y = useRef(new Animated.Value(0)).current;
+  // Lazy state, not a ref: reading `.current` during render trips react-hooks/refs,
+  // and `useRef(new Animated.Value(0))` allocates a throwaway Value on every render.
+  const [y] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const loop = Animated.loop(
