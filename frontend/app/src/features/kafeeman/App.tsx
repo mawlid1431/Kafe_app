@@ -27,7 +27,7 @@ import {
   REWARD_TIERS,
 } from './data';
 import { LOGO_GREEN, LOGO_GREEN_DARK, LOGO_GREEN_LIGHT } from './brand';
-import { calcPromoDiscount, findPromo, maxRedeemablePoints, pointsForSpend, pointsToRmDiscount, POINTS_PER_RM, type PromoCode } from './lib/promos';
+import { calcPromoDiscount, findPromo, findPromoIn, maxRedeemablePoints, pointsForSpend, pointsToRmDiscount, POINTS_PER_RM, type PromoCode } from './lib/promos';
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess, hapticWarning } from './lib/haptics';
 import {
   DEFAULT_ADDRESSES,
@@ -393,7 +393,7 @@ function KafeemanApp() {
 
   const applyPromoFromCode = useCallback(
     (code: string) => {
-      const promo = findPromo(code);
+      const promo = findPromoIn(promoList, code) ?? findPromo(code);
       if (!promo) {
         setAppliedPromo(null);
         setPromoMessage('Invalid promo code');
@@ -415,7 +415,7 @@ function KafeemanApp() {
       void hapticSuccess();
       showToast(`${promo.label} applied`, 'success');
     },
-    [cartTotal, showToast],
+    [cartTotal, promoList, showToast],
   );
 
   const completeOrder = useCallback(

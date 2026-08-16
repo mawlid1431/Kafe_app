@@ -14,8 +14,36 @@ export const PROMO_CODES: PromoCode[] = [
 ];
 
 export function findPromo(code: string): PromoCode | null {
+  return findPromoIn(PROMO_CODES, code);
+}
+
+/**
+ * Resolve a code against the live catalog, falling back to {@link PROMO_CODES}.
+ *
+ * The server is the authority on pricing — it re-prices every order from the
+ * promo row. Matching only the bundled table would mean an admin's new promo
+ * reads as "Invalid promo code" here, and an edited one would quote a discount
+ * the receipt does not honour. Entries without any discount rule are skipped so
+ * a banner-only promo cannot silently apply as RM 0 off.
+ */
+export function findPromoIn(
+  promos: readonly Partial<PromoCode>[] | undefined,
+  code: string,
+): PromoCode | null {
   const normalized = code.trim().toUpperCase();
-  return PROMO_CODES.find((p) => p.code === normalized) ?? null;
+  const match = promos?.find(
+    (p) =>
+      p.code?.trim().toUpperCase() === normalized &&
+      (p.discountPercent != null || p.fixedOff != null),
+  );
+  if (!match) return null;
+  return {
+    code: match.code!.trim().toUpperCase(),
+    label: match.label ?? '',
+    discountPercent: match.discountPercent,
+    fixedOff: match.fixedOff,
+    minSpend: match.minSpend,
+  };
 }
 
 export function calcPromoDiscount(subtotal: number, promo: PromoCode | null): number {

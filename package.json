@@ -44,6 +44,11 @@
   "devDependencies": {
     "only-allow": "^1.2.2"
   },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "semver": "^7.7.2"
+  },
   "workspaces": [
     "backend",
     "frontend/app",

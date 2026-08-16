@@ -126,5 +126,12 @@ export function toPromoBanner(p: ApiPromoBanner, index: number) {
     sub: p.subtitle,
     img: p.imageUrl ?? '',
     code: p.code,
+    // Carry the discount rules through, not just the artwork: the cart resolves an
+    // entered code against this list, so dropping them here would leave the app
+    // pricing every promo from its offline fallback table instead of the admin's.
+    label: p.title,
+    discountPercent: p.discountPercent,
+    fixedOff: p.fixedOff,
+    minSpend: p.minSpend,
   };
 }
